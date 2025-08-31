@@ -1,0 +1,71 @@
+/* Import Google Font: DotGothic16 */
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+:root {
+  --crt-color: rgb(100,150,250); /* CRT color */
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: var(--crt-color);
+  font-family: 'DotGothic16', sans-serif;
+  text-align: center;
+
+  /* mouse cursor: X shape */
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><line x1='0' y1='0' x2='32' y2='32' stroke='black' stroke-width='4'/><line x1='32' y1='0' x2='0' y2='32' stroke='black' stroke-width='4'/></svg>") 16 16, auto;
+}
+
+/* ---- Title block ---- */
+.title-wrap {
+  position: relative;
+  width: max-content;
+  margin: 20px auto;
+}
+
+/* Ghost line: invisible, holds final width so text doesn’t shift */
+.title-measure {
+  visibility: hidden;
+  pointer-events: none;
+  font: 400 28px 'DotGothic16', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: pre;
+}
+
+/* Typed line sits on top of ghost, anchored left */
+.type-title {
+  position: absolute;
+  top: 0; left: 0;
+  font: 400 28px 'DotGothic16', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: pre;
+  color: var(--crt-color);
+  text-align: left;
+}
+
+/* ---- Cursor for typing animation ---- */
+.cursor-block {
+  display: inline-block;
+  padding: 0 0.00001em;
+  line-height: 1;
+  background: var(--crt-color);
+  color: #000;
+  vertical-align: -0.05em;
+  animation: cursorBlink 0.8s steps(1, end) infinite;
+  filter: drop-shadow(0 0 2px var(--crt-color));
+}
+
+.cursor-pause { animation-duration: 0.3s; }
+
+@keyframes cursorBlink {
+  0%, 45%   { background: var(--crt-color); color: #000; }
+  50%, 100% { background: transparent; color: transparent; }
+}
+
+/* ---- Canvas centering ---- */
+canvas {
+  display: block;
+  margin: 20px auto;
+}
