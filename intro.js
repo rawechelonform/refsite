@@ -1,5 +1,5 @@
 // Where to go after correct entry
-const NEXT_URL = "/main.html";
+const NEXT_URL = "main.html";
 const TARGET   = "REF CORP";
 
 // Elements
