@@ -1,0 +1,19 @@
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: #000;
+  overflow: hidden;
+  /* cursor: none; */
+}
+#avatar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% 50%;   /* center anchor */
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+  /* transform is set by JS: translate(-50%, -50%) scale(SCALE) */
+}
