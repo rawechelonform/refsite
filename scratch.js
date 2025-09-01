@@ -1,5 +1,5 @@
-// Follow mouse (center-anchored while moving) + stand beside cursor on idle
-// Changes: SCALE=0.125, STAND_OFFSET_X=40, clamping uses SCALED size so she isn't confined to center.
+// Follow with live side-offset while mouse moves; stand at same offset when idle.
+// Center-anchored sprite; uses standing sheet for sizing.
 
 const SHEETS = {
   up:    'avatar/avatar_walkingbackward.png',
@@ -12,43 +12,45 @@ const SHEETS = {
 const AVATAR = document.getElementById('avatar');
 
 /* ===== Tunables ===== */
-let SCALE = 0.125;               // half of 0.25
+let SCALE = 0.125;               // current size (half of 0.25)
 const BASE_SPEED = 360;          // px/sec
 const STEP_INTERVAL_MS = 180;    // walk cadence
 const ARRIVAL_EPS = 3;           // movement arrival threshold
 const ARRIVAL_EPS_IDLE = 5;      // idle arrival threshold
-const MOUSE_IDLE_MS = 200;       // idle delay (ms)
+const MOUSE_IDLE_MS = 200;       // ms since last mousemove = idle
 
-// internal crop to remove padding bars (adjust if needed)
+// internal crop to remove padding bars
 const CROP_TOP_PX = 24;
 const CROP_BOTTOM_PX = 12;
 
-// exact stand distance (screen px) to left/right of cursor
-const STAND_OFFSET_X = 40;
+// exact horizontal offset from cursor center while moving/idle
+const SIDE_OFFSET_X = 40;
 
 // distance-based speed boost
 const BOOST_PER_PX = 1.2;
 const MAX_BOOST = 900;
 /* ==================== */
 
-/* Metrics (center-anchored; use standing sheet as reference) */
-let FRAME_W = 64, FRAME_H = 64; // full frame per pose (2 frames across total)
+/* Metrics (center-anchored; from standing sheet) */
+let FRAME_W = 64, FRAME_H = 64;
 let VISIBLE_H = 64;
 
+/* State (CENTER positions) */
 let pos = { x: innerWidth / 2, y: innerHeight / 2 }; // avatar center
-let cursor = { x: pos.x, y: pos.y };                 // live mouse (center target)
-let frozenTarget = null;                              // frozen center target while idle
+let cursor = { x: pos.x, y: pos.y };                 // mouse center
+let frozenTarget = null;                              // frozen center target when idle
 
 let currentSheet = 'stand';
 let stepIndex = 0;
 let lastT = performance.now();
 let animAcc = 0;
 
-// track last horizontal direction of the MOUSE (for idle side)
+// track last horizontal direction of MOUSE movement to decide side
 let lastMouseT = performance.now();
 let prevMouseX = pos.x;
-let lastMouseHorizDir = null; // 'right' | 'left'
+let sidePreference = null; // 'left' or 'right' relative to cursor (where avatar should be)
 
+/* Helpers */
 function setScale() {
   AVATAR.style.transform = `translate(-50%, -50%) scale(${SCALE})`;
 }
@@ -86,33 +88,34 @@ function preload(src) {
     img.src = src + '?v=' + Date.now(); // cache-bust
   });
 }
-
-// CLAMP using the **scaled** half sizes so she can reach the edges
+// clamp using **scaled** size so she can reach edges
 function clampCenter(x, y) {
   const halfWScaled = (FRAME_W * SCALE) * 0.5;
   const halfHScaled = (VISIBLE_H * SCALE) * 0.5;
-
   const minX = halfWScaled;
   const maxX = innerWidth - halfWScaled;
   const minY = halfHScaled;
   const maxY = innerHeight - halfHScaled;
-
   return {
     x: Math.max(minX, Math.min(maxX, x)),
     y: Math.max(minY, Math.min(maxY, y))
   };
 }
 
-// Build one frozen CENTER target at ±STAND_OFFSET_X from the mouse horizontally
-function buildFrozenStandTarget() {
-  let side; // where avatar will stand relative to mouse
-  if (lastMouseHorizDir === 'right') side = 'left';
-  else if (lastMouseHorizDir === 'left') side = 'right';
-  else side = (pos.x <= cursor.x) ? 'left' : 'right';
-
-  const tx = cursor.x + (side === 'left' ? -STAND_OFFSET_X : STAND_OFFSET_X);
-  const ty = cursor.y; // same vertical center as the cursor
+// Compute the live target WHILE MOVING: always ±SIDE_OFFSET_X from cursor horizontally, same Y
+function liveSideOffsetTarget() {
+  // Decide side if unknown: choose where the avatar currently is relative to cursor
+  if (!sidePreference) {
+    sidePreference = (pos.x <= cursor.x) ? 'left' : 'right';
+  }
+  const tx = cursor.x + (sidePreference === 'left' ? -SIDE_OFFSET_X : SIDE_OFFSET_X);
+  const ty = cursor.y;
   return clampCenter(tx, ty);
+}
+
+// Build ONE frozen target on idle (keeps same side and offset)
+function buildFrozenTarget() {
+  return liveSideOffsetTarget(); // same logic; just freeze the result
 }
 
 /* Inputs */
@@ -120,13 +123,14 @@ addEventListener('mousemove', e => {
   cursor.x = e.clientX;
   cursor.y = e.clientY;
 
+  // Update sidePreference from mouse movement direction (only if a clear horizontal move)
   const dxMouse = e.clientX - prevMouseX;
-  if (dxMouse > 1) lastMouseHorizDir = 'right';
-  else if (dxMouse < -1) lastMouseHorizDir = 'left';
+  if (dxMouse > 1) sidePreference = 'left';   // mouse moving right → avatar stays to its left
+  else if (dxMouse < -1) sidePreference = 'right'; // mouse moving left → avatar stays to its right
   prevMouseX = e.clientX;
 
   lastMouseT = performance.now();
-  frozenTarget = null; // unfreeze while the mouse moves
+  frozenTarget = null; // unfreeze while mouse moves
 });
 addEventListener('click', e => {
   cursor.x = e.clientX;
@@ -142,19 +146,22 @@ function tick(now) {
 
   const mouseIdle = (now - lastMouseT) > MOUSE_IDLE_MS;
 
-  // Choose target: live cursor while moving; frozen ±offset when idle starts
+  // Target selection:
+  // - Moving: live side-offset target (prevents ever landing on the cursor and backtracking)
+  // - Idle start: freeze once at the same side-offset
+  let target;
   if (!mouseIdle) {
-    frozenTarget = null;
-  } else if (!frozenTarget) {
-    frozenTarget = buildFrozenStandTarget();
+    target = liveSideOffsetTarget();
+  } else {
+    if (!frozenTarget) frozenTarget = buildFrozenTarget();
+    target = frozenTarget;
   }
-  const target = frozenTarget ? frozenTarget : clampCenter(cursor.x, cursor.y);
 
   const dx = target.x - pos.x;
   const dy = target.y - pos.y;
   const dist = Math.hypot(dx, dy);
 
-  // Idle & arrived → standing sheet
+  // Idle & arrived → standing
   if (mouseIdle && dist <= ARRIVAL_EPS_IDLE) {
     setSheet('stand');
     setFrame(0);
@@ -163,11 +170,11 @@ function tick(now) {
     return;
   }
 
-  // Face where we're going (small deadband to avoid flicker)
+  // Face where we're going (tiny deadband to avoid flicker)
   const DIR_DEADBAND = 2;
   let faceDir;
   if (Math.abs(dx) < DIR_DEADBAND && Math.abs(dy) < DIR_DEADBAND) {
-    // keep last facing
+    // keep current facing
   } else {
     faceDir = chooseDirection(dx, dy);
     setSheet(faceDir);
@@ -219,7 +226,7 @@ function tick(now) {
   requestAnimationFrame(tick);
 })();
 
-/* Keep center within window on resize, using scaled size */
+/* Keep center within window on resize */
 addEventListener('resize', () => {
   const c = clampCenter(pos.x, pos.y);
   pos.x = c.x;
