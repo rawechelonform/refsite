@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>REF // Intro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Intro-only styles -->
+  <link rel="stylesheet" href="/intro.css?v=20">
+</head>
+<body>
+  <div class="wrap">
+    <!-- walking “digital figure” -->
+    <div class="stage">
+      <div class="figure" aria-hidden="true">
+        <!-- pixel head -->
+        <span class="px px-h"></span>
+        <!-- body -->
+        <span class="px px-b"></span>
+        <!-- arms -->
+        <span class="px px-a px-a-l"></span>
+        <span class="px px-a px-a-r"></span>
+        <!-- legs -->
+        <span class="px px-l px-l-l"></span>
+        <span class="px px-l px-l-r"></span>
+      </div>
+    </div>
+
+<div class="terminal">
+  <div id="type-line" class="line">
+    <span id="static-part"></span><span id="typed-part"></span>
+  </div>
+
+  <div class="prompt">
+    <span class="caret">></span>
+    <span id="typed" class="typed"></span>
+    <span class="cursor-block">&nbsp;</span>
+    <input id="cmd" class="cmd" type="text"
+      inputmode="latin"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false" />
+  </div>
+
+  <div id="hint" class="hint" aria-live="polite"></div>
+</div>
+
+
+<script src="/intro.js?v=20"></script>
+</body>
+</html>
