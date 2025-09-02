@@ -1,15 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bathroom Page</title>
-  <link rel="stylesheet" href="bathroom.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bathroom Tags</title>
+  <link rel="stylesheet" href="bathroom.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>WELCOME TO THE BATHROOM</h1>
-    <p>Send me your stickers and I'll add them to the wall.</p>
+  <!-- Choose one of your backgrounds; you can rotate them in JS if you want -->
+  <div id="wall" class="wall" data-bg="bathroom/bathroom_orangegreen.png">
+    <!-- This container receives random stickers -->
+    <div id="tags-layer" class="tags-layer" aria-hidden="true"></div>
+
+    <!-- Optional debug overlay to see the oval (toggle with “O” in JS) -->
+    <div id="mirror-oval" class="mirror-oval hidden"></div>
+
+    <!-- A small UI block you can remove later -->
+    <div class="ui">
+      <button id="regen">Regenerate Tags</button>
+      <label style="margin-left:8px">
+        Count
+        <input id="count" type="number" min="1" max="200" value="18" />
+      </label>
+      <label style="margin-left:8px">
+        Avoid overlap
+        <input id="avoid" type="checkbox" checked />
+      </label>
+      <small style="margin-left:8px">Press “O” to toggle oval preview</small>
+    </div>
   </div>
+
+  <script src="bathroom.js"></script>
 </body>
 </html>

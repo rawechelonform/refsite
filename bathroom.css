@@ -1,21 +1,84 @@
+:root {
+  /* Mirror/oval placement as percentages of the viewport/container */
+  --oval-cx: 50%;   /* center X of oval */
+  --oval-cy: 50%;   /* center Y of oval */
+  --oval-rx: 18vw;  /* horizontal radius */
+  --oval-ry: 35vh;  /* vertical radius */
+
+  /* Sticker (tag) default sizing */
+  --tag-min: 70px;
+  --tag-max: 180px;
+}
+
+/* Full-bleed wall */
+html, body {
+  height: 100%;
+}
 body {
   margin: 0;
-  padding: 0;
-  height: 100vh;
+  background: rgb(255, 0, 4); /* your requested background color */
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #fff;
+}
 
-  /* Fallback color */
-  background-color: rgb(255, 0, 4);
+.wall {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: center/cover no-repeat var(--wall-image, url("bathroom/bathroom_orangegreen.png"));
+  overflow: hidden;
+}
 
-  /* Background image (just swap the filename when testing) */
-  background-image: url("bathroom/bathroom_orangegreen.png");
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
+/* Layer to hold random tag images */
+.tags-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 
-  font-family: Arial, sans-serif;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+/* Individual tag images */
+.tag {
+  position: absolute;
+  will-change: transform, left, top, width;
+  image-rendering: auto;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+  transform-origin: center center;
+}
+
+/* Optional: visualize the forbidden oval (mirror) */
+.mirror-oval {
+  position: absolute;
+  left: calc(var(--oval-cx));
+  top: calc(var(--oval-cy));
+  width: calc(2 * var(--oval-rx));
+  height: calc(2 * var(--oval-ry));
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  outline: 2px dashed rgba(255,255,255,.8);
+  background: rgba(0,0,0,.15);
+  pointer-events: none;
+}
+.hidden { display: none; }
+
+/* Tiny UI */
+.ui {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: rgba(0,0,0,.45);
+  padding: 8px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  font-size: 14px;
+}
+.ui input[type="number"] { width: 64px; }
+.ui button {
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
 }
