@@ -142,8 +142,38 @@ async function generateTags() {
 
   const placed = []; // keep rects for overlap avoidance
 
-  for (let i = 0; i < count; i++) {
-    const src = tags[randInt(0, tags.length - 1)];
+  // Shuffle tags so we can pick unique ones
+function shuffle(array) {
+  const a = array.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function generateTags() {
+  const count = Math.max(1, Math.min(200, parseInt(inputCount.value || "18", 10)));
+  const avoidOverlap = !!inputAvoid.checked;
+
+  layer.innerHTML = "";
+
+  const tags = await loadTagList();
+  if (!tags || tags.length === 0) {
+    console.warn("No tag images found.");
+    return;
+  }
+
+  // Shuffle list and slice the amount we need
+  const uniqueTags = shuffle(tags).slice(0, count);
+
+  const {width: W, height: H} = layer.getBoundingClientRect();
+  const oval = readOval(W, H);
+  const {min, max} = getSizeRange();
+
+  const placed = [];
+
+  for (const src of uniqueTags) {
     const img = document.createElement("img");
     img.className = "tag";
     img.alt = "";
@@ -151,40 +181,28 @@ async function generateTags() {
     img.loading = "lazy";
     img.src = src;
 
-    // Decide desired width and rotation
     const targetW = rand(min, max);
-    const rot = rand(-22, 22); // fun tilt
+    const rot = rand(-22, 22);
 
-    // Try multiple times to place a valid spot
-    const MAX_TRIES = 100;
-    let attempt = 0, ok = false, rx = 0, ry = 0, rect;
+    let rect;
+    let ok = false;
 
-    while (attempt++ < MAX_TRIES && !ok) {
-      rx = rand(0, W - targetW);
-      // approximate height from width before image loads (square-ish stickers look fine)
+    for (let attempt = 0; attempt < 100 && !ok; attempt++) {
       const approxH = targetW * rand(0.75, 1.25);
-      ry = rand(0, H - approxH);
-
+      const rx = rand(0, W - targetW);
+      const ry = rand(0, H - approxH);
       rect = {x: rx, y: ry, w: targetW, h: approxH};
 
-      // keep away from the oval
       if (rectIntersectsOval(rect, oval)) continue;
-
-      // avoid overlap with previously placed tags if enabled
       if (avoidOverlap && placed.some(p => rectsOverlap(p, rect))) continue;
 
       ok = true;
     }
 
-    if (!ok) {
-      // give up on this sticker
-      continue;
-    }
+    if (!ok) continue;
 
-    // record placement rect
     placed.push(rect);
 
-    // position the element
     img.style.left = `${rect.x}px`;
     img.style.top = `${rect.y}px`;
     img.style.width = `${rect.w}px`;
@@ -193,6 +211,7 @@ async function generateTags() {
     layer.appendChild(img);
   }
 }
+
 
 /* UI actions */
 btnRegen.addEventListener("click", generateTags);
