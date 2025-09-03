@@ -7,27 +7,18 @@
   <link rel="stylesheet" href="bathroom.css" />
 </head>
 <body>
-  <!-- Choose one of your backgrounds; you can rotate them in JS if you want -->
   <div id="wall" class="wall" data-bg="bathroom/bathroom_orangegreen.png">
-    <!-- This container receives random stickers -->
+    <!-- Sticker container -->
     <div id="tags-layer" class="tags-layer" aria-hidden="true"></div>
 
-    <!-- Optional debug overlay to see the oval (toggle with “O” in JS) -->
-    <div id="mirror-oval" class="mirror-oval hidden"></div>
-
-    <!-- A small UI block you can remove later -->
-    <div class="ui">
-      <button id="regen">Regenerate Tags</button>
-      <label style="margin-left:8px">
-        Count
-        <input id="count" type="number" min="1" max="200" value="18" />
-      </label>
-      <label style="margin-left:8px">
-        Avoid overlap
-        <input id="avoid" type="checkbox" checked />
-      </label>
-      <small style="margin-left:8px">Press “O” to toggle oval preview</small>
+    <!-- Centered headline -->
+    <div class="headline">
+      <h1>Welcome to the bathroom.</h1>
+      <p>Send me your tags / stickers.</p>
     </div>
+
+    <!-- Optional: toggle with “O” for debugging -->
+    <div id="mirror-oval" class="mirror-oval hidden"></div>
   </div>
 
   <script src="bathroom.js"></script>

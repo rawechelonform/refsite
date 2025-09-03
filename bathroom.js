@@ -1,17 +1,10 @@
-/* Config
-   Place your tags inside: bathroom/tags/
-   Also create bathroom/tags/tags.json that lists the filenames, e.g.:
-   ["sticker1.png","sticker2.webp","logo.svg"]
-*/
+/* ---------- config ---------- */
 const TAGS_JSON_URL = "bathroom/tags/tags.json";
+const STICKER_COUNT = 20;          // you control this
+const AVOID_OVERLAP = true;        // you control this
+const BASE_STICKER_DELAY = 500;    // wait after headline shows before 1st sticker (ms)
+const STAGGER_MS = 60;             // gap between stickers (ms)
 
-/* If fetching JSON fails (e.g., local file preview without a server), fallback here */
-const FALLBACK_TAGS = [
-  // "bathroom/tags/example1.png",
-  // "bathroom/tags/example2.png",
-];
-
-/* Backgrounds you can rotate if you want */
 const BACKGROUNDS = [
   "bathroom/bathroom_orangegreen.png",
   "bathroom/bathroom_redblack.png",
@@ -20,211 +13,135 @@ const BACKGROUNDS = [
   "bathroom/bathroom_redlightblue.png"
 ];
 
-const wall = document.getElementById("wall");
-const layer = document.getElementById("tags-layer");
-const btnRegen = document.getElementById("regen");
-const inputCount = document.getElementById("count");
-const inputAvoid = document.getElementById("avoid");
+/* ---------- elements ---------- */
+const wall      = document.getElementById("wall");
+const layer     = document.getElementById("tags-layer");
 const ovalDebug = document.getElementById("mirror-oval");
 
-/* Oval geometry pulled from CSS custom properties */
+/* ---------- helpers ---------- */
+const rand = (min, max) => Math.random() * (max - min) + min;
+function shuffle(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]];} return x; }
+function unitToPixels(v, vw, vh) {
+  if (!v) return 0; v = v.trim();
+  if (v.endsWith("px")) return parseFloat(v);
+  if (v.endsWith("vw")) return (parseFloat(v) * vw) / 100;
+  if (v.endsWith("vh")) return (parseFloat(v) * vh) / 100;
+  const n = parseFloat(v); return isNaN(n) ? 0 : n;
+}
 function readOval(w, h) {
-  const style = getComputedStyle(document.documentElement);
-  const cxPerc = parseFloat(style.getPropertyValue("--oval-cx")) / 100 || 0.5;
-  const cyPerc = parseFloat(style.getPropertyValue("--oval-cy")) / 100 || 0.5;
-
-  const rxStr = style.getPropertyValue("--oval-rx").trim();
-  const ryStr = style.getPropertyValue("--oval-ry").trim();
-
-  const rx = unitToPixels(rxStr, w, h);
-  const ry = unitToPixels(ryStr, w, h);
-
+  const cs = getComputedStyle(document.documentElement);
+  const cx = (parseFloat(cs.getPropertyValue("--oval-cx"))/100 || .5) * w;
+  const cy = (parseFloat(cs.getPropertyValue("--oval-cy"))/100 || .5) * h;
+  const rx = unitToPixels(cs.getPropertyValue("--oval-rx"), w, h);
+  const ry = unitToPixels(cs.getPropertyValue("--oval-ry"), w, h);
+  return { cx, cy, rx, ry };
+}
+function pointInEllipse(x,y,o){ const nx=(x-o.cx)/o.rx, ny=(y-o.cy)/o.ry; return nx*nx+ny*ny<=1; }
+function rectIntersectsOval(r,o){
+  const pts=[[r.x+r.w/2,r.y+r.h/2],[r.x,r.y],[r.x+r.w,r.y],[r.x,r.y+r.h],[r.x+r.w,r.y+r.h]];
+  return pts.some(([px,py])=>pointInEllipse(px,py,o));
+}
+function rectsOverlap(a,b){
+  return !(a.x+a.w<b.x || b.x+b.w<a.x || a.y+a.h<b.y || b.y+b.h<a.y);
+}
+function getSizeRange(){
+  const cs = getComputedStyle(document.documentElement);
   return {
-    cx: cxPerc * w,
-    cy: cyPerc * h,
-    rx,
-    ry
+    min: parseFloat(cs.getPropertyValue("--tag-min")) || 70,
+    max: parseFloat(cs.getPropertyValue("--tag-max")) || 180
   };
 }
-
-/* Convert a CSS length string (px, vw, vh) into pixels */
-function unitToPixels(v, vw, vh) {
-  if (v.endsWith("px")) return parseFloat(v);
-  if (v.endsWith("vw")) return parseFloat(v) * vw / 100;
-  if (v.endsWith("vh")) return parseFloat(v) * vh / 100;
-  // fallback: try number
-  const n = parseFloat(v);
-  return isNaN(n) ? 0 : n;
+function preloadImage(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(src); i.onerror=rej; i.src=src; });
 }
-
-/* ellipse test: is a point inside the oval? */
-function pointInEllipse(x, y, oval) {
-  const nx = (x - oval.cx) / oval.rx;
-  const ny = (y - oval.cy) / oval.ry;
-  return (nx*nx + ny*ny) <= 1;
-}
-
-/* quick rect vs ellipse intersection by sampling rect center + corners */
-function rectIntersectsOval(rect, oval) {
-  const pts = [
-    [rect.x + rect.w/2, rect.y + rect.h/2],    // center
-    [rect.x, rect.y],                          // tl
-    [rect.x + rect.w, rect.y],                 // tr
-    [rect.x, rect.y + rect.h],                 // bl
-    [rect.x + rect.w, rect.y + rect.h]         // br
-  ];
-  return pts.some(([px, py]) => pointInEllipse(px, py, oval));
-}
-
-/* simple axis-aligned rect intersection */
-function rectsOverlap(a, b) {
-  return !(a.x + a.w < b.x ||
-           b.x + b.w < a.x ||
-           a.y + a.h < b.y ||
-           b.y + b.h < a.y);
-}
-
-/* random helpers */
-const rand = (min, max) => Math.random() * (max - min) + min;
-const randInt = (min, max) => Math.floor(rand(min, max + 1));
-
-/* get CSS sizing variables */
-function getSizeRange() {
-  const cs = getComputedStyle(document.documentElement);
-  const min = parseFloat(cs.getPropertyValue("--tag-min")) || 70;
-  const max = parseFloat(cs.getPropertyValue("--tag-max")) || 180;
-  return {min, max};
-}
-
-/* pick a random background image if desired */
-function setRandomBackground() {
-  const bg = BACKGROUNDS[randInt(0, BACKGROUNDS.length - 1)];
-  wall.style.setProperty("--wall-image", `url("${bg}")`);
-}
-
-/* load tag list from JSON, else fallback */
-async function loadTagList() {
-  try {
-    const res = await fetch(TAGS_JSON_URL, {cache: "no-cache"});
-    if (!res.ok) throw new Error("tags.json not found");
-    const list = await res.json();
-    return list.map(name => {
-      // Normalize to full path under bathroom/tags
-      return name.startsWith("bathroom/tags/")
-        ? name
-        : `bathroom/tags/${name}`;
-    });
-  } catch {
-    return FALLBACK_TAGS;
+async function loadTagList(){
+  try{
+    const r = await fetch(TAGS_JSON_URL, { cache: "no-cache" });
+    if(!r.ok) throw new Error("fetch failed");
+    const list = await r.json();
+    if(!Array.isArray(list)) throw new Error("tags.json is not an array");
+    return list.map(n => n.startsWith("bathroom/tags/") ? n : `bathroom/tags/${n}`);
+  }catch(err){
+    console.error("Error loading tag list:", err);
+    return [];
   }
 }
 
-/* main generator */
-async function generateTags() {
-  const count = Math.max(1, Math.min(200, parseInt(inputCount.value || "18", 10)));
-  const avoidOverlap = !!inputAvoid.checked;
-
-  // clear previous
-  layer.innerHTML = "";
-
-  // optional: randomize background each time
-  // setRandomBackground();
-
-  const tags = await loadTagList();
-  if (!tags || tags.length === 0) {
-    console.warn("No tag images found. Add filenames to bathroom/tags/tags.json or FALLBACK_TAGS.");
-    return;
-  }
-
-  const {width: W, height: H} = layer.getBoundingClientRect();
-  const oval = readOval(W, H);
-  const {min, max} = getSizeRange();
-
-  const placed = []; // keep rects for overlap avoidance
-
-  // Shuffle tags so we can pick unique ones
-function shuffle(array) {
-  const a = array.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-async function generateTags() {
-  const count = Math.max(1, Math.min(200, parseInt(inputCount.value || "18", 10)));
-  const avoidOverlap = !!inputAvoid.checked;
-
+/* ---------- stickers ---------- */
+async function generateTags(){
   layer.innerHTML = "";
 
   const tags = await loadTagList();
-  if (!tags || tags.length === 0) {
-    console.warn("No tag images found.");
+  if (!tags.length) {
+    console.warn("No tag images found. Ensure bathroom/tags/tags.json exists and lists files.");
     return;
   }
+  const uniqueTags = shuffle(tags).slice(0, Math.min(STICKER_COUNT, tags.length));
 
-  // Shuffle list and slice the amount we need
-  const uniqueTags = shuffle(tags).slice(0, count);
-
-  const {width: W, height: H} = layer.getBoundingClientRect();
+  const { width: W, height: H } = layer.getBoundingClientRect();
   const oval = readOval(W, H);
-  const {min, max} = getSizeRange();
-
+  const { min, max } = getSizeRange();
   const placed = [];
 
+  let index = 0;
   for (const src of uniqueTags) {
     const img = document.createElement("img");
     img.className = "tag";
-    img.alt = "";
     img.decoding = "async";
-    img.loading = "lazy";
+    img.loading  = "lazy";
     img.src = src;
 
     const targetW = rand(min, max);
     const rot = rand(-22, 22);
 
-    let rect;
-    let ok = false;
-
+    let ok = false, rect;
     for (let attempt = 0; attempt < 100 && !ok; attempt++) {
       const approxH = targetW * rand(0.75, 1.25);
       const rx = rand(0, W - targetW);
       const ry = rand(0, H - approxH);
-      rect = {x: rx, y: ry, w: targetW, h: approxH};
+      rect = { x: rx, y: ry, w: targetW, h: approxH };
 
       if (rectIntersectsOval(rect, oval)) continue;
-      if (avoidOverlap && placed.some(p => rectsOverlap(p, rect))) continue;
-
+      if (AVOID_OVERLAP && placed.some(p => rectsOverlap(p, rect))) continue;
       ok = true;
     }
-
     if (!ok) continue;
 
     placed.push(rect);
-
     img.style.left = `${rect.x}px`;
-    img.style.top = `${rect.y}px`;
+    img.style.top  = `${rect.y}px`;
     img.style.width = `${rect.w}px`;
     img.style.transform = `rotate(${rot}deg)`;
 
-    layer.appendChild(img);
+    // Append one-by-one (no CSS animation)
+    const delayMs = BASE_STICKER_DELAY + index * STAGGER_MS;
+    setTimeout(() => layer.appendChild(img), delayMs);
+
+    index++;
   }
 }
 
+/* ---------- boot ---------- */
+window.addEventListener("load", async () => {
+  // 1) Choose background (data-bg wins)
+  const bg = wall.getAttribute("data-bg") || BACKGROUNDS[0];
 
-/* UI actions */
-btnRegen.addEventListener("click", generateTags);
+  // 2) Preload bg; only then apply and reveal headline
+  try { await preloadImage(bg); } catch {}
+  wall.style.setProperty("--wall-image", `url("${bg}")`);
+
+  // Flip the CSS switch on the next frame so the headline fades in after bg is set
+  requestAnimationFrame(() => {
+    document.documentElement.classList.add("bg-ready");
+  });
+
+  // 3) Start sticker placement (their own BASE_STICKER_DELAY controls the pause)
+  generateTags();
+});
+
+/* Optional: toggle oval with “O” */
 document.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "o") {
     ovalDebug.classList.toggle("hidden");
   }
-});
-
-/* kickoff */
-window.addEventListener("load", () => {
-  // ensure the wall background respects the data attribute
-  const bg = wall.getAttribute("data-bg");
-  if (bg) wall.style.setProperty("--wall-image", `url("${bg}")`);
-  generateTags();
 });
