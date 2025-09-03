@@ -1,3 +1,4 @@
 
 # large design sources (do not commit)
 *.psd
+.DS_Store
