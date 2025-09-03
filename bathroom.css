@@ -30,8 +30,19 @@ body {
 .tags-layer {
   position: absolute;
   inset: 0;
-  pointer-events: none;
+  pointer-events: auto; /* allow hover */
   z-index: 1;
+}
+
+.tag {
+  position: absolute;
+  will-change: transform, left, top, width;
+  user-select: none;
+  pointer-events: auto; /* allow hover */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+  transform-origin: center center;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Headline centered in page */
@@ -49,6 +60,7 @@ body {
   width: 100%;
   opacity: 0;                        /* start hidden */
   transition: opacity 250ms ease;    /* fade in */
+  pointer-events: none;              /* let mouse hover reach stickers */
 }
 .bg-ready .headline {
   opacity: 1;                        /* reveal after bg loads */
@@ -62,15 +74,33 @@ body {
   margin: 0.25rem 0;
 }
 
-/* Stickers — just appear when JS appends them */
-.tag {
+/* Tooltip styling using data-tip */
+.tag[data-tip]::after {
+  content: attr(data-tip);
   position: absolute;
-  will-change: transform, left, top, width;
-  user-select: none;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -8px);   /* fixed position – no animation */
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font: 12px/1.2 Arial, sans-serif;
+  white-space: pre;                   /* preserves newlines */
+  opacity: 0;
   pointer-events: none;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
-  transform-origin: center center;
-  opacity: 1;
+  transition: opacity .15s ease;      /* fade only */
+  z-index: 5;
+
+  /* removed black background & shadow */
+  background: transparent;
+  box-shadow: none;
+
+  /* readability */
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+
+.tag[data-tip]:hover::after {
+  opacity: 1;                         /* only fade in */
 }
 
 /* Optional debug oval */
@@ -83,8 +113,30 @@ body {
   transform: translate(-50%, -50%);
   border-radius: 50%;
   outline: 2px dashed rgba(255,255,255,.8);
-  background: rgba(0,0,0,.15);
+  background: transparent;            /* was rgba(0,0,0,.15) */
   pointer-events: none;
   z-index: 3;
 }
 .hidden { display: none; }
+
+/* Global floating tooltip (always above everything) */
+.hover-tip {
+  position: fixed;
+  left: 0; top: 0;
+  transform: translate(-9999px, -9999px);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font: 12px/1.2 Arial, sans-serif;
+  white-space: pre;        /* preserve newlines */
+  pointer-events: none;    /* don't steal the hover */
+  z-index: 9999;
+  opacity: 0;
+
+  /* removed black background & shadow */
+  background: transparent;
+  box-shadow: none;
+
+  /* readability */
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
