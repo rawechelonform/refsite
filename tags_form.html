@@ -6,10 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-  <!-- If you have your own CSS, keep this line; otherwise you can remove it -->
-  <link rel="stylesheet" href="tags_form.css">
   <style>
-    /* Minimal fallback styles in case tags_form.css isn't present */
     :root{
       --bg:#000; --crt:#00ff00; --crt-dim:rgba(0,255,0,.55);
       --fs:20px; --ls:.08em; --lh:1.3; --btn-w:240px;
@@ -24,50 +21,58 @@
       text-transform:uppercase; letter-spacing:var(--ls); font-size:var(--fs);
       line-height:calc(var(--lh) * 1em);
     }
+    .wrap{ width:var(--wrap-w); max-width:var(--max-w); margin:calc(var(--stage-offset)) auto 32px;
+           padding:0 calc(12px + var(--left-offset)); }
+    h1{ margin:0; font-weight:700; font-size:var(--fs); line-height:calc(var(--lh)*1em); text-align:left;}
+    .spacer-title{ height: var(--sep-title); }
+
+    .q{ margin-top: var(--between-q); }
+    .line{ display:flex; align-items:baseline; gap:var(--caret-gap); margin-top:var(--row-gap); margin-bottom:var(--between-q); }
+    .no-caret .caret{ display:none; }
+
+    .typed{ min-height:calc(var(--lh)*1em); line-height:calc(var(--lh)*1em); white-space:pre-wrap; color:var(--crt); }
+    .typed.ph{ color:var(--crt-dim); }
+
+    .cursor-block{ display:inline-block; width:1.1ch; height:1em; background:var(--crt); color:#000;
+                   transform: translateY(calc((var(--lh) - 1) * 0.5em));
+                   animation: cursorBlink .8s steps(1,end) infinite; vertical-align:baseline; }
+    @keyframes cursorBlink{0%,45%{background:var(--crt);color:#000}50%,100%{background:transparent;color:transparent}}
+
+    .btn{ display:inline-block; width:var(--btn-w); padding:10px 14px; background:var(--bg); color:var(--crt);
+          border:1px solid var(--crt); border-radius:0; font:inherit; font-weight:700; text-align:center; cursor:pointer; user-select:none; white-space:nowrap;}
+    .btn:hover{ filter:brightness(1.05) }
+    input[type="file"]{ display:none }
+
+    .status{ display:inline-block; margin-left:14px; font-style:italic; white-space:nowrap; vertical-align:baseline; color:rgba(0,255,0,.8); }
+
+    /* hidden real inputs (lowercase) */
+    .hid-input{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; border:0; outline:none; background:transparent; color:transparent; caret-color:transparent; text-transform:lowercase; }
+
+    /* Back button (optional) */
     .back-btn{
       position:fixed; top:calc(var(--stage-offset)); right:calc(12px + var(--left-offset));
       background:transparent; border:0; color:var(--crt); font:inherit; font-weight:700; cursor:pointer;
     }
     .back-btn .br{ text-decoration:none; }
     .back-btn .u{ text-decoration:underline; }
-    .wrap{ width:var(--wrap-w); max-width:var(--max-w); margin:calc(var(--stage-offset)) auto 32px;
-           padding:0 calc(12px + var(--left-offset)); }
-    h1{ margin:0; font-weight:700; font-size:var(--fs); line-height:calc(var(--lh)*1em); text-align:left;}
-    .spacer-title{ height: var(--sep-title); }
-    .q{ margin-top: var(--between-q); }
-    .line{ display:flex; align-items:baseline; gap:var(--caret-gap); margin-top:var(--row-gap); margin-bottom:var(--between-q); }
-    .no-caret .caret{ display:none; }
-    .typed{ min-height:calc(var(--lh)*1em); line-height:calc(var(--lh)*1em); white-space:pre-wrap; color:var(--crt); }
-    .typed.ph{ color:var(--crt-dim); }
-    .btn{ display:inline-block; width:var(--btn-w); padding:10px 14px; background:var(--bg); color:var(--crt);
-          border:1px solid var(--crt); border-radius:0; font:inherit; font-weight:700; text-align:center; cursor:pointer; user-select:none; white-space:nowrap;}
-    .btn:hover{ filter:brightness(1.05) }
-    input[type="file"]{ display:none }
-    .status{ display:inline-block; margin-left:14px; font-style:italic; white-space:nowrap; vertical-align:baseline; }
-    .cursor-block{ display:inline-block; width:1.1ch; height:1em; background:var(--crt); color:#000;
-                   transform: translateY(calc((var(--lh) - 1) * 0.5em));
-                   animation: cursorBlink .8s steps(1,end) infinite; vertical-align:baseline; }
-    @keyframes cursorBlink{0%,45%{background:var(--crt);color:#000}50%,100%{background:transparent;color:transparent}}
-    .hp{ position:absolute; left:-9999px; top:-9999px; }
   </style>
 </head>
 <body>
-  <!-- Top-right BACK -->
   <button class="back-btn" onclick="location.href='bathroom.html'">
-    <span class="br">&lt;</span><span class="u">BACK</span><span class="br">&gt;</span>
+    <span class="br"><</span><span class="u">BACK</span><span class="br">></span>
   </button>
 
   <div class="wrap">
     <h1>TAG THE WALL</h1>
     <div class="spacer-title"></div>
 
-    <!-- IMPORTANT: no action/method/target here; JS fetch() will submit -->
-    <form id="tags_form" novalidate enctype="multipart/form-data"> 
+    <!-- IMPORTANT: no action/method/target; JS intercepts and uses fetch() -->
+    <form id="tags_form" novalidate enctype="multipart/form-data">
 
       <!-- UPLOAD -->
       <div class="q">UPLOAD IMAGE</div>
       <div class="line no-caret">
-        <span class="caret">&gt;</span>
+        <span class="caret">></span>
         <label for="sticker" class="btn">UPLOAD IMAGE</label>
         <input id="sticker" type="file" name="sticker" accept=".png,.jpg,.jpeg,.webp" />
         <span id="fileStatus" class="status"></span>
@@ -76,50 +81,51 @@
       <!-- PLACE OF TAG -->
       <div class="q">PLACE OF TAG</div>
       <div class="line" data-field="title" data-ph="'ZËRGË COFFEESHOP', 'BERLIN WALL', 'STRIPPER POLE' (LEAVE BLANK IF UNKNOWN)">
-        <span class="caret">&gt;</span>
+        <span class="caret">></span>
         <div class="typed" id="typed-title"></div>
         <input id="hid-title" class="hid-input" type="text" name="title" maxlength="30"
-               autocomplete="off" autocapitalize="off" spellcheck="false" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+               autocomplete="off" autocapitalize="off" spellcheck="false">
       </div>
 
       <!-- CITY -->
       <div class="q">CITY</div>
       <div class="line" data-field="city" data-ph="NEW YORK CITY">
-        <span class="caret">&gt;</span>
+        <span class="caret">></span>
         <div class="typed" id="typed-city"></div>
         <input id="hid-city" class="hid-input" type="text" name="city" maxlength="30"
-               autocomplete="address-level2" autocapitalize="off" spellcheck="false" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+               autocomplete="address-level2" autocapitalize="off" spellcheck="false">
       </div>
 
       <!-- COUNTRY -->
       <div class="q">COUNTRY</div>
       <div class="line" data-field="country" data-ph="NEW YORK">
-        <span class="caret">&gt;</span>
+        <span class="caret">></span>
         <div class="typed" id="typed-country"></div>
         <input id="hid-country" class="hid-input" type="text" name="country" maxlength="30"
-               autocomplete="country-name" autocapitalize="off" spellcheck="false" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+               autocomplete="country-name" autocapitalize="off" spellcheck="false">
       </div>
 
       <!-- Honeypot -->
-      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;top:-9999px;" />
 
       <!-- GO + inline status -->
       <div class="line no-caret">
-        <span class="caret">&gt;</span>
-        <button id="submitBtn" type="submit" class="btn">&lt;GO&gt;</button>
+        <span class="caret">></span>
+        <button id="submitBtn" type="submit" class="btn"><GO></button>
         <span id="status" class="status"></span>
       </div>
     </form>
 
-    <!-- single global cursor (hidden until focus/typing) -->
+    <!-- one global cursor (hidden until focus/typing) -->
     <span id="cursor" class="cursor-block" aria-hidden="true" style="display:none;"></span>
   </div>
 
   <script>
-    // =============================
-    // Terminal-like inputs (title/city/country) with single cursor
-    // =============================
-    const cursorEl = document.getElementById('cursor');
+    // ------- prove script loads -------
+    console.log('[tags_form] script loaded');
+
+    // ------- single moving block-cursor -------
+    var cursorEl = document.getElementById('cursor');
     function attachCursorTo(typedEl){
       if (!typedEl) return;
       typedEl.appendChild(cursorEl);
@@ -129,17 +135,20 @@
       cursorEl.style.display = 'none';
       document.body.appendChild(cursorEl);
     }
+
+    // ------- bind one "terminal" field without backticks -------
     function bindTermField(field){
-      const line  = document.querySelector(\`.line[data-field="\${field}"]\`);
+      var line  = document.querySelector('.line[data-field="' + field + '"]');
       if (!line) return;
-      const typed = line.querySelector('.typed');
-      const input = document.getElementById(\`hid-\${field}\`);
-      const ph    = line.getAttribute('data-ph') || '';
+      var typed = line.querySelector('.typed');
+      var input = document.getElementById('hid-' + field);
+      var ph    = line.getAttribute('data-ph') || '';
 
-      line.addEventListener('click', ()=> input.focus());
+      line.addEventListener('click', function(){ input.focus(); });
 
-      function render(showPh=true){
-        const v = input.value || '';
+      function render(showPh){
+        if (showPh === undefined) showPh = true;
+        var v = input.value || '';
         if (!v && showPh){
           typed.textContent = ph;
           typed.classList.add('ph');
@@ -148,103 +157,111 @@
           typed.classList.remove('ph');
         }
       }
-      input.addEventListener('focus', ()=>{
+      input.addEventListener('focus', function(){
         render(false);
         attachCursorTo(typed);
       });
-      input.addEventListener('input', ()=>{
+      input.addEventListener('input', function(){
         input.value = (input.value || '').toLowerCase().slice(0,30);
         render(false);
         attachCursorTo(typed);
       });
-      input.addEventListener('blur', ()=>{
+      input.addEventListener('blur', function(){
         hideCursor();
         if (!input.value) render(true);
       });
       render(true);
     }
-    ['title','city','country'].forEach(bindTermField);
+    ['title','city','country'].forEach(function(f){ bindTermField(f); });
 
-    // =============================
-    // Fetch-based submission (works on Neocities CSP)
-    // =============================
-    const form       = document.getElementById('tags_form');
-    const btn        = document.getElementById('submitBtn');
-    const statusEl   = document.getElementById('status');
-    const fileInput  = document.getElementById('sticker');
-    const fileStatus = document.getElementById('fileStatus');
+    // ------- fetch-based submit (prevents native form post) -------
+    var form       = document.getElementById('tags_form');
+    var btn        = document.getElementById('submitBtn');
+    var statusEl   = document.getElementById('status');
+    var fileInput  = document.getElementById('sticker');
+    var fileStatus = document.getElementById('fileStatus');
 
-    function setStatus(msg){ statusEl.className='status'; statusEl.textContent=msg; }
+    function setStatus(msg){ statusEl.className='status'; statusEl.textContent=msg; console.log('[status]', msg); }
     function clearStatus(){ statusEl.className='status'; statusEl.textContent=''; }
 
     function prettyBytes(n){
       if (n==null) return '';
-      const u=['B','KB','MB','GB']; let i=0,v=n;
+      var u=['B','KB','MB','GB']; var i=0; var v=n;
       while(v>=1024 && i<u.length-1){ v/=1024; i++; }
-      return \`\${v.toFixed(i?1:0)} \${u[i]}\`;
+      return (i?v.toFixed(1):v.toFixed(0)) + ' ' + u[i];
     }
 
-    // show file name + size after select
     if (fileInput && fileStatus){
-      fileInput.addEventListener('change', ()=>{
-        const f = fileInput.files && fileInput.files[0];
-        fileStatus.textContent = f ? \`selected: \${f.name} (\${prettyBytes(f.size)})\` : '';
+      fileInput.addEventListener('change', function(){
+        var f = fileInput.files && fileInput.files[0];
+        fileStatus.textContent = f ? ('selected: ' + f.name + ' (' + prettyBytes(f.size) + ')') : '';
       });
     }
 
-    form.addEventListener('submit', async (event)=>{
-      event.preventDefault(); // important: use fetch, not native form submit
+    form.addEventListener('submit', function(event){
+      event.preventDefault(); // CRITICAL: stop native post
+      console.log('[tags_form] submit intercepted');
       clearStatus();
 
-      const file = fileInput.files && fileInput.files[0];
+      var file = fileInput.files && fileInput.files[0];
       if (!file){ setStatus('no image uploaded.'); return; }
-      if (!['image/png','image/jpeg','image/webp'].includes(file.type)){
+      if (['image/png','image/jpeg','image/webp'].indexOf(file.type) === -1){
         setStatus('png/jpeg/webp only'); return;
       }
       if (file.size > 10*1024*1024){ setStatus('file size limit: 10mb.'); return; }
 
       // normalize text before upload
-      ['hid-title','hid-city','hid-country'].forEach(id=>{
-        const el = document.getElementById(id);
+      ['hid-title','hid-city','hid-country'].forEach(function(id){
+        var el = document.getElementById(id);
         if (el) el.value = (el.value||'').toLowerCase().slice(0,30);
       });
 
-      const fd = new FormData();
+      var fd = new FormData();
       fd.append('sticker', file);
       fd.append('title',   document.getElementById('hid-title').value);
       fd.append('city',    document.getElementById('hid-city').value);
       fd.append('country', document.getElementById('hid-country').value);
-      // honeypot (bots fill this)
-      const hp = document.querySelector('input[name="website"]');
-      if (hp && hp.value) { setStatus('spam blocked.'); return; }
 
-      btn.disabled = true; btn.textContent = '<GO>';
+      // honeypot
+      var hp = document.querySelector('input[name="website"]');
+      if (hp && hp.value){ setStatus('spam blocked.'); return; }
 
-      try{
-        const resp = await fetch("https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec", {
-          method: "POST",
-          body: fd
-        });
+      btn.disabled = true;
+      btn.textContent = '<GO>';
 
-        // Apps Script (postMessage version) may send HTML; if so, try JSON parse, else assume ok on 200
-        let data = null;
-        try { data = await resp.json(); } catch(_) {}
-
-        btn.disabled = false; btn.textContent = '<GO>';
-
-        if (resp.ok && (!data || data.ok)){
+      fetch('https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec', {
+        method: 'POST',
+        body: fd
+      })
+      .then(function(resp){
+        // try to parse JSON, but continue if it isn't
+        return resp.json().catch(function(){ return { ok: resp.ok }; });
+      })
+      .then(function(data){
+        btn.disabled = false;
+        btn.textContent = '<GO>';
+        if (data && data.ok){
           setStatus('tag submitted. it may take a few days to see tag added to the wall.');
           form.reset();
           if (fileStatus) fileStatus.textContent = '';
+          hideCursor();
+          ['title','city','country'].forEach(function(f){
+            var line = document.querySelector('.line[data-field="' + f + '"]');
+            var typed = line && line.querySelector('.typed');
+            var ph = line && line.getAttribute('data-ph');
+            if (typed && ph){ typed.textContent = ph; typed.classList.add('ph'); }
+          });
         } else {
-          const err = (data && data.error) ? data.error.toLowerCase() : 'upload failed.';
+          var err = (data && data.error) ? String(data.error).toLowerCase() : 'upload failed.';
           setStatus(err);
         }
-      }catch(err){
-        btn.disabled = false; btn.textContent = '<GO>';
+      })
+      .catch(function(err){
+        btn.disabled = false;
+        btn.textContent = '<GO>';
         setStatus('network error.');
         console.error(err);
-      }
+      });
     });
   </script>
 </body>
