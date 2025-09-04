@@ -161,6 +161,14 @@ h1{
 
 input[type="file"]{ display:none; }
 
+.file-status{
+  margin-left:12px;
+  font-style:italic;
+  color: var(--crt-dim);  /* the dim green you already use */
+  text-transform:none;
+  white-space:nowrap;
+}
+
 .status{
   display:inline-block;
   margin-left: 14px;

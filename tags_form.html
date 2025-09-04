@@ -20,8 +20,9 @@
     <div class="spacer-title"></div>
 
     <form id="tags_form" novalidate method="POST" enctype="multipart/form-data"
-      action="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
+      action="YOUR_WEB_APP_URL/exec"
       target="hidden_iframe">
+
 
       <!-- UPLOAD -->
       <div class="q">UPLOAD AN IMAGE OF GRAFFITI, A STICKER, A SIGN, ETC.</div>
@@ -29,8 +30,10 @@
         <span class="caret">&gt;</span>
         <label for="sticker" class="btn">UPLOAD IMAGE</label>
         <input id="sticker" type="file" name="sticker" accept=".png,.jpg,.jpeg,.webp">
+        <span id="fileStatus" class="file-status"></span>
       </div>
       <div class="row-spacer"></div>
+
 
       <!-- PLACE OF TAG -->
       <div class="q">PLACE OF TAG</div>
@@ -74,6 +77,7 @@
 
       <!-- hidden iframe target for Apps Script response -->
       <iframe name="hidden_iframe" class="hidden"></iframe>
+      </form>
 
       <!-- one global cursor; hidden until focus/typing -->
       <span id="cursor" class="cursor-block" aria-hidden="true" style="display:none;"></span>
