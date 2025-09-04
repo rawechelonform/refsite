@@ -48,7 +48,7 @@
     /* hidden real inputs (lowercase) */
     .hid-input{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; border:0; outline:none; background:transparent; color:transparent; caret-color:transparent; text-transform:lowercase; }
 
-    /* Back button (optional) */
+    /* Back button */
     .back-btn{
       position:fixed; top:calc(var(--stage-offset)); right:calc(12px + var(--left-offset));
       background:transparent; border:0; color:var(--crt); font:inherit; font-weight:700; cursor:pointer;
@@ -66,8 +66,18 @@
     <h1>TAG THE WALL</h1>
     <div class="spacer-title"></div>
 
-    <!-- IMPORTANT: no action/method/target; JS intercepts and uses fetch() -->
-    <form id="tags_form" novalidate enctype="multipart/form-data">
+    <!-- Hidden iframe target: makes submission CSP-safe on Neocities -->
+    <iframe name="uploadTarget" id="uploadTarget" style="display:none"></iframe>
+
+    <!-- Native multipart form posts directly to Apps Script /exec inside the iframe -->
+    <form
+      id="tags_form"
+      action="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
+      method="POST"
+      enctype="multipart/form-data"
+      target="uploadTarget"
+      novalidate
+    >
 
       <!-- UPLOAD -->
       <div class="q">UPLOAD IMAGE</div>
@@ -174,7 +184,7 @@
     }
     ['title','city','country'].forEach(function(f){ bindTermField(f); });
 
-    // ------- fetch-based submit (prevents native form post) -------
+    // ------- DOM refs -------
     var form       = document.getElementById('tags_form');
     var btn        = document.getElementById('submitBtn');
     var statusEl   = document.getElementById('status');
@@ -187,7 +197,8 @@
     function prettyBytes(n){
       if (n==null) return '';
       var u=['B','KB','MB','GB']; var i=0; var v=n;
-      while(v>=1024 && i<u.length-1){ v/=1024; i++; }
+      while(v>=1024 && i<u.length-1){ v/=1024; i++;
+      }
       return (i?v.toFixed(1):v.toFixed(0)) + ' ' + u[i];
     }
 
@@ -198,17 +209,22 @@
       });
     }
 
-    form.addEventListener('submit', function(event){
-      event.preventDefault(); // CRITICAL: stop native post
-      console.log('[tags_form] submit intercepted');
+    // ------- CSP-safe submit: validate, then allow native POST to iframe -------
+    form.addEventListener('submit', function(e){
       clearStatus();
 
-      var file = fileInput.files && fileInput.files[0];
-      if (!file){ setStatus('no image uploaded.'); return; }
-      if (['image/png','image/jpeg','image/webp'].indexOf(file.type) === -1){
-        setStatus('png/jpeg/webp only'); return;
+      var f = fileInput.files && fileInput.files[0];
+      if (!f){ e.preventDefault(); setStatus('no image uploaded.'); return; }
+      if (['image/png','image/jpeg','image/webp'].indexOf(f.type) === -1){
+        e.preventDefault(); setStatus('png/jpeg/webp only'); return;
       }
-      if (file.size > 10*1024*1024){ setStatus('file size limit: 10mb.'); return; }
+      if (f.size > 10*1024*1024){
+        e.preventDefault(); setStatus('file size limit: 10mb.'); return;
+      }
+
+      // honeypot
+      var hp = document.querySelector('input[name="website"]');
+      if (hp && hp.value){ e.preventDefault(); setStatus('spam blocked.'); return; }
 
       // normalize text before upload
       ['hid-title','hid-city','hid-country'].forEach(function(id){
@@ -216,52 +232,48 @@
         if (el) el.value = (el.value||'').toLowerCase().slice(0,30);
       });
 
-      var fd = new FormData();
-      fd.append('sticker', file);
-      fd.append('title',   document.getElementById('hid-title').value);
-      fd.append('city',    document.getElementById('hid-city').value);
-      fd.append('country', document.getElementById('hid-country').value);
-
-      // honeypot
-      var hp = document.querySelector('input[name="website"]');
-      if (hp && hp.value){ setStatus('spam blocked.'); return; }
-
+      // UI while uploading
       btn.disabled = true;
       btn.textContent = '<GO>';
+      setStatus('uploading...');
+      // let the browser submit natively to the iframe target
+    });
 
-      fetch('https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec', {
-        method: 'POST',
-        body: fd
-      })
-      .then(function(resp){
-        // try to parse JSON, but continue if it isn't
-        return resp.json().catch(function(){ return { ok: resp.ok }; });
-      })
-      .then(function(data){
-        btn.disabled = false;
-        btn.textContent = '<GO>';
-        if (data && data.ok){
-          setStatus('tag submitted. it may take a few days to see tag added to the wall.');
-          form.reset();
-          if (fileStatus) fileStatus.textContent = '';
-          hideCursor();
-          ['title','city','country'].forEach(function(f){
-            var line = document.querySelector('.line[data-field="' + f + '"]');
-            var typed = line && line.querySelector('.typed');
-            var ph = line && line.getAttribute('data-ph');
-            if (typed && ph){ typed.textContent = ph; typed.classList.add('ph'); }
-          });
-        } else {
-          var err = (data && data.error) ? String(data.error).toLowerCase() : 'upload failed.';
-          setStatus(err);
-        }
-      })
-      .catch(function(err){
-        btn.disabled = false;
-        btn.textContent = '<GO>';
-        setStatus('network error.');
-        console.error(err);
-      });
+    // ------- receive postMessage from Apps Script (_sendToParent) -------
+    var ALLOWED_ORIGINS = [
+      'https://script.google.com',
+      'https://script.googleusercontent.com'
+    ];
+
+    window.addEventListener('message', function(e){
+      if (ALLOWED_ORIGINS.indexOf(e.origin) === -1) {
+        console.warn('[postMessage] ignored origin:', e.origin);
+        return;
+      }
+      var data = e.data || {};
+      if (data.source !== 'tags-webapp') return;
+
+      // reset UI
+      btn.disabled = false;
+      btn.textContent = '<GO>';
+
+      if (data.ok) {
+        setStatus('tag submitted. it may take a few days to see tag added to the wall.');
+        form.reset();
+        if (fileStatus) fileStatus.textContent = '';
+        hideCursor();
+        ['title','city','country'].forEach(function(f){
+          var line = document.querySelector('.line[data-field="' + f + '"]');
+          var typed = line && line.querySelector('.typed');
+          var ph = line && line.getAttribute('data-ph');
+          if (typed && ph){ typed.textContent = ph; typed.classList.add('ph'); }
+        });
+        console.log('[upload ok]', data);
+      } else {
+        var err = (data && data.error) ? String(data.error).toLowerCase() : 'upload failed.';
+        setStatus(err);
+        console.error('[upload error]', data);
+      }
     });
   </script>
 </body>
