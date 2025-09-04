@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>tags_form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Roboto Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root { --w: min(720px, 92vw); }
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .wrap {
+      width: var(--w);
+      margin: 40px auto;
+      padding: 24px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    p.hint {
+      margin: 0 0 16px;
+      color: #bbb;
+      font-size: 11px;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    input, button {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #0f0f0f;
+      color: #fff;
+      padding: 10px 12px;
+      font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.35;
+      outline: none;
+    }
+    input::placeholder { color: #888; }
+
+    input[type="file"] {
+      padding: 8px;
+      background: #0f0f0f;
+    }
+
+    .lower { text-transform: lowercase; }
+    input[autocapitalize="off"] { }
+
+    button {
+      margin-top: 16px;
+      background: #e11d48;
+      border: 0;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    .ok { color: #7cfc00; margin-top: 12px; font-size: 11px; }
+    .err { color: #ff6b6b; margin-top: 12px; font-size: 11px; }
+    .hidden { display: none; }
+
+    .hp { position: absolute; left: -9999px; top: -9999px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>tags_form</h1>
+    <p class="hint">png, jpeg, or webp • max 10mb • text answers limited to 30 characters</p>
+
+   <form id="tags_form" method="POST" enctype="multipart/form-data"
+      action="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
+      target="hidden_iframe">
+
+      <label>upload image</label>
+      <input type="file" name="sticker" accept=".png,.jpg,.jpeg,.webp" required />
+
+      <label>description</label>
+      <input
+        class="lower"
+        type="text"
+        name="title"
+        maxlength="30"
+        placeholder="upload an image of your graffiti, stickers, signs, etc."
+        autocapitalize="off"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      <label>city</label>
+      <input
+        class="lower"
+        type="text"
+        name="city"
+        maxlength="30"
+        placeholder="new york city"
+        autocapitalize="off"
+        autocomplete="address-level2"
+        spellcheck="false"
+      />
+
+      <label>country</label>
+      <input
+        class="lower"
+        type="text"
+        name="country"
+        maxlength="30"
+        placeholder="new york"
+        autocapitalize="off"
+        autocomplete="country-name"
+        spellcheck="false"
+      />
+
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
+
+      <button id="submitBtn" type="submit">send</button>
+      <div id="msg" class="hidden"></div>
+
+      <iframe name="hidden_iframe" class="hidden"></iframe>
+    </form>
+  </div>
+
+  <script>
+    function forceLowercase(el) {
+      el.addEventListener('input', () => {
+        const pos = el.selectionStart;
+        el.value = el.value.toLowerCase();
+        if (typeof pos === 'number') el.setSelectionRange(pos, pos);
+      });
+      el.addEventListener('blur', () => { el.value = el.value.toLowerCase(); });
+    }
+
+    ['title','city','country'].forEach(name => {
+      const el = document.querySelector(`[name="${name}"]`);
+      if (el) forceLowercase(el);
+    });
+
+    const form = document.getElementById('tags_form');
+    const btn  = document.getElementById('submitBtn');
+    const msg  = document.getElementById('msg');
+
+    form.addEventListener('submit', (event) => {
+      const f = form.querySelector('input[type="file"]');
+      const file = f.files && f.files[0];
+      if (!file) return;
+      const okType = ['image/png','image/jpeg','image/webp'].includes(file.type);
+      if (!okType) {
+        event.preventDefault();
+        msg.className = 'err';
+        msg.textContent = 'png/jpeg/webp only';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        event.preventDefault();
+        msg.className = 'err';
+        msg.textContent = 'file too large (max 10mb)';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'uploading…';
+      msg.className = 'hidden';
+      msg.textContent = '';
+    });
+
+    document.querySelector('iframe[name="hidden_iframe"]').addEventListener('load', () => {
+      btn.disabled = false;
+      btn.textContent = 'send';
+      msg.className = 'ok';
+      msg.textContent = 'thanks — received.';
+      form.reset();
+    });
+  </script>
+</body>
+</html>
