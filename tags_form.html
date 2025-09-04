@@ -4,14 +4,11 @@
   <meta charset="utf-8" />
   <title>TAG THE WALL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg:#000; --crt:#00ff00; --crt-dim:rgba(0,255,0,.55);
-      --fs:20px; --ls:.08em; --lh:1.3; --btn-w:240px;
-      --wrap-w:96vw; --max-w:1600px; --left-offset:1in;
-      --stage-offset:56px; --sep-title:24px; --between-q:18px; --row-gap:12px; --caret-gap:1ch;
+      --fs:20px; --ls:.08em; --lh:1.3; --wrap-w:96vw; --max-w:1600px; --left-offset:1in; --stage-offset:56px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
@@ -24,31 +21,9 @@
     .wrap{ width:var(--wrap-w); max-width:var(--max-w); margin:calc(var(--stage-offset)) auto 32px;
            padding:0 calc(12px + var(--left-offset)); }
     h1{ margin:0; font-weight:700; font-size:var(--fs); line-height:calc(var(--lh)*1em); text-align:left;}
-    .spacer-title{ height: var(--sep-title); }
-
-    .q{ margin-top: var(--between-q); }
-    .line{ display:flex; align-items:baseline; gap:var(--caret-gap); margin-top:var(--row-gap); margin-bottom:var(--between-q); }
-    .no-caret .caret{ display:none; }
-
-    .typed{ min-height:calc(var(--lh)*1em); line-height:calc(var(--lh)*1em); white-space:pre-wrap; color:var(--crt); }
-    .typed.ph{ color:var(--crt-dim); }
-
-    .cursor-block{ display:inline-block; width:1.1ch; height:1em; background:var(--crt); color:#000;
-                   transform: translateY(calc((var(--lh) - 1) * 0.5em));
-                   animation: cursorBlink .8s steps(1,end) infinite; vertical-align:baseline; }
-    @keyframes cursorBlink{0%,45%{background:var(--crt);color:#000}50%,100%{background:transparent;color:transparent}}
-
-    .btn{ display:inline-block; width:var(--btn-w); padding:10px 14px; background:var(--bg); color:var(--crt);
-          border:1px solid var(--crt); border-radius:0; font:inherit; font-weight:700; text-align:center; cursor:pointer; user-select:none; white-space:nowrap;}
-    .btn:hover{ filter:brightness(1.05) }
-    input[type="file"]{ display:none }
-
-    .status{ display:inline-block; margin-left:14px; font-style:italic; white-space:nowrap; vertical-align:baseline; color:rgba(0,255,0,.8); }
-
-    /* hidden real inputs (lowercase) */
-    .hid-input{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; border:0; outline:none; background:transparent; color:transparent; caret-color:transparent; text-transform:lowercase; }
-
-    /* Back button */
+    .status{ display:inline-block; margin-left:14px; font-style:italic; white-space:nowrap; color:rgba(0,255,0,.8); }
+    .iframe-shell{ margin-top:24px; border:1px solid var(--crt); }
+    iframe{ width:100%; height:560px; border:0; display:block; background:#000; }
     .back-btn{
       position:fixed; top:calc(var(--stage-offset)); right:calc(12px + var(--left-offset));
       background:transparent; border:0; color:var(--crt); font:inherit; font-weight:700; cursor:pointer;
@@ -63,217 +38,37 @@
   </button>
 
   <div class="wrap">
-    <h1>TAG THE WALL</h1>
-    <div class="spacer-title"></div>
+    <h1>TAG THE WALL <span id="status" class="status"></span></h1>
 
-    <!-- Hidden iframe target: makes submission CSP-safe on Neocities -->
-    <iframe name="uploadTarget" id="uploadTarget" style="display:none"></iframe>
-
-    <!-- Native multipart form posts directly to Apps Script /exec inside the iframe -->
-    <form
-      id="tags_form"
-      action="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
-      method="POST"
-      enctype="multipart/form-data"
-      target="uploadTarget"
-      novalidate
-    >
-
-      <!-- UPLOAD -->
-      <div class="q">UPLOAD IMAGE</div>
-      <div class="line no-caret">
-        <span class="caret">></span>
-        <label for="sticker" class="btn">UPLOAD IMAGE</label>
-        <input id="sticker" type="file" name="sticker" accept=".png,.jpg,.jpeg,.webp" />
-        <span id="fileStatus" class="status"></span>
-      </div>
-
-      <!-- PLACE OF TAG -->
-      <div class="q">PLACE OF TAG</div>
-      <div class="line" data-field="title" data-ph="'ZËRGË COFFEESHOP', 'BERLIN WALL', 'STRIPPER POLE' (LEAVE BLANK IF UNKNOWN)">
-        <span class="caret">></span>
-        <div class="typed" id="typed-title"></div>
-        <input id="hid-title" class="hid-input" type="text" name="title" maxlength="30"
-               autocomplete="off" autocapitalize="off" spellcheck="false">
-      </div>
-
-      <!-- CITY -->
-      <div class="q">CITY</div>
-      <div class="line" data-field="city" data-ph="NEW YORK CITY">
-        <span class="caret">></span>
-        <div class="typed" id="typed-city"></div>
-        <input id="hid-city" class="hid-input" type="text" name="city" maxlength="30"
-               autocomplete="address-level2" autocapitalize="off" spellcheck="false">
-      </div>
-
-      <!-- COUNTRY -->
-      <div class="q">COUNTRY</div>
-      <div class="line" data-field="country" data-ph="NEW YORK">
-        <span class="caret">></span>
-        <div class="typed" id="typed-country"></div>
-        <input id="hid-country" class="hid-input" type="text" name="country" maxlength="30"
-               autocomplete="country-name" autocapitalize="off" spellcheck="false">
-      </div>
-
-      <!-- Honeypot -->
-      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;top:-9999px;" />
-
-      <!-- GO + inline status -->
-      <div class="line no-caret">
-        <span class="caret">></span>
-        <button id="submitBtn" type="submit" class="btn"><GO></button>
-        <span id="status" class="status"></span>
-      </div>
-    </form>
-
-    <!-- one global cursor (hidden until focus/typing) -->
-    <span id="cursor" class="cursor-block" aria-hidden="true" style="display:none;"></span>
+    <div class="iframe-shell">
+      <!-- IMPORTANT: the form now lives INSIDE this iframe, hosted by Apps Script -->
+      <iframe
+        id="uploader"
+        src="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
+        referrerpolicy="no-referrer"
+      ></iframe>
+    </div>
   </div>
 
   <script>
-    // ------- prove script loads -------
-    console.log('[tags_form] script loaded');
-
-    // ------- single moving block-cursor -------
-    var cursorEl = document.getElementById('cursor');
-    function attachCursorTo(typedEl){
-      if (!typedEl) return;
-      typedEl.appendChild(cursorEl);
-      cursorEl.style.display = '';
-    }
-    function hideCursor(){
-      cursorEl.style.display = 'none';
-      document.body.appendChild(cursorEl);
-    }
-
-    // ------- bind one "terminal" field without backticks -------
-    function bindTermField(field){
-      var line  = document.querySelector('.line[data-field="' + field + '"]');
-      if (!line) return;
-      var typed = line.querySelector('.typed');
-      var input = document.getElementById('hid-' + field);
-      var ph    = line.getAttribute('data-ph') || '';
-
-      line.addEventListener('click', function(){ input.focus(); });
-
-      function render(showPh){
-        if (showPh === undefined) showPh = true;
-        var v = input.value || '';
-        if (!v && showPh){
-          typed.textContent = ph;
-          typed.classList.add('ph');
-        } else {
-          typed.textContent = v.toUpperCase();
-          typed.classList.remove('ph');
-        }
-      }
-      input.addEventListener('focus', function(){
-        render(false);
-        attachCursorTo(typed);
-      });
-      input.addEventListener('input', function(){
-        input.value = (input.value || '').toLowerCase().slice(0,30);
-        render(false);
-        attachCursorTo(typed);
-      });
-      input.addEventListener('blur', function(){
-        hideCursor();
-        if (!input.value) render(true);
-      });
-      render(true);
-    }
-    ['title','city','country'].forEach(function(f){ bindTermField(f); });
-
-    // ------- DOM refs -------
-    var form       = document.getElementById('tags_form');
-    var btn        = document.getElementById('submitBtn');
-    var statusEl   = document.getElementById('status');
-    var fileInput  = document.getElementById('sticker');
-    var fileStatus = document.getElementById('fileStatus');
-
-    function setStatus(msg){ statusEl.className='status'; statusEl.textContent=msg; console.log('[status]', msg); }
-    function clearStatus(){ statusEl.className='status'; statusEl.textContent=''; }
-
-    function prettyBytes(n){
-      if (n==null) return '';
-      var u=['B','KB','MB','GB']; var i=0; var v=n;
-      while(v>=1024 && i<u.length-1){ v/=1024; i++;
-      }
-      return (i?v.toFixed(1):v.toFixed(0)) + ' ' + u[i];
-    }
-
-    if (fileInput && fileStatus){
-      fileInput.addEventListener('change', function(){
-        var f = fileInput.files && fileInput.files[0];
-        fileStatus.textContent = f ? ('selected: ' + f.name + ' (' + prettyBytes(f.size) + ')') : '';
-      });
-    }
-
-    // ------- CSP-safe submit: validate, then allow native POST to iframe -------
-    form.addEventListener('submit', function(e){
-      clearStatus();
-
-      var f = fileInput.files && fileInput.files[0];
-      if (!f){ e.preventDefault(); setStatus('no image uploaded.'); return; }
-      if (['image/png','image/jpeg','image/webp'].indexOf(f.type) === -1){
-        e.preventDefault(); setStatus('png/jpeg/webp only'); return;
-      }
-      if (f.size > 10*1024*1024){
-        e.preventDefault(); setStatus('file size limit: 10mb.'); return;
-      }
-
-      // honeypot
-      var hp = document.querySelector('input[name="website"]');
-      if (hp && hp.value){ e.preventDefault(); setStatus('spam blocked.'); return; }
-
-      // normalize text before upload
-      ['hid-title','hid-city','hid-country'].forEach(function(id){
-        var el = document.getElementById(id);
-        if (el) el.value = (el.value||'').toLowerCase().slice(0,30);
-      });
-
-      // UI while uploading
-      btn.disabled = true;
-      btn.textContent = '<GO>';
-      setStatus('uploading...');
-      // let the browser submit natively to the iframe target
-    });
-
-    // ------- receive postMessage from Apps Script (_sendToParent) -------
+    console.log('[tags_form host] loaded');
+    var statusEl = document.getElementById('status');
     var ALLOWED_ORIGINS = [
       'https://script.google.com',
       'https://script.googleusercontent.com'
     ];
 
     window.addEventListener('message', function(e){
-      if (ALLOWED_ORIGINS.indexOf(e.origin) === -1) {
-        console.warn('[postMessage] ignored origin:', e.origin);
-        return;
-      }
+      if (!ALLOWED_ORIGINS.includes(e.origin)) return;
       var data = e.data || {};
       if (data.source !== 'tags-webapp') return;
 
-      // reset UI
-      btn.disabled = false;
-      btn.textContent = '<GO>';
-
-      if (data.ok) {
-        setStatus('tag submitted. it may take a few days to see tag added to the wall.');
-        form.reset();
-        if (fileStatus) fileStatus.textContent = '';
-        hideCursor();
-        ['title','city','country'].forEach(function(f){
-          var line = document.querySelector('.line[data-field="' + f + '"]');
-          var typed = line && line.querySelector('.typed');
-          var ph = line && line.getAttribute('data-ph');
-          if (typed && ph){ typed.textContent = ph; typed.classList.add('ph'); }
-        });
-        console.log('[upload ok]', data);
+      if (data.ok){
+        statusEl.textContent = 'tag submitted. it may take a few days to see tag added to the wall.';
       } else {
-        var err = (data && data.error) ? String(data.error).toLowerCase() : 'upload failed.';
-        setStatus(err);
-        console.error('[upload error]', data);
+        statusEl.textContent = (data.error ? String(data.error).toLowerCase() : 'upload failed.');
       }
+      console.log('[host got message]', data);
     });
   </script>
 </body>
