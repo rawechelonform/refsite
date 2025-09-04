@@ -10,6 +10,7 @@
   --tag-max: 180px;
 }
 
+/* page + base */
 html, body { height: 100%; }
 body {
   margin: 0;
@@ -18,6 +19,7 @@ body {
   color: #fff;
 }
 
+/* wall background */
 .wall {
   position: relative;
   width: 100%;
@@ -42,10 +44,9 @@ body {
   filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
   transform-origin: center center;
   opacity: 1;
-  pointer-events: auto;
 }
 
-/* Headline centered in page */
+/* ---------- HEADLINE ---------- */
 .headline {
   position: absolute;
   top: 50%;
@@ -56,24 +57,66 @@ body {
   align-items: center;
   text-align: center;
   color: white;
-  z-index: 2;
+  z-index: 5;                    /* above stickers */
   width: 100%;
-  opacity: 0;                        /* start hidden */
-  transition: opacity 250ms ease;    /* fade in */
-  pointer-events: none;              /* let mouse hover reach stickers */
+  opacity: 0;                    /* start hidden */
+  transition: opacity 250ms ease;/* fade in */
+  pointer-events: auto;          /* allow clicks (for the link) */
 }
-.bg-ready .headline {
-  opacity: 1;                        /* reveal after bg loads */
-}
+
+/* load-time reveal */
+.bg-ready .headline { opacity: 1; }
+
 .headline h1 {
+  /* Use Atkinson Hyperlegible Mono for header if loaded in HTML */
+  font-family: 'Atkinson Hyperlegible Mono', monospace;
+  font-weight: 400;
   font-size: 2.5rem;
   margin: 0.5rem 0;
 }
+
+/* default paragraph size under headline */
 .headline p {
+  font-family: 'Atkinson Hyperlegible Mono', monospace;
+  font-weight: 400;
   font-size: 1.25rem;
   margin: 0.25rem 0;
+  text-transform: none;          /* keep “tag the wall.” lowercase */
 }
 
+/* Make headline links clickable + underline on hover */
+.headline a {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.headline a:hover { text-decoration: underline; }
+
+/* ---------- SMALL LINK (under the headline) ---------- */
+/* Put this <p> INSIDE .headline in your HTML */
+.headline .small-link {
+  font-family: 'Atkinson Hyperlegible Mono', monospace;
+  font-weight: 400;
+  font-size: 14px !important;    /* force smaller size than .headline p */
+  line-height: 1.2;
+  margin-top: 8px;
+  color: inherit;
+  text-transform: none !important;
+  position: static !important;   /* ensure normal flow/centering */
+  display: block;
+}
+
+.headline .small-link a {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.headline .small-link a:hover { text-decoration: underline; }
+
+/* Keep the period clean (not underlined) — place the dot OUTSIDE the <a> */
+.no-underline { text-decoration: none; }
+
+/* ---------- TOOLTIPS ON TAGS ---------- */
 /* Tooltip styling using data-tip */
 .tag[data-tip]::after {
   content: attr(data-tip);
@@ -119,7 +162,7 @@ body {
 }
 .hidden { display: none; }
 
-/* Global floating tooltip (always above everything) */
+/* ---------- FLOATING GLOBAL TOOLTIP ---------- */
 .hover-tip {
   position: fixed;
   left: 0; top: 0;

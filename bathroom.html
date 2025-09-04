@@ -4,7 +4,55 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bathroom Tags</title>
+
+  <!-- Your main styles -->
   <link rel="stylesheet" href="bathroom.css" />
+
+  <!-- Atkinson Hyperlegible Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono&display=swap" rel="stylesheet">
+
+  <!-- Small, final overrides to guarantee the behavior you want -->
+  <style>
+    /* Use Atkinson Hyperlegible Mono for headline + link line */
+    .headline h1,
+    .small-link { 
+      font-family: 'Atkinson Hyperlegible Mono', monospace;
+      font-weight: 400;
+    }
+
+    /* Make sure the headline/link are clickable above sticker layer */
+    .headline { pointer-events: auto !important; z-index: 5 !important; }
+
+    /* Split header onto two lines */
+    .headline h1 { margin: 0; }
+
+    /* Make the small “tag the wall.” link actually small */
+    .small-link {
+      font-size: 14px !important;  /* force smaller size */
+      line-height: 1.2;
+      margin-top: 8px;
+      color: inherit;
+      text-transform: none;         /* allow lowercase */
+    }
+
+    /* Clickable text only; underline on hover */
+    .small-link a {
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .small-link a:hover { text-decoration: underline; }
+
+    /* Keep the period clean (not underlined) */
+    .no-underline { text-decoration: none; }
+
+    /* If your headline paragraph previously blocked clicks, ensure it doesn’t */
+    .headline a { color: inherit; text-decoration: none; }
+    .headline a:hover { text-decoration: underline; }
+
+    /* Optional: if anything else forced uppercase globally, this protects the link */
+    .small-link, .small-link a, .small-link .no-underline { text-transform: none !important; }
+  </style>
 </head>
 <body>
   <div id="wall" class="wall" data-bg="bathroom/bathroom_orangegreen.png">
@@ -13,9 +61,11 @@
 
     <!-- Centered headline -->
     <div class="headline">
-      <h1>Welcome to the bathroom.</h1>
-      <p>Send me your tags / stickers.</p>
-    </div>
+  <h1>WELCOME TO<br>THE GIRL'S ROOM</h1>
+  <p class="small-link">
+    <a href="tags_form.html">tag the wall</a><span class="no-underline">.</span>
+  </p>
+</div>
 
     <!-- Optional: toggle with “O” for debugging -->
     <div id="mirror-oval" class="mirror-oval hidden"></div>
