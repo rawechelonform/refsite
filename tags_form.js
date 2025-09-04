@@ -1,3 +1,12 @@
+console.log('[tags_form] script loaded');
+
+document.getElementById('tags_form').addEventListener('submit', (e) => {
+  e.preventDefault(); // critical: stops native form submission
+  console.log('[tags_form] submit intercepted');
+  // (your fetch(...) code goes here)
+});
+
+
 form.addEventListener('submit', async (event)=>{
   event.preventDefault(); // stop browser form submission
   clearStatus();
