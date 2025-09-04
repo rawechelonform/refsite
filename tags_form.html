@@ -6,42 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#000; --crt:#00ff00; --crt-dim:rgba(0,255,0,.55);
-      --fs:20px; --ls:.08em; --lh:1.3; --wrap-w:96vw; --max-w:1600px; --left-offset:1in; --stage-offset:56px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body{
-      background:var(--bg); color:var(--crt);
-      font-family:'DotGothic16',system-ui,monospace;
-      text-transform:uppercase; letter-spacing:var(--ls); font-size:var(--fs);
-      line-height:calc(var(--lh) * 1em);
-    }
-    .wrap{ width:var(--wrap-w); max-width:var(--max-w); margin:calc(var(--stage-offset)) auto 32px;
-           padding:0 calc(12px + var(--left-offset)); }
-    h1{ margin:0; font-weight:700; font-size:var(--fs); line-height:calc(var(--lh)*1em); text-align:left;}
-    .status{ display:inline-block; margin-left:14px; font-style:italic; white-space:nowrap; color:rgba(0,255,0,.8); }
-    .iframe-shell{ margin-top:24px; border:1px solid var(--crt); }
-    iframe{ width:100%; height:560px; border:0; display:block; background:#000; }
-    .back-btn{
-      position:fixed; top:calc(var(--stage-offset)); right:calc(12px + var(--left-offset));
-      background:transparent; border:0; color:var(--crt); font:inherit; font-weight:700; cursor:pointer;
-    }
-    .back-btn .br{ text-decoration:none; }
-    .back-btn .u{ text-decoration:underline; }
+    :root{ --bg:#000; --crt:#00ff00; --fs:20px; --ls:.08em; --lh:1.3; --wrap-w:96vw; --max-w:1600px; --left-offset:1in; --stage-offset:56px }
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{ background:#000; color:#00ff00; font-family:'DotGothic16',system-ui,monospace; text-transform:uppercase; letter-spacing:var(--ls); font-size:var(--fs); line-height:calc(var(--lh) * 1em) }
+    .wrap{ width:var(--wrap-w); max-width:var(--max-w); margin:calc(var(--stage-offset)) auto 32px; padding:0 calc(12px + var(--left-offset)) }
+    h1{ margin:0; font-weight:700; font-size:var(--fs); line-height:calc(var(--lh)*1em) }
+    .status{ display:inline-block; margin-left:14px; font-style:italic; white-space:nowrap; color:rgba(0,255,0,.8) }
+    .iframe-shell{ margin-top:24px; border:1px solid var(--crt) }
+    iframe{ width:100%; height:560px; border:0; display:block; background:#000 }
+    .back-btn{ position:fixed; top:calc(var(--stage-offset)); right:calc(12px + var(--left-offset)); background:transparent; border:0; color:#00ff00; font:inherit; font-weight:700; cursor:pointer }
+    .back-btn .u{ text-decoration:underline }
   </style>
 </head>
 <body>
-  <button class="back-btn" onclick="location.href='bathroom.html'">
-    <span class="br"><</span><span class="u">BACK</span><span class="br">></span>
-  </button>
+  <button class="back-btn" onclick="location.href='bathroom.html'"><span class="u">BACK</span></button>
 
   <div class="wrap">
     <h1>TAG THE WALL <span id="status" class="status"></span></h1>
 
     <div class="iframe-shell">
-      <!-- IMPORTANT: the form now lives INSIDE this iframe, hosted by Apps Script -->
       <iframe
         id="uploader"
         src="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
@@ -51,24 +34,16 @@
   </div>
 
   <script>
-    console.log('[tags_form host] loaded');
     var statusEl = document.getElementById('status');
-    var ALLOWED_ORIGINS = [
-      'https://script.google.com',
-      'https://script.googleusercontent.com'
-    ];
-
+    var ALLOWED = ['https://script.google.com','https://script.googleusercontent.com'];
     window.addEventListener('message', function(e){
-      if (!ALLOWED_ORIGINS.includes(e.origin)) return;
-      var data = e.data || {};
-      if (data.source !== 'tags-webapp') return;
-
-      if (data.ok){
-        statusEl.textContent = 'tag submitted. it may take a few days to see tag added to the wall.';
-      } else {
-        statusEl.textContent = (data.error ? String(data.error).toLowerCase() : 'upload failed.');
-      }
-      console.log('[host got message]', data);
+      if (!ALLOWED.includes(e.origin)) return;
+      var d = e.data || {};
+      if (d.source !== 'tags-webapp') return;
+      statusEl.textContent = d.ok
+        ? 'tag submitted. it may take a few days to see tag added to the wall.'
+        : (d.error ? String(d.error).toLowerCase() : 'upload failed.');
+      console.log('[host message]', d);
     });
   </script>
 </body>
