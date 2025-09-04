@@ -1,9 +1,9 @@
 /* ---------- config ---------- */
 const TAGS_JSON_URL = "bathroom/tags/tags.json";
-const STICKER_COUNT = 20;          // you control this
+const STICKER_COUNT = 100;          // you control this
 const AVOID_OVERLAP = true;        // you control this
 const BASE_STICKER_DELAY = 100;    // first sticker delay (ms) — your latest choice
-const STAGGER_MS = 60;             // gap between stickers (ms)
+const STAGGER_MS = 130;             // gap between stickers (ms)
 
 const BACKGROUNDS = [
   "bathroom/bathroom_orangegreen.png",

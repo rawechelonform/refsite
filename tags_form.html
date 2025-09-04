@@ -2,190 +2,371 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>tags_form</title>
+  <title>TAG THE WALL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Roboto Mono -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- DotGothic16 -->
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 
   <style>
-    :root { --w: min(720px, 92vw); }
-    body {
-      margin: 0;
-      background: #111;
-      color: #fff;
-      font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .wrap {
-      width: var(--w);
-      margin: 40px auto;
-      padding: 24px;
-      background: #1a1a1a;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    h1 {
-      margin: 0 0 12px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    p.hint {
-      margin: 0 0 16px;
-      color: #bbb;
-      font-size: 11px;
+    :root{
+      --bg:#000;
+      --crt:#00ff00;
+      --crt-dim: rgba(0,255,0,.55);
+
+      /* typography (single size) */
+      --fs:20px;
+      --ls:.08em;
+      --lh:1.3;                  /* unitless; used for vertical math */
+
+      /* layout */
+      --stage-offset:56px;       /* push canvas down */
+      --wrap-w:96vw;             /* let text run wide */
+      --max-w:1600px;
+      --left-offset: 1in;        /* scooch block ~1 inch to the right */
+      --sep-title:24px;          /* extra space under header */
+      --between-q:18px;          /* extra row between questions */
+      --row-gap:12px;            /* label→input spacing */
+
+      /* caret + input spacing */
+      --caret-gap:1ch;
+
+      /* buttons */
+      --btn-w: 240px;            /* wider so UPLOAD IMAGE stays on one line */
     }
 
-    label {
-      display: block;
-      margin: 14px 0 6px;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.2px;
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      background:var(--bg);
+      color:var(--crt);
+      font-family:'DotGothic16', system-ui, monospace;
+      text-transform:uppercase;
+      letter-spacing:var(--ls);
+      font-size:var(--fs);
+      line-height:calc(var(--lh) * 1em);
     }
 
-    input, button {
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: #0f0f0f;
-      color: #fff;
-      padding: 10px 12px;
-      font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 11px;
-      line-height: 1.35;
-      outline: none;
+    .wrap{
+  width: var(--wrap-w);
+  max-width: var(--max-w);
+  margin: calc(var(--stage-offset)) auto 32px;
+  padding: 0 calc(12px + var(--left-offset));
+}
+
+
+    /* BACK button: align with header top, inset from the right
+       by the SAME amount we inset content from the left */
+.back-btn{
+  position: fixed;
+  top: calc(var(--stage-offset));           /* align vertically with header */
+  right: calc(12px + var(--left-offset));   /* same margin distance as wrap’s left padding */
+  z-index: 10;
+  background: transparent;                  /* no box */
+  color: var(--crt);
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+.back-btn:hover{
+  text-decoration: underline;               /* subtle hover effect */
+}
+
+
+    /* header */
+    h1{
+      margin:0;
+      font-weight:700;
+      font-size:var(--fs);
+      line-height:calc(var(--lh)*1em);
+      text-align:left;
     }
-    input::placeholder { color: #888; }
+    .spacer-title{ height: var(--sep-title); } /* EXTRA space under header */
 
-    input[type="file"] {
-      padding: 8px;
-      background: #0f0f0f;
+    /* section labels (questions) */
+    .q{
+      margin-top: var(--between-q);      /* EXTRA row between questions */
     }
 
-    .lower { text-transform: lowercase; }
-    input[autocapitalize="off"] { }
-
-    button {
-      margin-top: 16px;
-      background: #e11d48;
-      border: 0;
-      cursor: pointer;
-      font-weight: 700;
+    /* input line: caret + typed are baseline-aligned with flex */
+    .line{
+      display:flex;
+      align-items: baseline;             /* <— aligns “>”, text, and cursor */
+      gap: var(--caret-gap);
+      margin-top: var(--row-gap);
+      margin-bottom: var(--between-q);   /* EXTRA space after each input row */
     }
-    button:disabled { opacity: .6; cursor: not-allowed; }
 
-    .ok { color: #7cfc00; margin-top: 12px; font-size: 11px; }
-    .err { color: #ff6b6b; margin-top: 12px; font-size: 11px; }
-    .hidden { display: none; }
+    /* when there should be no caret (upload/go rows) */
+    .no-caret .caret{ display:none; }
 
-    .hp { position: absolute; left: -9999px; top: -9999px; }
+    .caret{
+      flex: 0 0 auto;
+      line-height: calc(var(--lh) * 1em);
+      /* tiny optical tweak so “>” sits perfectly on the text baseline */
+      transform: translateY(calc((var(--lh) - 1) * 0.5em - 0.02em));
+    }
+
+    .typed{
+      flex: 1 1 auto;
+      white-space: pre-wrap;
+      min-height: calc(var(--lh) * 1em);
+      line-height: calc(var(--lh) * 1em);
+      color: var(--crt);
+    }
+    .typed.ph{ color: var(--crt-dim); }  /* dimmer green for placeholder */
+
+    /* single block cursor that moves to active field, hidden by default */
+    .cursor-block{
+      display:inline-block;
+      width:1.1ch;
+      height:1em;
+      background:var(--crt);
+      color:#000;
+      /* blink and sit on baseline */
+      transform: translateY(calc((var(--lh) - 1) * 0.5em));
+      animation: cursorBlink .8s steps(1,end) infinite;
+      vertical-align: baseline;
+    }
+    @keyframes cursorBlink{
+      0%,45%   { background:var(--crt); color:#000; }
+      50%,100% { background:transparent; color:transparent; }
+    }
+
+    /* hidden real inputs store lowercase value */
+    .hid-input{
+      position:absolute !important;
+      left:-9999px !important;
+      width:1px; height:1px;
+      opacity:0; border:0; outline:none;
+      background:transparent; color:transparent;
+      caret-color:transparent;
+      pointer-events:none;
+      text-transform:lowercase;
+    }
+
+    /* buttons: flush-left with everything else */
+    .btn{
+      display:inline-block;
+      width:var(--btn-w);
+      padding:10px 14px;
+      background:var(--bg);
+      color:var(--crt);
+      border:1px solid var(--crt);
+      border-radius:0;
+      font: inherit;
+      font-weight:700;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ filter:brightness(1.05); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    input[type="file"]{ display:none; }
+
+    /* inline status to the RIGHT of the GO button */
+    .status{
+      display:inline-block;
+      margin-left: 14px;
+      font-style: italic;
+      white-space: nowrap;
+      vertical-align: baseline;
+    }
+    .status.ok{ color:#7cfc00; }
+    .status.err{ color:#ff6b6b; }
+
+    .hidden{ display:none; }
+
+    /* honeypot */
+    .hp{ position:absolute; left:-9999px; top:-9999px; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>tags_form</h1>
-    <p class="hint">png, jpeg, or webp • max 10mb • text answers limited to 30 characters</p>
+  <!-- Top-right BACK (no box) -->
+  <button class="back-btn" onclick="location.href='bathroom.html'">&lt;BACK&gt;</button>
 
-   <form id="tags_form" method="POST" enctype="multipart/form-data"
+  <div class="wrap">
+    <h1>TAG THE WALL</h1>
+    <div class="spacer-title"></div>
+
+    <form id="tags_form" novalidate method="POST" enctype="multipart/form-data"
       action="https://script.google.com/macros/s/AKfycbxv3FKB0P30wixxKJUfYvTnCW9vzqgar4JV7PArIpirC9lk7Srpqe3SNDKIcCIvjs_4/exec"
       target="hidden_iframe">
 
-      <label>upload image</label>
-      <input type="file" name="sticker" accept=".png,.jpg,.jpeg,.webp" required />
+      <!-- UPLOAD -->
+      <div class="q">UPLOAD IMAGE</div>
+      <div class="line no-caret">
+        <span class="caret">&gt;</span>
+        <label for="sticker" class="btn">UPLOAD IMAGE</label>
+        <input id="sticker" type="file" name="sticker" accept=".png,.jpg,.jpeg,.webp" required />
+      </div>
 
-      <label>description</label>
-      <input
-        class="lower"
-        type="text"
-        name="title"
-        maxlength="30"
-        placeholder="upload an image of your graffiti, stickers, signs, etc."
-        autocapitalize="off"
-        autocomplete="off"
-        spellcheck="false"
-      />
+      <!-- PLACE OF TAG -->
+      <div class="q">PLACE OF TAG</div>
+      <div class="line" data-field="title" data-ph="'ZËRGË COFFEESHOP', 'BERLIN WALL', 'STRIPPER POLE' (LEAVE BLANK IF UNKNOWN)">
+        <span class="caret">&gt;</span>
+        <div class="typed" id="typed-title"></div>
+        <input id="hid-title" class="hid-input" type="text" name="title" maxlength="30"
+               autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
 
-      <label>city</label>
-      <input
-        class="lower"
-        type="text"
-        name="city"
-        maxlength="30"
-        placeholder="new york city"
-        autocapitalize="off"
-        autocomplete="address-level2"
-        spellcheck="false"
-      />
+      <!-- CITY -->
+      <div class="q">CITY</div>
+      <div class="line" data-field="city" data-ph="NEW YORK CITY">
+        <span class="caret">&gt;</span>
+        <div class="typed" id="typed-city"></div>
+        <input id="hid-city" class="hid-input" type="text" name="city" maxlength="30"
+               autocomplete="address-level2" autocapitalize="off" spellcheck="false">
+      </div>
 
-      <label>country</label>
-      <input
-        class="lower"
-        type="text"
-        name="country"
-        maxlength="30"
-        placeholder="new york"
-        autocapitalize="off"
-        autocomplete="country-name"
-        spellcheck="false"
-      />
+      <!-- COUNTRY -->
+      <div class="q">COUNTRY</div>
+      <div class="line" data-field="country" data-ph="NEW YORK">
+        <span class="caret">&gt;</span>
+        <div class="typed" id="typed-country"></div>
+        <input id="hid-country" class="hid-input" type="text" name="country" maxlength="30"
+               autocomplete="country-name" autocapitalize="off" spellcheck="false">
+      </div>
 
+      <!-- Honeypot -->
       <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
 
-      <button id="submitBtn" type="submit">send</button>
-      <div id="msg" class="hidden"></div>
+      <!-- GO + inline status -->
+      <div class="line no-caret">
+        <span class="caret">&gt;</span>
+        <button id="submitBtn" type="submit" class="btn">&lt;GO&gt;</button>
+        <span id="status" class="status"></span>
+      </div>
 
+      <!-- hidden iframe target for Apps Script response -->
       <iframe name="hidden_iframe" class="hidden"></iframe>
+
+      <!-- one global cursor; hidden until focus/typing -->
+      <span id="cursor" class="cursor-block" aria-hidden="true" style="display:none;"></span>
     </form>
   </div>
 
   <script>
-    function forceLowercase(el) {
-      el.addEventListener('input', () => {
-        const pos = el.selectionStart;
-        el.value = el.value.toLowerCase();
-        if (typeof pos === 'number') el.setSelectionRange(pos, pos);
-      });
-      el.addEventListener('blur', () => { el.value = el.value.toLowerCase(); });
+    // --- single moving block-cursor ---
+    const cursorEl = document.getElementById('cursor');
+
+    function attachCursorTo(typedEl){
+      if (!typedEl) return;
+      typedEl.appendChild(cursorEl);
+      cursorEl.style.display = '';
+    }
+    function hideCursor(){
+      cursorEl.style.display = 'none';
+      document.body.appendChild(cursorEl);
     }
 
-    ['title','city','country'].forEach(name => {
-      const el = document.querySelector(`[name="${name}"]`);
-      if (el) forceLowercase(el);
-    });
+    // --- terminal-like binding per field ---
+    function bindTermField(field){
+      const line  = document.querySelector(`.line[data-field="${field}"]`);
+      if (!line) return;
+      const typed = line.querySelector('.typed');
+      const input = document.getElementById(`hid-${field}`);
+      const ph    = line.getAttribute('data-ph') || '';
 
+      // focus when clicking anywhere on the line
+      line.addEventListener('click', ()=> input.focus());
+
+      function render(showPh=true){
+        const v = input.value || '';
+        if (!v && showPh){
+          typed.textContent = ph;          // placeholder
+          typed.classList.add('ph');       // dimmer color
+        } else {
+          typed.textContent = v.toUpperCase();
+          typed.classList.remove('ph');
+        }
+      }
+
+      input.addEventListener('focus', ()=>{
+        render(false);                     // clear placeholder
+        attachCursorTo(typed);
+      });
+
+      input.addEventListener('input', ()=>{
+        input.value = (input.value || '').toLowerCase().slice(0, 30);
+        render(false);
+        attachCursorTo(typed);
+      });
+
+      input.addEventListener('blur', ()=>{
+        hideCursor();
+        if (!input.value) render(true);    // restore placeholder if empty
+      });
+
+      // initial paint (placeholder visible, no cursor)
+      render(true);
+    }
+
+    ['title','city','country'].forEach(bindTermField);
+
+    // --- validation + inline status + submit ---
     const form = document.getElementById('tags_form');
     const btn  = document.getElementById('submitBtn');
-    const msg  = document.getElementById('msg');
+    const status = document.getElementById('status');
+    const fileInput = document.getElementById('sticker');
 
-    form.addEventListener('submit', (event) => {
-      const f = form.querySelector('input[type="file"]');
-      const file = f.files && f.files[0];
-      if (!file) return;
+    function setStatusOk(msg){
+      status.className = 'status ok';
+      status.textContent = msg;
+    }
+    function setStatusErr(msg){
+      status.className = 'status err';
+      status.textContent = msg;
+    }
+    function clearStatus(){ status.className = 'status'; status.textContent = ''; }
+
+    form.addEventListener('submit', (event)=>{
+      clearStatus();
+
+      const file = fileInput.files && fileInput.files[0];
+      if (!file){
+        event.preventDefault();
+        setStatusErr('no image uploaded.');
+        return;
+      }
       const okType = ['image/png','image/jpeg','image/webp'].includes(file.type);
-      if (!okType) {
+      if (!okType){
         event.preventDefault();
-        msg.className = 'err';
-        msg.textContent = 'png/jpeg/webp only';
+        setStatusErr('PNG/JPEG/WEBP ONLY');
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > 10*1024*1024){
         event.preventDefault();
-        msg.className = 'err';
-        msg.textContent = 'file too large (max 10mb)';
+        setStatusErr('FILE TOO LARGE (MAX 10MB)');
         return;
       }
+
+      // final lowercase & 30-char cap
+      ['hid-title','hid-city','hid-country'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) el.value = (el.value||'').toLowerCase().slice(0,30);
+      });
+
       btn.disabled = true;
-      btn.textContent = 'uploading…';
-      msg.className = 'hidden';
-      msg.textContent = '';
+      btn.textContent = '<GO>';
     });
 
-    document.querySelector('iframe[name="hidden_iframe"]').addEventListener('load', () => {
+    // success handler (when Apps Script returns into the hidden iframe)
+    document.querySelector('iframe[name="hidden_iframe"]').addEventListener('load', ()=>{
       btn.disabled = false;
-      btn.textContent = 'send';
-      msg.className = 'ok';
-      msg.textContent = 'thanks — received.';
-      form.reset();
+      btn.textContent = '<GO>';
+      setStatusOk('TAG SUBMITTED. IT MAY TAKE A FEW DAYS FOR TAG TO APPEAR ON WALL.');
+      // (Optional) reset fields and placeholders:
+      // document.getElementById('tags_form').reset();
+      // hideCursor();
+      // ['title','city','country'].forEach(f=>{
+      //   const input = document.getElementById(`hid-${f}`);
+      //   if (input) input.dispatchEvent(new Event('blur'));
+      // });
     });
   </script>
 </body>
