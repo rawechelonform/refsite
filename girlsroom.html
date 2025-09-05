@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Girls' Room Tags</title>
+  <title>Girls' Room</title>
 
   <!-- Your main styles -->
   <link rel="stylesheet" href="girlsroom.css" />
@@ -28,11 +28,11 @@
 
     /* Make the small “tag the wall.” link actually small */
     .small-link {
-      font-size: 14px !important;  /* force smaller size */
+      font-size: 14px !important;
       line-height: 1.2;
       margin-top: 8px;
       color: inherit;
-      text-transform: none;         /* allow lowercase */
+      text-transform: none;
     }
 
     /* Clickable text only; underline on hover */
@@ -50,7 +50,7 @@
     .headline a { color: inherit; text-decoration: none; }
     .headline a:hover { text-decoration: underline; }
 
-    /* Optional: if anything else forced uppercase globally, this protects the link */
+    /* Protect against any global all-caps styles */
     .small-link, .small-link a, .small-link .no-underline { text-transform: none !important; }
   </style>
 </head>
@@ -61,11 +61,11 @@
 
     <!-- Centered headline -->
     <div class="headline">
-  <h1>WELCOME TO<br>THE GIRLS'ROOM</h1>
-  <p class="small-link">
-    <a href="tags_form.html">tag the wall</a><span class="no-underline">.</span>
-  </p>
-</div>
+      <h1>WELCOME TO<br>THE GIRLS'ROOM</h1>
+      <p class="small-link">
+        <a href="https://rawechelonform.github.io/tags/" target="_blank" rel="noopener">tag the wall</a><span class="no-underline">.</span>
+      </p>
+    </div>
 
     <!-- Optional: toggle with “O” for debugging -->
     <div id="mirror-oval" class="mirror-oval hidden"></div>
