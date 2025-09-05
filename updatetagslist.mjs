@@ -1,26 +1,17 @@
-// Run with: node updatetagslist.mjs
-// Purpose: regenerate girlsroom/tags/tags.json
-// so your girlsroom page knows about all stickers
+// updatetagslist.mjs
+import fs from "node:fs/promises";
+import path from "node:path";
 
-import { readdir, writeFile } from "node:fs/promises";
-import { extname } from "node:path";
+const dir = path.resolve("girlsroom/tags");
+const out = path.join(dir, "tags.json");
 
-const DIR = "girlsroom/tags";
-const OUT = `${DIR}/tags.json`;
+const entries = await fs.readdir(dir, { withFileTypes: true });
 
-// Which file types to include in the list
-const exts = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"]);
+const files = entries
+  .filter((e) => e.isFile())
+  .map((e) => e.name.normalize("NFC"))
+  .filter((n) => /\.(png|jpe?g|webp|gif)$/i.test(n))
+  .sort((a, b) => a.localeCompare(b, "en"));
 
-async function main() {
-  const files = (await readdir(DIR, { withFileTypes: true }))
-    .filter(d => d.isFile() && exts.has(extname(d.name).toLowerCase()))
-    .map(d => d.name)
-    .sort((a, b) => a.localeCompare(b));
-
-  await writeFile(OUT, JSON.stringify(files, null, 2));
-  console.log(`✅ Updated tags list: wrote ${files.length} entries to ${OUT}`);
-}
-
-main().catch(err => {
-  console.error("❌ Error updating tags list:", err);
-});
+await fs.writeFile(out, JSON.stringify(files, null, 2) + "\n", "utf8");
+console.log(`wrote ${files.length} items to ${out}`);

@@ -168,54 +168,60 @@ async function generateTags() {
   const placed = [];
 
   let index = 0;
-  for (const item of unique) {
-    const src = item.path || item; // supports both formats
-    const img = document.createElement("img");
-    img.className = "tag";
-    img.decoding = "async";
-    img.loading  = "lazy";
-    img.src = src;
+for (const item of unique) {
+  // normalize filename to NFC so accents always match the filesystem
+  const srcRaw = item.path || item; // supports both formats
+  const src = srcRaw.normalize("NFC");
 
-    // Tooltip wiring
-    const tip = titleFromSimpleFilename(src);
-    img.alt = tip;
-    img.setAttribute("aria-label", tip);
-    img.addEventListener("mouseenter", (e) => { showTip(tip); moveTip(e); });
-    img.addEventListener("mousemove",  moveTip);
-    img.addEventListener("mouseleave",  hideTip);
+  const img = document.createElement("img");
+  img.className = "tag";
+  img.decoding = "async";
+  img.loading  = "lazy";
+  img.src = encodeURI(src); // percent-encode special chars safely
 
-    // Random size/rotation
-    const targetW = rand(min, max);
-    const rot = rand(-22, 22);
+  // Tooltip wiring
+  const tip = titleFromSimpleFilename(src);
+  img.alt = tip;
+  img.setAttribute("aria-label", tip);
+  img.title = tip;                  // native tooltip
+  img.setAttribute("data-tip", tip); // enables CSS tooltip
+  img.addEventListener("mouseenter", (e) => { showTip(tip); moveTip(e); });
+  img.addEventListener("mousemove",  moveTip);
+  img.addEventListener("mouseleave",  hideTip);
 
-    // Find a non-overlapping, non-oval spot
-    let ok = false, rect;
-    for (let attempt = 0; attempt < 100 && !ok; attempt++) {
-      const approxH = targetW * rand(0.75, 1.25);
-      const rx = rand(0, W - targetW);
-      const ry = rand(0, H - approxH);
-      rect = { x: rx, y: ry, w: targetW, h: approxH };
+  // Random size/rotation
+  const targetW = rand(min, max);
+  const rot = rand(-22, 22);
 
-      if (rectIntersectsOval(rect, oval)) continue;
-      if (AVOID_OVERLAP && placed.some(p => rectsOverlap(p, rect))) continue;
+  // Find a non-overlapping, non-oval spot
+  let ok = false, rect;
+  for (let attempt = 0; attempt < 100 && !ok; attempt++) {
+    const approxH = targetW * rand(0.75, 1.25);
+    const rx = rand(0, W - targetW);
+    const ry = rand(0, H - approxH);
+    rect = { x: rx, y: ry, w: targetW, h: approxH };
 
-      ok = true;
-    }
-    if (!ok) continue;
+    if (rectIntersectsOval(rect, oval)) continue;
+    if (AVOID_OVERLAP && placed.some(p => rectsOverlap(p, rect))) continue;
 
-    placed.push(rect);
-    img.style.left = `${rect.x}px`;
-    img.style.top  = `${rect.y}px`;
-    img.style.width = `${rect.w}px`;
-    img.style.transform = `rotate(${rot}deg)`;
-
-    // One-by-one appearance (no CSS animation)
-    const delayMs = BASE_STICKER_DELAY + index * STAGGER_MS;
-    setTimeout(() => layer.appendChild(img), delayMs);
-
-    index++;
+    ok = true;
   }
+  if (!ok) continue;
+
+  placed.push(rect);
+  img.style.left = `${rect.x}px`;
+  img.style.top  = `${rect.y}px`;
+  img.style.width = `${rect.w}px`;
+  img.style.transform = `rotate(${rot}deg)`;
+
+  // One-by-one appearance (no CSS animation)
+  const delayMs = BASE_STICKER_DELAY + index * STAGGER_MS;
+  setTimeout(() => layer.appendChild(img), delayMs);
+
+  index++;
 }
+  }
+
 
 /* ---------- boot ---------- */
 window.addEventListener("load", async () => {
