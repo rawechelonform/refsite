@@ -1,16 +1,16 @@
 /* ---------- config ---------- */
-const TAGS_JSON_URL = "bathroom/tags/tags.json";
+const TAGS_JSON_URL = "girlsroom/tags/tags.json";
 const STICKER_COUNT = 100;          // you control this
 const AVOID_OVERLAP = true;        // you control this
 const BASE_STICKER_DELAY = 100;    // first sticker delay (ms) — your latest choice
 const STAGGER_MS = 130;             // gap between stickers (ms)
 
 const BACKGROUNDS = [
-  "bathroom/bathroom_orangegreen.png",
-  "bathroom/bathroom_redblack.png",
-  "bathroom/bathroom_reddarkblue.png",
-  "bathroom/bathroom_redgrey.png",
-  "bathroom/bathroom_redlightblue.png"
+  "girlsroom/girlsroom_orangegreen.png",
+  "girlsroom/girlsroom_redblack.png",
+  "girlsroom/girlsroom_reddarkblue.png",
+  "girlsroom/girlsroom_redgrey.png",
+  "girlsroom/girlsroom_redlightblue.png"
 ];
 
 /* ---------- element refs ---------- */
@@ -102,13 +102,13 @@ async function loadTagList() {
     if (Array.isArray(data) && typeof data[0] === "string") {
       return data.map(file => ({
         file,
-        path: file.startsWith("bathroom/tags/") ? file : `bathroom/tags/${file}`
+        path: file.startsWith("girlsroom/tags/") ? file : `girlsroom/tags/${file}`
       }));
     }
     if (Array.isArray(data) && typeof data[0] === "object") {
       return data.map(item => {
         const file = item.file || "";
-        const path = file.startsWith("bathroom/tags/") ? file : `bathroom/tags/${file}`;
+        const path = file.startsWith("girlsroom/tags/") ? file : `girlsroom/tags/${file}`;
         return { ...item, file, path };
       });
     }
@@ -157,7 +157,7 @@ async function generateTags() {
 
   const tags = await loadTagList();
   if (!tags.length) {
-    console.warn("No tag images found. Ensure bathroom/tags/tags.json exists and lists files.");
+    console.warn("No tag images found. Ensure girlsroom/tags/tags.json exists and lists files.");
     return;
   }
 

@@ -1,11 +1,11 @@
 // Run with: node updatetagslist.mjs
-// Purpose: regenerate bathroom/tags/tags.json
-// so your bathroom page knows about all stickers
+// Purpose: regenerate girlsroom/tags/tags.json
+// so your girlsroom page knows about all stickers
 
 import { readdir, writeFile } from "node:fs/promises";
 import { extname } from "node:path";
 
-const DIR = "bathroom/tags";
+const DIR = "girlsroom/tags";
 const OUT = `${DIR}/tags.json`;
 
 // Which file types to include in the list

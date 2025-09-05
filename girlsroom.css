@@ -24,7 +24,7 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  background: center/cover no-repeat var(--wall-image, url("bathroom/bathroom_orangegreen.png"));
+  background: center/cover no-repeat var(--wall-image, url("girlsroom/girlsroom_orangegreen.png"));
   overflow: hidden;
 }
 
