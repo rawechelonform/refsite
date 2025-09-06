@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Raw Echelon Form</title>
@@ -10,6 +10,7 @@
   <!-- p5.js library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
+
 <body>
   <!-- typing title -->
   <div class="title-wrap">
@@ -17,10 +18,23 @@
     <h1 id="type-title" class="type-title" aria-label="Raw Echelon Form"></h1>
   </div>
 
+  <!-- rasterized sketch holder (this reserves space in layout) -->
+  <div id="raster-wrap"></div>
+
   <!-- rasterized sketch -->
   <script src="shes_so_lucky_rasterized.js?v=4" defer></script>
 
   <!-- typing effect -->
   <script src="typing.js?v=2"></script>
+
+   <!-- Menu Bar -->
+  <nav class="menu-bar" aria-label="site">
+    <ul class="menu">
+      <li><a href="aboutme.html" class="menu-link">principal’s office</a></li>
+      <li><a href="shop.html" class="menu-link">cafeteria</a></li>
+      <li><a href="girlsroom.html" class="menu-link">girls’ room</a></li>
+    </ul>
+  </nav>
 </body>
 </html>
+

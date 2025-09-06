@@ -71,4 +71,61 @@ canvas {
 }
 
 
-/* ---- Bouncing image ---- */
+/* ===== Movable Menu Bar ===== */
+.menu-bar {
+  /* position handles where it sits on the page — change as needed */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* current placement: centered, with breathing room below the rasterized image */
+  margin: 2rem auto 0;
+  width: 100%;
+  pointer-events: auto; /* be sure links are clickable if parent has pointer-events set */
+}
+
+.menu {
+  display: inline-flex;
+  gap: 2rem;                /* space between items */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: "Atkinson Hyperlegible Mono", monospace;
+  font-size: clamp(14px, 2.2vw, 18px);
+  text-transform: none;     /* keep labels lowercase regardless of body caps */
+  letter-spacing: 0.02em;
+}
+
+.menu-link {
+  text-decoration: none;
+  border-bottom: 2px solid transparent; /* clean underline control */
+  padding-bottom: 2px;
+}
+
+.menu-link:hover,
+.menu-link:focus {
+  border-bottom-color: currentColor;    /* underline on hover */
+  outline: none;
+}
+
+.menu-link:focus-visible {
+  outline: 2px dashed currentColor;     /* keyboard focus */
+  outline-offset: 2px;
+}
+
+/* small screens: tighten spacing a bit */
+@media (max-width: 480px) {
+  .menu { gap: 1rem; }
+}
+
+/* stick to bottom... do i need this? it's not really sticking to the bottom right now*/
+.menu-bar.is-bottom {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0.75rem 0;
+  background: transparent;
+  z-index: 10;
+}

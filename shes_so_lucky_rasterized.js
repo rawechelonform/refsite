@@ -24,9 +24,11 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(CANVAS_W, CANVAS_H);
+  const cnv = createCanvas(CANVAS_W, CANVAS_H);  // was: createCanvas(...)
+  cnv.parent('raster-wrap');                      // add this line
+
   noStroke();
-  colorMode(RGB, 255); // <<< RGB everywhere
+  colorMode(RGB, 255);
 
   tileSize = CANVAS_W / TILES_X;
   TILES_Y = floor(CANVAS_H / tileSize);
@@ -34,7 +36,6 @@ function setup() {
   img.resize(TILES_X, TILES_Y);
   img.loadPixels();
 
-  // random per-cell modulation
   randomSeed(1234);
   for (let i = 0; i < TILES_X * TILES_Y; i++) {
     amps[i]   = random(0.3, 1.0);
@@ -42,6 +43,7 @@ function setup() {
     speeds[i] = random(0.8, 1.2);
   }
 }
+
 
 function draw() {
   background(0);

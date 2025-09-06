@@ -1,3 +1,7 @@
+/* Google font: Montserrat (clean, modern) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap');
+
+
 :root {
   /* Mirror (oval) geometry */
   --oval-cx: 50%;
@@ -8,6 +12,11 @@
   /* Sticker size range */
   --tag-min: 70px;
   --tag-max: 180px;
+
+  /* Floating menu colors — lighter/brighter version of rgb(40,93,5) */
+  --menu-bg: #6CCB33;       /* ~rgb(108,203,51) */
+  --menu-bg-hover: #7fe244; /* hover state */
+  --menu-text: #0b2202;     /* dark green text for contrast */
 }
 
 /* page + base */
@@ -182,4 +191,38 @@ body {
 
   /* readability */
   text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+
+/* ---------- FLOATING MENU (bottom-right, minimal) ---------- */
+.gr-menu {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;        /* small */
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gr-menu a {
+  color: #045E00;         /* lighter/brighter green */
+  text-decoration: none;
+  transition: color 150ms ease, transform 120ms ease;
+}
+
+.gr-menu a:hover,
+.gr-menu a:focus-visible {
+  color: #C84601;         /* brighter green on hover */
+}
+
+.gr-menu a:active {
+  transform: translateY(1px);
+}
+
+/* tighter on very small screens */
+@media (max-width: 420px) {
+  .gr-menu { font-size: 11px; gap: 6px; }
 }
