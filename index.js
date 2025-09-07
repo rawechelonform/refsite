@@ -1,24 +1,27 @@
-// Config
-const TARGET   = "REF CORP";
-const NEXT_URL = "main.html";
+// ===== CONFIG =====
+const TARGET     = "REF CORP";
+const NEXT_URL   = "main.html";
+const GO_HOLD_MS = 300; // your chosen delay
+const SPRITE_PATH = "avatar/avatar_intro.png"; // exact relative path you confirmed
 
-// Elements
+// ===== ELEMENTS =====
 const staticEl  = document.getElementById("static-part");
 const typeEl    = document.getElementById("typed-part");
 const inputEl   = document.getElementById("cmd");
-const mirrorEl  = document.getElementById("typed");
-const cursorEl  = document.querySelector(".cursor-block");
+const typedEl   = document.getElementById("typed");
 const hintEl    = document.getElementById("hint");
 const figureEl  = document.querySelector(".figure");
 const promptEl  = document.querySelector(".prompt");
 
-// Messages
+// ===== COPY =====
 const STATIC_TEXT = "ACCESS GATE //";
 const TYPE_TEXT   = ' TYPE "REF CORP" + PRESS ENTER';
 
+// ===== STATE =====
 let terminalStarted = false;
+let lockedOutput    = false; // once Enter with TARGET is pressed, freeze output (no cursor)
 
-/* --- Typewriter --- */
+// ===== HELPERS =====
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
   if(!el){ done && done(); return; }
@@ -33,103 +36,133 @@ function typeWriter(text, el, speed = 40, done){
   })();
 }
 
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    c === '&' ? '&amp;'
+      : c === '<' ? '&lt;'
+      : c === '>' ? '&gt;'
+      : c === '"' ? '&quot;'
+      : '&#39;'
+  );
+}
+
+// ===== TERMINAL SEQUENCE =====
 function startTerminalSequence(){
   if(terminalStarted) return;
   terminalStarted = true;
   if(staticEl) staticEl.textContent = STATIC_TEXT;
+
   setTimeout(() => {
     if(typeEl){
       typeWriter(TYPE_TEXT, typeEl, 50, () => {
-        if(promptEl) promptEl.classList.add("show");
-        if(inputEl) inputEl.focus();
+        promptEl && promptEl.classList.add("show");
+        inputEl && inputEl.focus();
+        renderMirror();
       });
-    }else{
-      if(promptEl) promptEl.classList.add("show");
-      if(inputEl) inputEl.focus();
+    } else {
+      promptEl && promptEl.classList.add("show");
+      inputEl && inputEl.focus();
+      renderMirror();
     }
   }, 300);
 }
 
-/* --- Ensure sprite really loads; if not, force the fallback path into the CSS var --- */
-function preload(url){
-  return new Promise(res => {
-    const img = new Image();
-    img.onload  = () => res(true);
-    img.onerror = () => res(false);
-    img.src = url + "?" + Date.now();
+// ===== MIRROR RENDERING (caret + Cmd/Ctrl-A) =====
+function renderMirror(){
+  if(lockedOutput) return;           // once locked, never draw a cursor again
+  if(!typedEl || !inputEl) return;
+
+  const raw = inputEl.value || "";
+  const v   = raw.toUpperCase();
+
+  let start = inputEl.selectionStart;
+  let end   = inputEl.selectionEnd;
+  if(start == null || end == null){ start = end = v.length; }
+
+  // Full-selection (Cmd/Ctrl-A): render each glyph with inline black text
+  if(v.length > 0 && start === 0 && end === v.length){
+    typedEl.innerHTML = v.split("").map(ch =>
+      `<span class="cursor-sel" style="background:rgb(0,255,0);color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
+    ).join("");
+    return;
+  }
+
+  // Single caret block (CSS anim handles flip between green/black states)
+  const idx = Math.min(Math.max(0, start), v.length);
+  const ch  = v.slice(idx, idx + 1);
+
+  const before = escapeHTML(v.slice(0, idx));
+  const at     = ch ? escapeHTML(ch) : "&nbsp;";
+  const after  = escapeHTML(v.slice(idx + (ch ? 1 : 0)));
+
+  typedEl.innerHTML = before + `<span class="cursor-block">${at}</span>` + after;
+}
+
+function bindPrompt(){
+  if(!inputEl || !typedEl) return;
+
+  typedEl.parentElement.addEventListener("click", () => inputEl.focus());
+  ["input","focus","blur","keyup","click"].forEach(evt =>
+    inputEl.addEventListener(evt, renderMirror)
+  );
+  document.addEventListener("selectionchange", () => {
+    if(document.activeElement === inputEl) renderMirror();
+  });
+
+  // Enter submits
+  inputEl.addEventListener("keydown", (e) => {
+    if(e.key !== "Enter") return;
+
+    const value = (inputEl.value || "").trim().toUpperCase();
+    if(value === TARGET){
+      // Freeze output: no further cursor renders
+      lockedOutput = true;
+
+      // Show: REF CORP <GO> (green text on black; no cursor)
+      typedEl.innerHTML = `REF CORP <span class="go-pill">&lt;GO&gt;</span>`;
+      hintEl && (hintEl.textContent = "");
+
+      // Brief hold, then navigate
+      setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+    } else {
+      hintEl && (hintEl.innerHTML = "<em>denied.</em>");
+    }
   });
 }
 
-async function ensureSprite(){
-  const style = getComputedStyle(figureEl);
-  let bg = style.backgroundImage;         // may look like: url("blob1"), url("avatar/avatar_intro.png")
-  if(bg && bg !== "none"){
-    // extract last url(...) from multi-background
-    const urls = [...bg.matchAll(/url\(([^)]+)\)/g)].map(m => m[1].replace(/^["']|["']$/g, ""));
-    const last = urls[urls.length - 1]; // the fallback we declared in CSS
-    const ok = await preload(last);
-    if(!ok){
-      // if fallback didn't load, try common alternates then override var
-      const candidates = [
-        "avatar/avatar_intro.png",
-        "./avatar/avatar_intro.png",
-        "../avatar/avatar_intro.png",
-        "avatar/avatar_walkingforward.png",
-        "avatar/avatar_standing.png"
-      ];
-      for(const p of candidates){
-        // eslint-disable-next-line no-await-in-loop
-        if(await preload(p)){
-          document.documentElement.style.setProperty("--avatar-url", `url("${p}")`);
-          hintEl && (hintEl.textContent = "");
-          return;
-        }
-      }
-      hintEl && (hintEl.textContent = "avatar not found — check that /avatar/avatar_intro.png is deployed next to index.html");
-    }
+// ===== AVATAR: force sprite inline so it always shows =====
+function startAvatar(){
+  if(!figureEl){
+    startTerminalSequence();
+    return;
   }
-}
 
-document.addEventListener("DOMContentLoaded", async () => {
-  if(figureEl){
-    await ensureSprite();
+  // Preload and then apply
+  const img = new Image();
+  img.onload = () => {
+    // Set inline background-image so CSS cascade can’t break it
+    figureEl.style.backgroundImage = `url("${SPRITE_PATH}")`;
 
-    // reset classes
     figureEl.classList.remove("forward","walking");
-    // start walking
     figureEl.classList.add("walking");
 
-    // on slide-in end: set forward pose first, then stop walking
     figureEl.addEventListener("animationend", (e) => {
       if(e.animationName !== "walk-in") return;
-      figureEl.classList.add("forward");     // keep final frame & position
+      figureEl.classList.add("forward");     // keep landed position & frame
       figureEl.classList.remove("walking");  // stop animations
       startTerminalSequence();
     }, { once:true });
-  }else{
+  };
+  img.onerror = () => {
+    if(hintEl) hintEl.textContent = "sprite not found at avatar/avatar_intro.png";
+    // still start terminal so the page isn't stuck
     startTerminalSequence();
-  }
+  };
+  img.src = SPRITE_PATH + "?" + Date.now(); // cache-bust
+}
 
-  // Prompt wiring
-  if(inputEl && mirrorEl){
-    inputEl.addEventListener("input", () => {
-      const val = inputEl.value.toUpperCase();
-      inputEl.value = val;
-      mirrorEl.textContent = val;
-    });
-    window.addEventListener("load", () => { inputEl.blur(); });
-    inputEl.addEventListener("keydown", (e) => {
-      if(e.key !== "Enter") return;
-      const value = inputEl.value.trim().toUpperCase();
-      if(value === TARGET){
-        mirrorEl.textContent = "REF CORP <GO>";
-        cursorEl && cursorEl.remove();
-        hintEl && (hintEl.textContent = "");
-        setTimeout(() => { window.location.href = NEXT_URL; }, 400);
-      }else{
-        hintEl && (hintEl.innerHTML = "<em>denied.</em>");
-        inputEl.select();
-      }
-    });
-  }
+// ===== INIT =====
+document.addEventListener("DOMContentLoaded", () => {
+  startAvatar();
+  bindPrompt();
 });
