@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Zoom Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Preload landing + zoom frames -->
+  <link rel="preload" as="image" href="landing/img1_white.png">
+  <!-- preload a few key frames for smoother start -->
+  <link rel="preload" as="image" href="landing/zoom0.png">
+  <link rel="preload" as="image" href="landing/zoom5.png">
+  <link rel="preload" as="image" href="landing/zoom10.png">
+
+  <link rel="stylesheet" href="test.css?v=2">
+</head>
+<body>
+  <main class="wrap">
+    <!-- Start: white screen -->
+    <button id="start-zoom" class="frame-btn" aria-label="enter / zoom in">
+      <img id="landing-frame" src="landing/img1_white.png" alt="computer screen" />
+    </button>
+
+    <!-- Animation: we swap frames into this -->
+    <img id="zoom-frame" class="hidden" alt="zoom sequence" />
+  </main>
+
+  <script src="test.js?v=2"></script>
+</body>
+</html>

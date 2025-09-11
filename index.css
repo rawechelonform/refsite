@@ -1,45 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
 
-/* ---------- THEME + VARS ---------- */
 :root {
   --crt: rgb(0,255,0);
   --bg: #000;
 
-  /* Terminal */
   --term-font-size: 20px;
-  --term-gap: 8px;       /* spacing between rows */
-  --hint-row-h: 1.2em;   /* fixed height row for hint */
+  --term-gap: 8px;
+  --hint-row-h: 1.2em;
 
-  /* Avatar sprite sheet */
   --avatar-frames: 4;
   --avatar-src-w: 1536px;
   --avatar-src-h: 1024px;
-  --avatar-frame-w: calc(var(--avatar-src-w) / var(--avatar-frames)); /* 384px */
-  --avatar-frame-h: var(--avatar-src-h);                              /* 1024px */
+  --avatar-frame-w: calc(var(--avatar-src-w) / var(--avatar-frames));
+  --avatar-frame-h: var(--avatar-src-h);
 
-  /* Scale so avatar fits stage */
   --avatar-scale: 0.22;
   --avatar-w: calc(var(--avatar-frame-w) * var(--avatar-scale));
   --avatar-h-full: calc(var(--avatar-frame-h) * var(--avatar-scale));
 
-  /* Crop padding above/below character (source pixels) */
   --avatar-top-crop: 190px;
   --avatar-bottom-crop: 24px;
 
-  /* Derived crop values */
   --avatar-cropY: calc(-1 * var(--avatar-top-crop) * var(--avatar-scale));
   --avatar-visible-h: calc(var(--avatar-frame-h) - var(--avatar-top-crop) - var(--avatar-bottom-crop));
   --avatar-h: calc(var(--avatar-visible-h) * var(--avatar-scale));
 
-  /* Animation speeds */
-  --avatar-step-speed: 0.5s;  /* slower leg switch so you can see steps */
-  --walk-duration: 1.6s;      /* how long the glide takes */
-
-  /* How far she walks from start (left:-120px). Tweak later if needed. */
+  --avatar-step-speed: 0.5s;
+  --walk-duration: 1.6s;
   --walk-end: 450px;
+
+  /* Room/computer stack width (match your art) */
+  --room-w: 640px;
 }
 
-/* ---------- GLOBAL RESET ---------- */
 * { box-sizing: border-box; }
 
 html, body {
@@ -50,9 +43,71 @@ html, body {
   font-family: 'DotGothic16', system-ui, monospace;
 }
 
-/* ---------- PAGE LAYOUT ---------- */
+.hidden { display: none !important; }
+
+/* ---------- ROOM VIEW ---------- */
+.room {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+/* Button wrapper around the stack */
+.computer-btn {
+  display: inline-block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: default;               /* JS toggles to pointer only when over opaque pixels */
+}
+.computer-btn.hot { cursor: pointer; }    /* set by JS hit-test */
+.computer-btn:active .stack { transform: scale(0.985); }
+.computer-btn:hover .stack { transform: scale(1.01); } /* optional subtle hover scale */
+
+/* Layer stack */
+.stack {
+  position: relative;
+  width: var(--room-w);
+  aspect-ratio: 4 / 3;           /* adjust if your art isn’t 4:3 */
+  transition: transform 120ms ease;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 120ms linear;
+  pointer-events: none;          /* ensure the button receives events */
+}
+.white-set { z-index: 20; }
+.black-set { z-index: 10; }
+.show { opacity: 1; }
+
+/* Hover glow overlay — shown only when .computer-btn.hot is present */
+.hover-layer {
+  z-index: 30;                   /* above other layers */
+  opacity: 0;
+  transition: opacity 140ms ease;
+  pointer-events: none;
+}
+/* IMPORTANT: no :hover rule — JS adds .hot when over opaque pixels */
+.computer-btn.hot .hover-layer { opacity: 1; }
+
+/* Zoom player image (same sizing as stack for a seamless swap) */
+.zoom {
+  display: block;
+  width: var(--room-w);
+  aspect-ratio: 4 / 3;           /* match your zoom frames ratio */
+  height: auto;
+}
+
+/* ---------- GATE VIEW ---------- */
 .wrap {
-  min-height: 100%;
+  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -70,7 +125,6 @@ html, body {
   .terminal { justify-self: start; }
 }
 
-/* ---------- STAGE (avatar area) ---------- */
 .stage {
   position: relative;
   height: 280px;
@@ -79,65 +133,43 @@ html, body {
   overflow: hidden;
 }
 
-/* ---------- TERMINAL ---------- */
 .terminal {
   padding: 24px;
   background: var(--bg);
-  text-align: left !important;
-
   display: grid;
-  grid-template-rows: auto auto var(--hint-row-h); /* system, prompt, hint */
+  grid-template-rows: auto auto var(--hint-row-h);
   row-gap: var(--term-gap);
 }
 
-/* System line */
 .line {
   font-size: var(--term-font-size);
   letter-spacing: 0.08em;
   line-height: 1;
   margin: 0;
-  align-self: start;
 }
 
-/* Prompt row */
 .prompt {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  visibility: hidden;   /* hidden until JS adds .show */
+  visibility: hidden;
   pointer-events: none;
-  gap: 0;               /* we add one space via .caret::after */
-  margin: 0;
 }
-.prompt.show {
-  visibility: visible;
-  pointer-events: auto;
-}
+.prompt.show { visibility: visible; pointer-events: auto; }
 
-/* caret symbol (">") + one space after */
-.caret {
-  font-size: var(--term-font-size);
-}
+.caret { font-size: var(--term-font-size); }
 .caret::after { content: "\00a0"; }
 
-/* typed mirror */
 .typed {
   font-size: var(--term-font-size);
   letter-spacing: 0.08em;
-  line-height: 1;
-  min-height: 1em;
   white-space: pre-wrap;
   color: var(--crt);
 }
 
-/* blinking block cursor that FLIPS STATES
-   0–49%: green bg + black text
-   50–100%: black bg + green text */
 .cursor-block {
   display: inline-block;
   width: 1.1ch;
   height: 1.3em;
-  vertical-align: -0.06em;
   animation: cursorFlip 0.8s steps(1,end) infinite;
 }
 @keyframes cursorFlip {
@@ -145,108 +177,61 @@ html, body {
   50%,100% { background: var(--bg);  color: var(--crt); }
 }
 
-/* Full-selection blocks (Cmd/Ctrl-A): FORCE green bg + black text */
 .cursor-sel,
-.cursor-sel * {
-  background: var(--crt) !important;
-  color: #000 !important;
-}
+.cursor-sel * { background: var(--crt) !important; color: #000 !important; }
+::selection { background: var(--crt) !important; color: #000 !important; }
+::-moz-selection { background: var(--crt) !important; color: #000 !important; }
 
-/* Also override UA selection (belt & suspenders) */
-::selection {
-  background: var(--crt) !important;
-  color: #000 !important;
-}
-::-moz-selection {
-  background: var(--crt) !important;
-  color: #000 !important;
-}
+.go-pill { display:inline-block; padding:0 0.15ch; background:var(--bg); color:var(--crt); }
 
-/* GO token: green text on black */
-.go-pill{
-  display:inline-block;
-  padding:0 0.15ch;
-  background:var(--bg);
-  color:var(--crt);
-  vertical-align:-0.06em;
-}
-
-/* Real input: hidden offscreen */
 #cmd.cmd {
   position: absolute !important;
   left: -9999px !important;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: transparent;
-  caret-color: transparent;
-  pointer-events: none;
+  width: 1px; height: 1px; opacity: 0; border: 0;
 }
 
-/* Hint row (always reserved) */
 .hint {
   font-style: italic;
   opacity: 0.9;
   font-size: 16px;
-  height: var(--hint-row-h);      /* fixed height */
+  height: var(--hint-row-h);
   line-height: 1;
   margin: 0;
-  display: block;
-  margin-left: calc(1.3ch + 6px); /* indent under typed text */
+  margin-left: calc(1.3ch + 6px);
 }
 
 /* ---------- AVATAR ---------- */
 .figure {
   position: absolute;
-  bottom: calc(40px + 2vh);   /* raise avatar a bit so she aligns with text */
+  bottom: calc(40px + 2vh);
   left: -120px;
-
   width: var(--avatar-w);
   height: var(--avatar-h);
   overflow: hidden;
-
-  /* SIMPLE, ROBUST: direct relative path */
-  background-image: url('avatar/avatar_intro.png'); /* keep this simple path */
+  background-image: url('avatar/avatar_intro.png'); /* repo-root/avatar/... */
   background-repeat: no-repeat;
   background-position: 0 var(--avatar-cropY);
-
-  background-size:
-    calc(var(--avatar-src-w) * var(--avatar-scale))
-    calc(var(--avatar-src-h) * var(--avatar-scale));
-
+  background-size: calc(var(--avatar-src-w) * var(--avatar-scale))
+                   calc(var(--avatar-src-h) * var(--avatar-scale));
   image-rendering: pixelated;
-  will-change: transform, background-position;
   transform-origin: bottom left;
 }
 
-/* Legs step only while .walking is present */
 .figure.walking {
-  animation:
-    walk-in var(--walk-duration) linear forwards,
-    avatar-walk var(--avatar-step-speed) steps(2) infinite;
+  animation: walk-in var(--walk-duration) linear forwards,
+             avatar-walk var(--avatar-step-speed) steps(2) infinite;
 }
-
-/* After arrival, face forward (frame 3 = index 2) and KEEP landed position */
 .figure.forward {
   background-position: calc(-2 * var(--avatar-w)) var(--avatar-cropY);
   transform: translateX(var(--walk-end));
 }
 
-/* ---------- AVATAR KEYFRAMES ---------- */
 @keyframes walk-in {
-  0%   { transform: translateX(0); opacity: 0; }
-  10%  { opacity: 1; } /* fade in quickly */
-  100% { transform: translateX(var(--walk-end)); }  /* landing distance */
+  0%{ transform: translateX(0); opacity:0; }
+  10%{ opacity:1; }
+  100%{ transform: translateX(var(--walk-end)); }
 }
 @keyframes avatar-walk {
-  from { background-position: 0 var(--avatar-cropY); }
-  to   { background-position: calc(-2 * var(--avatar-w)) var(--avatar-cropY); }
-}
-
-/* ---------- RESPONSIVE TWEAK ---------- */
-@media (max-width: 879px){
-  .stage{ margin-bottom:18px; }
+  from{ background-position: 0 var(--avatar-cropY); }
+  to  { background-position: calc(-2 * var(--avatar-w)) var(--avatar-cropY); }
 }

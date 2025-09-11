@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+:root {
+  --bg: #000;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: var(--bg); }
+
+.wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+}
+
+.hidden { display: none !important; }
+
+#landing-frame,
+#zoom-frame {
+  display: block;
+  width: min(90vw, 800px);  /* responsive size */
+  height: auto;
+}
+
+.frame-btn {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.frame-btn:active { transform: scale(0.985); }

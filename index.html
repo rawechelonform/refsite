@@ -4,11 +4,49 @@
   <meta charset="UTF-8" />
   <title>REF // Intro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- IMPORTANT: relative path, no leading slash -->
-  <link rel="stylesheet" href="index.css?v=93">
+
+  <!-- Preload key visuals -->
+  <link rel="preload" as="image" href="landing/img1_white.png">
+  <link rel="preload" as="image" href="landing/button1_white.png">
+  <link rel="preload" as="image" href="landing/button2_black.png">
+  <link rel="preload" as="image" href="landing/img3_blackA.png">
+  <link rel="preload" as="image" href="landing/img4_blackB.png">
+  <link rel="preload" as="image" href="landing/img5_blackC.png">
+  <link rel="preload" as="image" href="landing/hoverbutton.png">
+
+  <!-- Preload a few zoom frames for instant start -->
+  <link rel="preload" as="image" href="landing/zoom0.png">
+  <link rel="preload" as="image" href="landing/zoom5.png">
+  <link rel="preload" as="image" href="landing/zoom10.png">
+
+  <link rel="stylesheet" href="index.css?v=97">
 </head>
 <body>
-  <div class="wrap">
+  <!-- ROOM VIEW -->
+  <div id="room" class="room">
+    <button id="enter-computer" class="computer-btn" aria-label="enter / zoom in">
+      <div class="stack">
+        <!-- back track (one visible at a time)  — back → front -->
+        <img src="landing/img5_blackC.png" class="layer black-set"       alt="">
+        <img src="landing/img4_blackB.png" class="layer black-set"       alt="">
+        <img src="landing/img3_blackA.png" class="layer black-set show"  alt="">
+
+        <!-- front track (one visible at a time) -->
+        <img src="landing/button2_black.png" class="layer white-set"       alt="">
+        <img src="landing/button1_white.png" class="layer white-set"       alt="">
+        <img src="landing/img1_white.png"    class="layer white-set show"  alt="">
+
+        <!-- hover glow overlay (always on top, shown only on :hover) -->
+        <img src="landing/hoverbutton.png"   class="layer hover-layer"     alt="">
+      </div>
+    </button>
+
+    <!-- Zoom player: hidden until click, then we swap frames here -->
+    <img id="zoom-frame" class="zoom hidden" alt="zoom sequence">
+  </div>
+
+  <!-- GATE VIEW (hidden until after zoom) -->
+  <div id="gate-view" class="wrap hidden">
     <div class="stage">
       <div class="figure" aria-hidden="true"></div>
     </div>
@@ -30,7 +68,6 @@
     </div>
   </div>
 
-  <!-- IMPORTANT: relative path, no leading slash -->
-  <script src="index.js?v=93"></script>
+  <script src="index.js?v=97"></script>
 </body>
 </html>

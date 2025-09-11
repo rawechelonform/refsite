@@ -1,8 +1,15 @@
 // ===== CONFIG =====
-const TARGET     = "REF CORP";
-const NEXT_URL   = "main.html";
-const GO_HOLD_MS = 300; // your chosen delay
-const SPRITE_PATH = "avatar/avatar_intro.png"; // exact relative path you confirmed
+const TARGET      = "REF CORP";
+const NEXT_URL    = "main.html";
+const GO_HOLD_MS  = 300;
+const SPRITE_PATH = "avatar/avatar_intro.png"; // repo-root/avatar/...
+
+// Zoom frames config
+const FRAMES_DIR   = "landing/";
+const FRAME_PREFIX = "zoom";   // zoom0.png ... zoom10.png
+const FRAME_START  = 0;
+const FRAME_END    = 10;       // inclusive
+const FPS          = 12;       // adjust speed (12–18 looks good)
 
 // ===== ELEMENTS =====
 const staticEl  = document.getElementById("static-part");
@@ -13,116 +20,160 @@ const hintEl    = document.getElementById("hint");
 const figureEl  = document.querySelector(".figure");
 const promptEl  = document.querySelector(".prompt");
 
+const roomView  = document.getElementById('room');
+const gateView  = document.getElementById('gate-view');
+const enterBtn  = document.getElementById('enter-computer');
+const zoomImg   = document.getElementById('zoom-frame');
+
 // ===== COPY =====
 const STATIC_TEXT = "ACCESS GATE //";
 const TYPE_TEXT   = ' TYPE "REF CORP" + PRESS ENTER';
 
 // ===== STATE =====
 let terminalStarted = false;
-let lockedOutput    = false; // once Enter with TARGET is pressed, freeze output (no cursor)
+let lockedOutput    = false;
+let zoomPlaying     = false;
 
 // ===== HELPERS =====
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
-  if(!el){ done && done(); return; }
+  if (!el) { done && done(); return; }
   el.textContent = "";
   (function step(){
     if(i <= text.length){
       el.textContent = text.slice(0, i++);
       setTimeout(step, speed);
-    }else{
-      done && done();
-    }
+    } else { done && done(); }
   })();
 }
 
 function escapeHTML(s){
-  return String(s).replace(/[&<>"']/g, c =>
-    c === '&' ? '&amp;'
-      : c === '<' ? '&lt;'
-      : c === '>' ? '&gt;'
-      : c === '"' ? '&quot;'
-      : '&#39;'
+  return String(s).replace(/[&<>\"']/g, c =>
+    c === '&' ? '&amp;' :
+    c === '<' ? '&lt;' :
+    c === '>' ? '&gt;' :
+    c === '\"' ? '&quot;' : '&#39;'
   );
 }
 
-// ===== TERMINAL SEQUENCE =====
+// ===== ROOM BLINKERS =====
+function makeBlinker(selector, minMs, maxMs){
+  const nodes = Array.from(document.querySelectorAll(selector));
+  if (nodes.length < 2) return;
+  let current = nodes.findIndex(n => n.classList.contains('show'));
+  if (current < 0) { current = 0; nodes[0].classList.add('show'); }
+  function tick(){
+    const choices = nodes.map((_, i) => i).filter(i => i !== current);
+    const next = choices[Math.floor(Math.random() * choices.length)];
+    nodes[current].classList.remove('show');
+    nodes[next].classList.add('show');
+    current = next;
+    const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+    setTimeout(tick, delay);
+  }
+  const initial = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+  setTimeout(tick, initial);
+}
+function startRoomBlinkers(){
+  makeBlinker('.white-set', 120, 380); // front track (img1 / button1 / button2)
+  makeBlinker('.black-set', 220, 520); // back track (img3/4/5)
+}
+
+// ===== ZOOM SEQUENCE =====
+const frameList = [];
+for(let i = FRAME_START; i <= FRAME_END; i++){
+  frameList.push(`${FRAMES_DIR}${FRAME_PREFIX}${i}.png`);
+}
+
+function preload(srcs, cb){
+  let loaded = 0;
+  if (!srcs.length) { cb && cb(); return; }
+  srcs.forEach(src => {
+    const im = new Image();
+    im.onload = im.onerror = () => { if(++loaded >= srcs.length) cb && cb(); };
+    im.src = src;
+  });
+}
+
+function playZoomSequence(after){
+  if (zoomPlaying) return;
+  zoomPlaying = true;
+
+  // Hide the clickable stack; show zoom player
+  enterBtn.classList.add('hidden');
+  zoomImg.classList.remove('hidden');
+
+  let i = FRAME_START;
+  zoomImg.src = frameList[i];
+
+  const interval = Math.max(1, Math.round(1000 / FPS));
+  const timer = setInterval(() => {
+    i++;
+    if (i > FRAME_END) {
+      clearInterval(timer);
+      after && after();
+      return;
+    }
+    zoomImg.src = frameList[i];
+  }, interval);
+}
+
+// ===== TERMINAL =====
 function startTerminalSequence(){
   if(terminalStarted) return;
   terminalStarted = true;
-  if(staticEl) staticEl.textContent = STATIC_TEXT;
+  if (staticEl) staticEl.textContent = STATIC_TEXT;
 
   setTimeout(() => {
-    if(typeEl){
-      typeWriter(TYPE_TEXT, typeEl, 50, () => {
-        promptEl && promptEl.classList.add("show");
+    typeWriter(TYPE_TEXT, typeEl, 50, () => {
+      if (promptEl) {
+        promptEl.classList.add("show");
         inputEl && inputEl.focus();
         renderMirror();
-      });
-    } else {
-      promptEl && promptEl.classList.add("show");
-      inputEl && inputEl.focus();
-      renderMirror();
-    }
+      }
+    });
   }, 300);
 }
 
-// ===== MIRROR RENDERING (caret + Cmd/Ctrl-A) =====
 function renderMirror(){
-  if(lockedOutput) return;           // once locked, never draw a cursor again
+  if(lockedOutput) return;
   if(!typedEl || !inputEl) return;
 
   const raw = inputEl.value || "";
   const v   = raw.toUpperCase();
+  let start = inputEl.selectionStart ?? v.length;
+  let end   = inputEl.selectionEnd   ?? v.length;
 
-  let start = inputEl.selectionStart;
-  let end   = inputEl.selectionEnd;
-  if(start == null || end == null){ start = end = v.length; }
-
-  // Full-selection (Cmd/Ctrl-A): render each glyph with inline black text
   if(v.length > 0 && start === 0 && end === v.length){
     typedEl.innerHTML = v.split("").map(ch =>
-      `<span class="cursor-sel" style="background:rgb(0,255,0);color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
+      `<span class="cursor-sel" style="background:rgb(0,255,0);color:#000">${escapeHTML(ch)}</span>`
     ).join("");
     return;
   }
 
-  // Single caret block (CSS anim handles flip between green/black states)
   const idx = Math.min(Math.max(0, start), v.length);
   const ch  = v.slice(idx, idx + 1);
-
   const before = escapeHTML(v.slice(0, idx));
   const at     = ch ? escapeHTML(ch) : "&nbsp;";
   const after  = escapeHTML(v.slice(idx + (ch ? 1 : 0)));
-
   typedEl.innerHTML = before + `<span class="cursor-block">${at}</span>` + after;
 }
 
 function bindPrompt(){
   if(!inputEl || !typedEl) return;
-
   typedEl.parentElement.addEventListener("click", () => inputEl.focus());
-  ["input","focus","blur","keyup","click"].forEach(evt =>
-    inputEl.addEventListener(evt, renderMirror)
-  );
+  ["input","focus","blur","keyup","click"].forEach(evt => inputEl.addEventListener(evt, renderMirror));
   document.addEventListener("selectionchange", () => {
     if(document.activeElement === inputEl) renderMirror();
   });
 
-  // Enter submits
   inputEl.addEventListener("keydown", (e) => {
     if(e.key !== "Enter") return;
-
     const value = (inputEl.value || "").trim().toUpperCase();
     if(value === TARGET){
-      // Freeze output: no further cursor renders
       lockedOutput = true;
-
-      // Show: REF CORP <GO> (green text on black; no cursor)
       typedEl.innerHTML = `REF CORP <span class="go-pill">&lt;GO&gt;</span>`;
       hintEl && (hintEl.textContent = "");
-
-      // Brief hold, then navigate
       setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
     } else {
       hintEl && (hintEl.innerHTML = "<em>denied.</em>");
@@ -130,39 +181,58 @@ function bindPrompt(){
   });
 }
 
-// ===== AVATAR: force sprite inline so it always shows =====
+// ===== AVATAR =====
 function startAvatar(){
-  if(!figureEl){
-    startTerminalSequence();
-    return;
-  }
-
-  // Preload and then apply
+  if(!figureEl){ startTerminalSequence(); return; }
   const img = new Image();
   img.onload = () => {
-    // Set inline background-image so CSS cascade can’t break it
     figureEl.style.backgroundImage = `url("${SPRITE_PATH}")`;
-
-    figureEl.classList.remove("forward","walking");
     figureEl.classList.add("walking");
-
     figureEl.addEventListener("animationend", (e) => {
       if(e.animationName !== "walk-in") return;
-      figureEl.classList.add("forward");     // keep landed position & frame
-      figureEl.classList.remove("walking");  // stop animations
+      figureEl.classList.add("forward");
+      figureEl.classList.remove("walking");
       startTerminalSequence();
     }, { once:true });
   };
-  img.onerror = () => {
-    if(hintEl) hintEl.textContent = "sprite not found at avatar/avatar_intro.png";
-    // still start terminal so the page isn't stuck
-    startTerminalSequence();
-  };
-  img.src = SPRITE_PATH + "?" + Date.now(); // cache-bust
+  img.onerror = () => { hintEl && (hintEl.textContent = "sprite not found"); startTerminalSequence(); };
+  img.src = SPRITE_PATH + "?" + Date.now();
 }
+
+// ===== VIEW SWITCH =====
+function showGateView(){
+  roomView.classList.add('hidden');
+  gateView.classList.remove('hidden');
+  startAvatar();
+}
+
+function bindRoomEnter(){
+  if(!enterBtn) return;
+  enterBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    // Preload all zoom frames once, then play, then go to gate
+    preload(frameList, () => playZoomSequence(showGateView));
+  });
+}
+
+
+
 
 // ===== INIT =====
 document.addEventListener("DOMContentLoaded", () => {
-  startAvatar();
+  // Start the room blinking layers
+  startRoomBlinkers();
+
+  // Prepare interactions
+  bindRoomEnter();
   bindPrompt();
+  enablePixelPerfectHover(); // <<< add this line
+
+  // Optional: log broken images quickly
+  document.querySelectorAll('.stack img, #zoom-frame').forEach(img => {
+    img.addEventListener('error', () => {
+      console.warn('Image failed:', img.getAttribute('src'));
+    });
+  });
 });
+
