@@ -62,12 +62,18 @@ function makeBlinker(selector, minMs, maxMs){
   if (nodes.length < 2) return;
   let current = nodes.findIndex(n => n.classList.contains('show'));
   if (current < 0) { current = 0; nodes[0].classList.add('show'); }
+
   function tick(){
     const choices = nodes.map((_, i) => i).filter(i => i !== current);
     const next = choices[Math.floor(Math.random() * choices.length)];
     nodes[current].classList.remove('show');
     nodes[next].classList.add('show');
     current = next;
+
+    // If the front track changed, we could refresh hit mask (not required now,
+    // because we sample hover-img, which does not change).
+    // if (selector === '.white-set') refreshHitMask();
+
     const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
     setTimeout(tick, delay);
   }
@@ -146,7 +152,7 @@ function renderMirror(){
 
   if(v.length > 0 && start === 0 && end === v.length){
     typedEl.innerHTML = v.split("").map(ch =>
-      `<span class="cursor-sel" style="background:rgb(0,255,0);color:#000">${escapeHTML(ch)}</span>`
+      `<span class="cursor-sel" style="background:rgb(0,255,0);color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
     ).join("");
     return;
   }
@@ -215,18 +221,99 @@ function bindRoomEnter(){
   });
 }
 
+// ===== PIXEL-PERFECT HOVER / CLICK (uses hoverbutton.png alpha) =====
+const hit = {
+  canvas: document.createElement('canvas'),
+  ctx: null,
+  imgEl: null,   // <img id="hover-img">
+  scaleX: 1,
+  scaleY: 1,
+  threshold: 12, // raise to 16–32 if edge glow triggers too easily
+};
+hit.ctx = hit.canvas.getContext('2d', { willReadFrequently: true });
 
+function buildHitMaskFrom(el){
+  if (!el || !el.complete || !el.naturalWidth) return false;
 
+  // Draw the hover image at natural resolution
+  hit.canvas.width  = el.naturalWidth;
+  hit.canvas.height = el.naturalHeight;
+  hit.ctx.clearRect(0, 0, hit.canvas.width, hit.canvas.height);
+  hit.ctx.drawImage(el, 0, 0);
+
+  // Map screen coords -> image coords
+  const rect = el.getBoundingClientRect();
+  hit.scaleX = hit.canvas.width  / rect.width;
+  hit.scaleY = hit.canvas.height / rect.height;
+
+  hit.imgEl = el;
+  return true;
+}
+
+function refreshHitMask(){
+  const el = document.getElementById('hover-img');
+  if (!el) return false;
+  const ok = buildHitMaskFrom(el);
+  if (!ok) {
+    el.addEventListener('load', () => buildHitMaskFrom(el), { once:true });
+  }
+  return ok;
+}
+
+function isOpaqueAtClientPoint(clientX, clientY){
+  const el = hit.imgEl || document.getElementById('hover-img');
+  if (!el) return false;
+
+  const rect = el.getBoundingClientRect();
+  const x = (clientX - rect.left) * hit.scaleX;
+  const y = (clientY - rect.top)  * hit.scaleY;
+  if (x < 0 || y < 0 || x >= hit.canvas.width || y >= hit.canvas.height) return false;
+
+  const alpha = hit.ctx.getImageData(x|0, y|0, 1, 1).data[3];
+  return alpha > hit.threshold;
+}
+
+function enablePixelPerfectHover(){
+  const btn = document.getElementById('enter-computer');
+  const hoverImg = document.getElementById('hover-img');
+  if (!btn || !hoverImg) return;
+
+  // Build once ready, and rebuild on resize (in case layout changes)
+  if (hoverImg.complete && hoverImg.naturalWidth) refreshHitMask();
+  else hoverImg.addEventListener('load', refreshHitMask, { once:true });
+  window.addEventListener('resize', refreshHitMask);
+
+  let raf = 0;
+  function onMove(e){
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const hot = isOpaqueAtClientPoint(e.clientX, e.clientY);
+      btn.classList.toggle('hot', !!hot);
+    });
+  }
+
+  btn.addEventListener('mousemove', onMove);
+  btn.addEventListener('mouseleave', () => btn.classList.remove('hot'));
+
+  // Block clicks if not over opaque pixels
+  btn.addEventListener('click', (e) => {
+    if (!btn.classList.contains('hot')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+
+  // Optional: log issues
+  hoverImg.addEventListener('error', () => console.warn('hoverbutton.png failed to load'));
+}
 
 // ===== INIT =====
 document.addEventListener("DOMContentLoaded", () => {
-  // Start the room blinking layers
   startRoomBlinkers();
-
-  // Prepare interactions
   bindRoomEnter();
   bindPrompt();
-  enablePixelPerfectHover(); // <<< add this line
+  enablePixelPerfectHover();   // per-pixel hover/glow
 
   // Optional: log broken images quickly
   document.querySelectorAll('.stack img, #zoom-frame').forEach(img => {
@@ -235,4 +322,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-

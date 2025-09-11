@@ -60,9 +60,9 @@ html, body {
   border: 0;
   background: transparent;
   padding: 0;
-  cursor: default;               /* JS toggles to pointer only when over opaque pixels */
+  cursor: default;                /* JS toggles to pointer only when over opaque pixels */
 }
-.computer-btn.hot { cursor: pointer; }    /* set by JS hit-test */
+.computer-btn.hot { cursor: pointer; }     /* set by JS hit-test */
 .computer-btn:active .stack { transform: scale(0.985); }
 .computer-btn:hover .stack { transform: scale(1.01); } /* optional subtle hover scale */
 
@@ -70,7 +70,7 @@ html, body {
 .stack {
   position: relative;
   width: var(--room-w);
-  aspect-ratio: 4 / 3;           /* adjust if your art isn’t 4:3 */
+  aspect-ratio: 4 / 3;            /* adjust if your art isn’t 4:3 */
   transition: transform 120ms ease;
 }
 
@@ -81,7 +81,7 @@ html, body {
   height: 100%;
   opacity: 0;
   transition: opacity 120ms linear;
-  pointer-events: none;          /* ensure the button receives events */
+  pointer-events: none;           /* ensure the button receives events */
 }
 .white-set { z-index: 20; }
 .black-set { z-index: 10; }
@@ -89,19 +89,19 @@ html, body {
 
 /* Hover glow overlay — shown only when .computer-btn.hot is present */
 .hover-layer {
-  z-index: 30;                   /* above other layers */
+  z-index: 30;                    /* above other layers */
   opacity: 0;
   transition: opacity 140ms ease;
   pointer-events: none;
 }
-/* IMPORTANT: no :hover rule — JS adds .hot when over opaque pixels */
+/* IMPORTANT: no :hover rule — JS adds .hot when over opaque chair pixels */
 .computer-btn.hot .hover-layer { opacity: 1; }
 
 /* Zoom player image (same sizing as stack for a seamless swap) */
 .zoom {
   display: block;
   width: var(--room-w);
-  aspect-ratio: 4 / 3;           /* match your zoom frames ratio */
+  aspect-ratio: 4 / 3;            /* match your zoom frames ratio */
   height: auto;
 }
 
@@ -166,6 +166,25 @@ html, body {
   color: var(--crt);
 }
 
+/* Selection colors — force green bg + BLACK text */
+::selection {
+  background: var(--crt) !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+::-moz-selection {
+  background: var(--crt) !important;
+  color: #000 !important;
+}
+
+/* Synthetic full-selection blocks */
+.cursor-sel,
+.cursor-sel * {
+  background: var(--crt) !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
 .cursor-block {
   display: inline-block;
   width: 1.1ch;
@@ -176,11 +195,6 @@ html, body {
   0%,49%   { background: var(--crt); color: #000; }
   50%,100% { background: var(--bg);  color: var(--crt); }
 }
-
-.cursor-sel,
-.cursor-sel * { background: var(--crt) !important; color: #000 !important; }
-::selection { background: var(--crt) !important; color: #000 !important; }
-::-moz-selection { background: var(--crt) !important; color: #000 !important; }
 
 .go-pill { display:inline-block; padding:0 0.15ch; background:var(--bg); color:var(--crt); }
 
