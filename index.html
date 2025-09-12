@@ -14,12 +14,12 @@
   <link rel="preload" as="image" href="landing/img5_blackC.png">
   <link rel="preload" as="image" href="landing/hoverbutton.png">
 
-  <!-- Preload a few zoom frames for fast start -->
+  <!-- Preload some zoom frames for instant start -->
   <link rel="preload" as="image" href="landing/zoom0.png">
   <link rel="preload" as="image" href="landing/zoom5.png">
   <link rel="preload" as="image" href="landing/zoom10.png">
 
-  <link rel="stylesheet" href="index.css?v=98">
+  <link rel="stylesheet" href="index.css?v=103">
 </head>
 <body>
   <!-- ROOM VIEW -->
@@ -36,12 +36,12 @@
         <img src="landing/button1_white.png" class="layer white-set"       alt="">
         <img src="landing/img1_white.png"    class="layer white-set show"  alt="">
 
-        <!-- hover glow overlay (sampled for per-pixel hover) -->
+        <!-- hover/click mask + glow (visual overlay only) -->
         <img id="hover-img" src="landing/hoverbutton.png" class="layer hover-layer" alt="">
       </div>
     </button>
 
-    <!-- Zoom player: hidden until click, then we swap frames here -->
+    <!-- Zoom player: hidden until click, then swap frames here -->
     <img id="zoom-frame" class="zoom hidden" alt="zoom sequence">
   </div>
 
@@ -68,6 +68,6 @@
     </div>
   </div>
 
-  <script src="index.js?v=98"></script>
+  <script src="index.js?v=103"></script>
 </body>
 </html>

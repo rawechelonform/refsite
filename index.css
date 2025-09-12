@@ -29,8 +29,7 @@
   --walk-duration: 1.6s;
   --walk-end: 450px;
 
-  /* Room/computer stack width (match your art) */
-  --room-w: 640px;
+  --room-w: 640px; /* match your art */
 }
 
 * { box-sizing: border-box; }
@@ -54,23 +53,21 @@ html, body {
   background: var(--bg);
 }
 
-/* Button wrapper around the stack */
 .computer-btn {
   display: inline-block;
   border: 0;
   background: transparent;
   padding: 0;
-  cursor: default;                /* JS toggles to pointer only when over opaque pixels */
+  cursor: default;                  /* JS toggles when "hot" */
 }
-.computer-btn.hot { cursor: pointer; }     /* set by JS hit-test */
+.computer-btn.hot { cursor: pointer; }
 .computer-btn:active .stack { transform: scale(0.985); }
-.computer-btn:hover .stack { transform: scale(1.01); } /* optional subtle hover scale */
+.computer-btn:hover .stack { transform: scale(1.01); }
 
-/* Layer stack */
 .stack {
   position: relative;
   width: var(--room-w);
-  aspect-ratio: 4 / 3;            /* adjust if your art isn’t 4:3 */
+  aspect-ratio: 4 / 3;
   transition: transform 120ms ease;
 }
 
@@ -81,27 +78,26 @@ html, body {
   height: 100%;
   opacity: 0;
   transition: opacity 120ms linear;
-  pointer-events: none;           /* ensure the button receives events */
+  pointer-events: none;
 }
 .white-set { z-index: 20; }
 .black-set { z-index: 10; }
 .show { opacity: 1; }
 
-/* Hover glow overlay — shown only when .computer-btn.hot is present */
+/* Hover glow overlay — shown only when .computer-btn.glow is present */
 .hover-layer {
-  z-index: 30;                    /* above other layers */
+  z-index: 30;
   opacity: 0;
   transition: opacity 140ms ease;
   pointer-events: none;
 }
-/* IMPORTANT: no :hover rule — JS adds .hot when over opaque chair pixels */
-.computer-btn.hot .hover-layer { opacity: 1; }
+.computer-btn.glow .hover-layer { opacity: 1; }
 
 /* Zoom player image (same sizing as stack for a seamless swap) */
 .zoom {
   display: block;
   width: var(--room-w);
-  aspect-ratio: 4 / 3;            /* match your zoom frames ratio */
+  aspect-ratio: 4 / 3;
   height: auto;
 }
 
@@ -166,7 +162,7 @@ html, body {
   color: var(--crt);
 }
 
-/* Selection colors — force green bg + BLACK text */
+/* Black text on green when the OS selection is active */
 ::selection {
   background: var(--crt) !important;
   color: #000 !important;
@@ -176,14 +172,16 @@ html, body {
   background: var(--crt) !important;
   color: #000 !important;
 }
-
-/* Synthetic full-selection blocks */
 .cursor-sel,
 .cursor-sel * {
   background: var(--crt) !important;
   color: #000 !important;
   -webkit-text-fill-color: #000 !important;
 }
+
+
+/* DO NOT force .typed to black; normal typing stays green */
+.terminal, .terminal * { -webkit-text-fill-color: unset; }
 
 .cursor-block {
   display: inline-block;
@@ -222,7 +220,7 @@ html, body {
   width: var(--avatar-w);
   height: var(--avatar-h);
   overflow: hidden;
-  background-image: url('avatar/avatar_intro.png'); /* repo-root/avatar/... */
+  background-image: url('avatar/avatar_intro.png');
   background-repeat: no-repeat;
   background-position: 0 var(--avatar-cropY);
   background-size: calc(var(--avatar-src-w) * var(--avatar-scale))

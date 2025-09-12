@@ -2,14 +2,14 @@
 const TARGET      = "REF CORP";
 const NEXT_URL    = "main.html";
 const GO_HOLD_MS  = 300;
-const SPRITE_PATH = "avatar/avatar_intro.png"; // repo-root/avatar/...
+const SPRITE_PATH = "avatar/avatar_intro.png";
 
-// Zoom frames config
+// Zoom frames
 const FRAMES_DIR   = "landing/";
 const FRAME_PREFIX = "zoom";   // zoom0.png ... zoom10.png
 const FRAME_START  = 0;
 const FRAME_END    = 10;       // inclusive
-const FPS          = 12;       // adjust speed (12–18 looks good)
+const FPS          = 12;
 
 // ===== ELEMENTS =====
 const staticEl  = document.getElementById("static-part");
@@ -70,9 +70,8 @@ function makeBlinker(selector, minMs, maxMs){
     nodes[next].classList.add('show');
     current = next;
 
-    // If the front track changed, we could refresh hit mask (not required now,
-    // because we sample hover-img, which does not change).
-    // if (selector === '.white-set') refreshHitMask();
+    // refresh hit mask when FRONT track swaps (screen changes)
+    if (selector === '.white-set') refreshHitMask();
 
     const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
     setTimeout(tick, delay);
@@ -81,8 +80,8 @@ function makeBlinker(selector, minMs, maxMs){
   setTimeout(tick, initial);
 }
 function startRoomBlinkers(){
-  makeBlinker('.white-set', 120, 380); // front track (img1 / button1 / button2)
-  makeBlinker('.black-set', 220, 520); // back track (img3/4/5)
+  makeBlinker('.white-set', 120, 380); // front track
+  makeBlinker('.black-set', 220, 520); // back track
 }
 
 // ===== ZOOM SEQUENCE =====
@@ -128,7 +127,7 @@ function playZoomSequence(after){
 function startTerminalSequence(){
   if(terminalStarted) return;
   terminalStarted = true;
-  if (staticEl) staticEl.textContent = STATIC_TEXT;
+  staticEl && (staticEl.textContent = STATIC_TEXT);
 
   setTimeout(() => {
     typeWriter(TYPE_TEXT, typeEl, 50, () => {
@@ -150,13 +149,15 @@ function renderMirror(){
   let start = inputEl.selectionStart ?? v.length;
   let end   = inputEl.selectionEnd   ?? v.length;
 
-  if(v.length > 0 && start === 0 && end === v.length){
+  // Full-selection (Cmd/Ctrl-A): render spans with inline BLACK text
+  if (v.length > 0 && start === 0 && end === v.length){
     typedEl.innerHTML = v.split("").map(ch =>
-      `<span class="cursor-sel" style="background:rgb(0,255,0);color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
+      `<span class="cursor-sel" style="color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
     ).join("");
     return;
   }
 
+  // Single caret block
   const idx = Math.min(Math.max(0, start), v.length);
   const ch  = v.slice(idx, idx + 1);
   const before = escapeHTML(v.slice(0, idx));
@@ -167,11 +168,35 @@ function renderMirror(){
 
 function bindPrompt(){
   if(!inputEl || !typedEl) return;
+
+  // Click mirror to focus hidden input
   typedEl.parentElement.addEventListener("click", () => inputEl.focus());
-  ["input","focus","blur","keyup","click"].forEach(evt => inputEl.addEventListener(evt, renderMirror));
+
+  ["input","focus","blur","keyup","click"].forEach(evt =>
+    inputEl.addEventListener(evt, renderMirror)
+  );
+
   document.addEventListener("selectionchange", () => {
     if(document.activeElement === inputEl) renderMirror();
   });
+
+  // Take full control of ⌘/Ctrl-A: prevent default, set range, render black
+  document.addEventListener("keydown", (e) => {
+    const isA = (e.key === 'a' || e.key === 'A');
+    const withMeta = (e.metaKey || e.ctrlKey);
+    if (!isA || !withMeta) return;
+
+    // Prevent browser's default selection
+    e.preventDefault();
+
+    // Programmatically select entire input
+    inputEl.focus();
+    const len = (inputEl.value || "").length;
+    try { inputEl.setSelectionRange(0, len); } catch(_) {}
+
+    // Render mirror as full-selection (black text on green)
+    renderMirror();
+  }, true);
 
   inputEl.addEventListener("keydown", (e) => {
     if(e.key !== "Enter") return;
@@ -212,65 +237,150 @@ function showGateView(){
   startAvatar();
 }
 
-function bindRoomEnter(){
-  if(!enterBtn) return;
-  enterBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Preload all zoom frames once, then play, then go to gate
-    preload(frameList, () => playZoomSequence(showGateView));
-  });
+// ===== PIXEL-PERFECT HOVER / CLICK =====
+// - Glow ON if cursor is over opaque pixels of hoverbutton.png OR screenmask.png
+// - Click ON if cursor is over (hoverbutton.png OR screenmask.png OR current front image)
+const hit = {
+  // hover (chair)
+  canvasHover: document.createElement('canvas'),
+  ctxHover: null,
+  hoverEl: null,
+  scaleXHover: 1,
+  scaleYHover: 1,
+
+  // screen mask (monitor face)
+  canvasScreen: document.createElement('canvas'),
+  ctxScreen: null,
+  screenImg: null,         // off-DOM Image()
+  scaleXScreen: 1,
+  scaleYScreen: 1,
+  screenMaskReady: false,
+
+  // front track
+  canvasFront: document.createElement('canvas'),
+  ctxFront: null,
+  frontEl: null,
+  scaleXFront: 1,
+  scaleYFront: 1,
+
+  threshold: 1,  // permissive so soft edges count
+};
+hit.ctxHover  = hit.canvasHover.getContext('2d',  { willReadFrequently: true });
+hit.ctxScreen = hit.canvasScreen.getContext('2d', { willReadFrequently: true });
+hit.ctxFront  = hit.canvasFront.getContext('2d',  { willReadFrequently: true });
+
+function getCurrentFrontImageEl(){
+  return document.querySelector('.white-set.show');
 }
 
-// ===== PIXEL-PERFECT HOVER / CLICK (uses hoverbutton.png alpha) =====
-const hit = {
-  canvas: document.createElement('canvas'),
-  ctx: null,
-  imgEl: null,   // <img id="hover-img">
-  scaleX: 1,
-  scaleY: 1,
-  threshold: 12, // raise to 16–32 if edge glow triggers too easily
-};
-hit.ctx = hit.canvas.getContext('2d', { willReadFrequently: true });
-
-function buildHitMaskFrom(el){
+function buildHoverMask(el){
   if (!el || !el.complete || !el.naturalWidth) return false;
-
-  // Draw the hover image at natural resolution
-  hit.canvas.width  = el.naturalWidth;
-  hit.canvas.height = el.naturalHeight;
-  hit.ctx.clearRect(0, 0, hit.canvas.width, hit.canvas.height);
-  hit.ctx.drawImage(el, 0, 0);
-
-  // Map screen coords -> image coords
+  hit.canvasHover.width  = el.naturalWidth;
+  hit.canvasHover.height = el.naturalHeight;
+  hit.ctxHover.clearRect(0, 0, hit.canvasHover.width, hit.canvasHover.height);
+  hit.ctxHover.drawImage(el, 0, 0);
   const rect = el.getBoundingClientRect();
-  hit.scaleX = hit.canvas.width  / rect.width;
-  hit.scaleY = hit.canvas.height / rect.height;
+  hit.scaleXHover = hit.canvasHover.width  / rect.width;
+  hit.scaleYHover = hit.canvasHover.height / rect.height;
+  hit.hoverEl = el;
+  return true;
+}
 
-  hit.imgEl = el;
+function buildScreenMask(imgElOrImage){
+  const el = imgElOrImage;
+  if (!el || !el.complete || !el.naturalWidth) return false;
+  hit.canvasScreen.width  = el.naturalWidth;
+  hit.canvasScreen.height = el.naturalHeight;
+  hit.ctxScreen.clearRect(0, 0, hit.canvasScreen.width, hit.canvasScreen.height);
+  hit.ctxScreen.drawImage(el, 0, 0);
+  // screenmask must align to the stack size; use hover image's rect for scale
+  const ref = document.getElementById('hover-img') || getCurrentFrontImageEl();
+  if (ref) {
+    const rect = ref.getBoundingClientRect();
+    hit.scaleXScreen = hit.canvasScreen.width  / rect.width;
+    hit.scaleYScreen = hit.canvasScreen.height / rect.height;
+  }
+  hit.screenMaskReady = true;
+  return true;
+}
+
+function buildFrontMask(el){
+  if (!el || !el.complete || !el.naturalWidth) return false;
+  hit.canvasFront.width  = el.naturalWidth;
+  hit.canvasFront.height = el.naturalHeight;
+  hit.ctxFront.clearRect(0, 0, hit.canvasFront.width, hit.canvasFront.height);
+  hit.ctxFront.drawImage(el, 0, 0);
+  const rect = el.getBoundingClientRect();
+  hit.scaleXFront = hit.canvasFront.width  / rect.width;
+  hit.scaleYFront = hit.canvasFront.height / rect.height;
+  hit.frontEl = el;
   return true;
 }
 
 function refreshHitMask(){
-  const el = document.getElementById('hover-img');
-  if (!el) return false;
-  const ok = buildHitMaskFrom(el);
-  if (!ok) {
-    el.addEventListener('load', () => buildHitMaskFrom(el), { once:true });
+  const hoverEl = document.getElementById('hover-img');
+  const frontEl = getCurrentFrontImageEl();
+
+  if (hoverEl) {
+    if (!buildHoverMask(hoverEl)) {
+      hoverEl.addEventListener('load', () => buildHoverMask(hoverEl), { once:true });
+    }
   }
-  return ok;
+  if (frontEl) {
+    if (!buildFrontMask(frontEl)) {
+      frontEl.addEventListener('load', () => buildFrontMask(frontEl), { once:true });
+    }
+  }
+
+  // screenmask.png (optional but recommended)
+  if (!hit.screenImg) {
+    const img = new Image();
+    img.onload  = () => buildScreenMask(img);
+    img.onerror = () => { hit.screenMaskReady = false; }; // file may be absent
+    img.src = FRAMES_DIR + "screenmask.png";
+    hit.screenImg = img;
+  } else if (hit.screenImg.complete && hit.screenImg.naturalWidth) {
+    buildScreenMask(hit.screenImg);
+  }
 }
 
-function isOpaqueAtClientPoint(clientX, clientY){
-  const el = hit.imgEl || document.getElementById('hover-img');
-  if (!el) return false;
+function alphaHot(ctx, canvasW, canvasH, scaleX, scaleY, clientX, clientY, rect, threshold){
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top)  * scaleY;
+  if (x < 0 || y < 0 || x >= canvasW || y >= canvasH) return false;
+  const a = ctx.getImageData(x|0, y|0, 1, 1).data[3];
+  return a >= threshold;
+}
 
-  const rect = el.getBoundingClientRect();
-  const x = (clientX - rect.left) * hit.scaleX;
-  const y = (clientY - rect.top)  * hit.scaleY;
-  if (x < 0 || y < 0 || x >= hit.canvas.width || y >= hit.canvas.height) return false;
+function pointState(clientX, clientY){
+  // Hover glow: hoverbutton.png OR screenmask.png
+  let hotGlow = false;
+  const refRect = (hit.hoverEl || hit.frontEl)?.getBoundingClientRect();
 
-  const alpha = hit.ctx.getImageData(x|0, y|0, 1, 1).data[3];
-  return alpha > hit.threshold;
+  if (hit.hoverEl && refRect) {
+    hotGlow = alphaHot(
+      hit.ctxHover, hit.canvasHover.width, hit.canvasHover.height,
+      hit.scaleXHover, hit.scaleYHover, clientX, clientY, refRect, hit.threshold
+    );
+  }
+  if (!hotGlow && hit.screenMaskReady && refRect) {
+    hotGlow = alphaHot(
+      hit.ctxScreen, hit.canvasScreen.width, hit.canvasScreen.height,
+      hit.scaleXScreen, hit.scaleYScreen, clientX, clientY, refRect, hit.threshold
+    );
+  }
+
+  // Click: union of (hotGlow OR front image alpha)
+  let hotClick = hotGlow;
+  if (!hotClick && hit.frontEl) {
+    const rect = hit.frontEl.getBoundingClientRect();
+    hotClick = alphaHot(
+      hit.ctxFront, hit.canvasFront.width, hit.canvasFront.height,
+      hit.scaleXFront, hit.scaleYFront, clientX, clientY, rect, hit.threshold
+    );
+  }
+
+  return { hotGlow, hotClick };
 }
 
 function enablePixelPerfectHover(){
@@ -278,44 +388,54 @@ function enablePixelPerfectHover(){
   const hoverImg = document.getElementById('hover-img');
   if (!btn || !hoverImg) return;
 
-  // Build once ready, and rebuild on resize (in case layout changes)
-  if (hoverImg.complete && hoverImg.naturalWidth) refreshHitMask();
-  else hoverImg.addEventListener('load', refreshHitMask, { once:true });
-  window.addEventListener('resize', refreshHitMask);
+  // Build initial masks and keep them fresh
+  const rebuild = () => refreshHitMask();
+  if (hoverImg.complete && hoverImg.naturalWidth) rebuild();
+  else hoverImg.addEventListener('load', rebuild, { once:true });
+  window.addEventListener('resize', rebuild);
 
   let raf = 0;
-  function onMove(e){
+  function updateHot(e){
     if (raf) return;
     raf = requestAnimationFrame(() => {
       raf = 0;
-      const hot = isOpaqueAtClientPoint(e.clientX, e.clientY);
-      btn.classList.toggle('hot', !!hot);
+      const { hotGlow, hotClick } = pointState(e.clientX, e.clientY);
+      // Glow ONLY where hoverbutton/screenmask have pixels
+      btn.classList.toggle('glow', !!hotGlow);
+      // Pointer/click where union is hot
+      btn.classList.toggle('hot',  !!hotClick);
     });
   }
 
-  btn.addEventListener('mousemove', onMove);
-  btn.addEventListener('mouseleave', () => btn.classList.remove('hot'));
+  btn.addEventListener('mousemove', updateHot);
+  btn.addEventListener('mouseenter', updateHot);
+  btn.addEventListener('mouseleave', () => {
+    btn.classList.remove('glow');
+    btn.classList.remove('hot');
+  });
 
-  // Block clicks if not over opaque pixels
+  // Re-check right before click so a still cursor works
   btn.addEventListener('click', (e) => {
-    if (!btn.classList.contains('hot')) {
+    const { hotGlow, hotClick } = pointState(e.clientX, e.clientY);
+    btn.classList.toggle('glow', !!hotGlow);
+    btn.classList.toggle('hot',  !!hotClick);
+    if (!hotClick) {
       e.preventDefault();
       e.stopPropagation();
+      return;
     }
+    e.preventDefault();
+    preload(frameList, () => playZoomSequence(showGateView));
   }, true);
-
-  // Optional: log issues
-  hoverImg.addEventListener('error', () => console.warn('hoverbutton.png failed to load'));
 }
 
 // ===== INIT =====
 document.addEventListener("DOMContentLoaded", () => {
   startRoomBlinkers();
-  bindRoomEnter();
   bindPrompt();
-  enablePixelPerfectHover();   // per-pixel hover/glow
+  enablePixelPerfectHover();
 
-  // Optional: log broken images quickly
+  // quick log for broken images
   document.querySelectorAll('.stack img, #zoom-frame').forEach(img => {
     img.addEventListener('error', () => {
       console.warn('Image failed:', img.getAttribute('src'));
