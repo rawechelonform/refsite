@@ -1,40 +1,44 @@
+
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Raw Echelon Form</title>
-
-  <!-- styles -->
-  <link rel="stylesheet" href="main.css?v=19">
-
-  <!-- p5.js library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REF - HOMEROOM</title>
+  <link rel="stylesheet" href="main.css" />
 </head>
-
 <body>
-  <!-- typing title -->
-  <div class="title-wrap">
-    <h1 class="title-measure">RAW ECHELON FORM</h1>
-    <h1 id="type-title" class="type-title" aria-label="Raw Echelon Form"></h1>
+  <div class="page">
+    <header>
+      <div class="brand"><a href="/">REF - HOMEROOM</a></div>
+      <!-- Menu Bar -->
+      <nav class="menu-bar" aria-label="site">
+        <ul class="menu">
+          <li><a href="aboutme.html" class="menu-link">principal’s office</a></li>
+          <li><a href="shop.html" class="menu-link">cafeteria</a></li>
+          <li><a href="girlsroom.html" class="menu-link">girls’ room</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Section title above the image -->
+    <h2 class="section-title">SAD GIRLS</h2>
+
+    <section class="carousel" aria-roledescription="carousel">
+      <div class="stage" id="stage" tabindex="0" aria-label="Artwork carousel">
+        <div class="stage-inner">
+          <img id="stageImg" alt="" />
+        </div>
+      </div>
+
+      <div class="thumbBarWrap">
+        <div class="thumbBar" id="thumbBar" aria-label="Thumbnails"></div>
+      </div>
+
+      <div class="caption" id="caption"></div>
+    </section>
   </div>
 
-  <!-- rasterized sketch holder (this reserves space in layout) -->
-  <div id="raster-wrap"></div>
-
-  <!-- rasterized sketch -->
-  <script src="shes_so_lucky_rasterized.js?v=4" defer></script>
-
-  <!-- typing effect -->
-  <script src="typing.js?v=2"></script>
-
-   <!-- Menu Bar -->
-  <nav class="menu-bar" aria-label="site">
-    <ul class="menu">
-      <li><a href="aboutme.html" class="menu-link">principal’s office</a></li>
-      <li><a href="shop.html" class="menu-link">cafeteria</a></li>
-      <li><a href="girlsroom.html" class="menu-link">girls’ room</a></li>
-    </ul>
-  </nav>
+  <script src="main.js" defer></script>
 </body>
 </html>
-

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Room • A‑Frame Gallery</title>
+  <!-- A‑Frame core (client‑side only, perfect for Neocities) -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <style>
+    /* ===== room.css (inline) ===== */
+    html, body { margin: 0; height: 100%; background: #111; }
+    .hud {
+      position: fixed; left: 12px; bottom: 12px; z-index: 9;
+      font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: #eee; opacity: .9; background: rgba(0,0,0,.35);
+      padding: 8px 10px; border-radius: 8px; user-select: none;
+    }
+    .hud b { color: #fff; }
+    .hotspot-label {
+      position: absolute; transform: translate(-50%, -140%);
+      background: rgba(0,0,0,.55); color:#fff; padding:3px 6px;
+      border-radius:6px; font-size:11px; pointer-events:none; display:none;
+    }
+    /* helper dot to visualize hotspots during setup; set to display:none to hide */
+    .hotspot-dot { width: 8px; height: 8px; border-radius: 50%; background:#fff; position:absolute; transform: translate(-50%, -50%); display:none; }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <b>Controls</b>
+    <div>WASD/Arrows to walk • Drag mouse/trackpad to look</div>
+    <div>Click a white square on the floor to jump near that wall</div>
+  </div>
+
+  <!-- ============ Scene ============ -->
+  <a-scene renderer="antialias:true; physicallyCorrectLights:false" background="color: #111">
+    <!-- Camera: desktop look + WASD movement -->
+    <a-entity id="rig" position="0 0 0">
+      <a-entity id="cam" camera wasd-controls look-controls position="0 1.6 0"></a-entity>
+    </a-entity>
+
+    <!-- Raycasting from the mouse for clicking hotspots/art -->
+    <a-entity id="mouseCursor" cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+
+    <!-- Lights (subtle so the white grid reads crisply) -->
+    <a-entity light="type: ambient; intensity: 0.95; color: #ffffff"></a-entity>
+
+    <!-- Assets: dynamically generated grid textures will be injected into these <img> tags by JS -->
+    <a-assets>
+      <img id="gridWall" crossorigin="anonymous" />
+      <img id="gridFloor" crossorigin="anonymous" />
+      <img id="gridCeil" crossorigin="anonymous" />
+    </a-assets>
+
+    <!-- ======= Room Geometry (6 planes, inward‑facing) ======= -->
+    <!-- Dimensions in meters -->
+    <a-entity id="room" position="0 0 0">
+      <!-- back wall (north) -->
+      <a-plane id="wallN" width="10" height="4" position="0 2 -7" rotation="0 0 0" material="side: back; src: #gridWall"></a-plane>
+      <!-- front wall (south) -->
+      <a-plane id="wallS" width="10" height="4" position="0 2 7" rotation="0 180 0" material="side: back; src: #gridWall"></a-plane>
+      <!-- left wall (west) -->
+      <a-plane id="wallW" width="14" height="4" position="-5 2 0" rotation="0 90 0" material="side: back; src: #gridWall"></a-plane>
+      <!-- right wall (east) -->
+      <a-plane id="wallE" width="14" height="4" position="5 2 0" rotation="0 -90 0" material="side: back; src: #gridWall"></a-plane>
+      <!-- floor -->
+      <a-plane id="floor" width="10" height="14" position="0 0 0" rotation="-90 0 0" material="side: back; src: #gridFloor"></a-plane>
+      <!-- ceiling -->
+      <a-plane id="ceiling" width="10" height="14" position="0 4 0" rotation="90 0 0" material="side: back; src: #gridCeil"></a-plane>
+    </a-entity>
+
+    <!-- ======= Teleport Hotspots (click to move + face each wall) ======= -->
+    <!-- Each is an invisible, clickable square on the floor near a wall -->
+    <a-entity id="hotspots">
+      <!-- near north wall -->
+      <a-plane class="clickable teleport" width="1.1" height="1.1" position="0 0.01 -5.6" rotation="-90 0 0"
+               material="color:#ffffff; opacity:0.20; transparent:true"
+               teleport="to: 0 0 -4.8; look: 0 0 0"></a-plane>
+      <!-- near south wall -->
+      <a-plane class="clickable teleport" width="1.1" height="1.1" position="0 0.01 5.6" rotation="-90 0 0"
+               material="color:#ffffff; opacity:0.20; transparent:true"
+               teleport="to: 0 0 4.8; look: 0 180 0"></a-plane>
+      <!-- near west wall -->
+      <a-plane class="clickable teleport" width="1.1" height="1.1" position="-3.8 0.01 0" rotation="-90 0 0"
+               material="color:#ffffff; opacity:0.20; transparent:true"
+               teleport="to: -3.2 0 0; look: 0 90 0"></a-plane>
+      <!-- near east wall -->
+      <a-plane class="clickable teleport" width="1.1" height="1.1" position="3.8 0.01 0" rotation="-90 0 0"
+               material="color:#ffffff; opacity:0.20; transparent:true"
+               teleport="to: 3.2 0 0; look: 0 -90 0"></a-plane>
+    </a-entity>
+
+    <!-- ======= Artwork Slots (replace src with your images, keep them compressed) ======= -->
+    <!-- Example: hanging two works on the north wall. Commented out by default. -->
+    <!--
+    <a-plane class="clickable art" width="1.2" height="1.2" position="-2 1.8 -6.95" rotation="0 0 0" material="src: url(art/art1.jpg); metalness:0; roughness:1"></a-plane>
+    <a-plane class="clickable art" width="1.2" height="1.2" position=" 2 1.8 -6.95" rotation="0 0 0" material="src: url(art/art2.jpg); metalness:0; roughness:1"></a-plane>
+    -->
+  </a-scene>
+
+  <script>
+    // ===== room.js (inline) =====
+    // 1) Generate beige grid textures for walls, floor, ceiling
+    function makeGridDataURL({bg="#f5f5dc", grid="#ffffff", cell=0.5, line=1, pxPerMeter=128}) {
+      // cell = meters per grid square; pxPerMeter scales resolution
+      const size = Math.round(cell * pxPerMeter);
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.max(8, size);
+      const ctx = c.getContext('2d');
+      // background
+      ctx.fillStyle = bg; ctx.fillRect(0,0,c.width,c.height);
+      // grid lines (top + left to tile seamlessly)
+      ctx.strokeStyle = grid; ctx.lineWidth = line; ctx.beginPath();
+      // vertical left edge
+      ctx.moveTo(0,0); ctx.lineTo(0,c.height);
+      // horizontal top edge
+      ctx.moveTo(0,0); ctx.lineTo(c.width,0);
+      ctx.stroke();
+      return c.toDataURL('image/png');
+    }
+
+    function setImageSrc(id, dataURL) { const img = document.getElementById(id); if (img) img.src = dataURL; }
+
+    // Create slightly different densities so the grid reads cleanly at angle
+    const wallURL = makeGridDataURL({ bg:'#f0e8cf', grid:'#ffffff', cell:0.5, line:1, pxPerMeter:128 });
+    const floorURL = makeGridDataURL({ bg:'#f2ead2', grid:'#ffffff', cell:0.5, line:1, pxPerMeter:128 });
+    const ceilURL = makeGridDataURL({ bg:'#efe4c6', grid:'#ffffff', cell:0.5, line:1, pxPerMeter:128 });
+    setImageSrc('gridWall', wallURL);
+    setImageSrc('gridFloor', floorURL);
+    setImageSrc('gridCeil', ceilURL);
+
+    // 2) Simple teleport component: moves the rig and orients the camera
+    AFRAME.registerComponent('teleport', {
+      schema: { to: {type:'vec3'}, look: {type:'vec3'} },
+      init: function(){
+        this.el.addEventListener('click', () => {
+          const rig = document.getElementById('rig');
+          const cam = document.getElementById('cam');
+          if (!rig || !cam) return;
+          // Move rig (y from current to keep head height)
+          const y = rig.object3D.position.y;
+          rig.setAttribute('position', { x:this.data.to.x, y:y, z:this.data.to.z });
+          // Face direction (Euler yaw is rotation.y)
+          cam.setAttribute('rotation', this.data.look);
+        });
+      }
+    });
+
+    // 3) Optional: click any artwork plane to move in front of it
+    document.addEventListener('DOMContentLoaded', () => {
+      const rig = document.getElementById('rig');
+      const cam = document.getElementById('cam');
+      document.querySelectorAll('.art').forEach(plane => {
+        plane.addEventListener('click', () => {
+          const p = plane.getAttribute('position');
+          // Approach point 1.2m back from the artwork normal
+          const rot = plane.getAttribute('rotation');
+          const yaw = (rot.y || 0) * Math.PI/180;
+          const dx = -Math.sin(yaw) * 1.2; // step back along normal
+          const dz = -Math.cos(yaw) * 1.2;
+          rig.setAttribute('position', { x: p.x + dx, y: rig.object3D.position.y, z: p.z + dz });
+          cam.setAttribute('rotation', { x: 0, y: rot.y, z: 0 });
+        });
+      });
+    });
+  </script>
+
+  <!--
+    ===== Splitting files =====
+    If you prefer separate files:
+      • Save the <style> block as room.css and link it in <head>
+      • Save the <script> block as room.js and include it at the end of <body>
+    Example:
+      <link rel="stylesheet" href="room.css" />
+      <script src="room.js"></script>
+  -->
+</body>
+</html>
