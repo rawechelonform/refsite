@@ -1,15 +1,38 @@
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>REF - HOMEROOM</title>
+  <title>R E F</title>
+
+  <!-- Preload Coral Pixels font -->
+  <link rel="preload"
+        href="fonts/coral-pixels/coralpixels-regular.woff2"
+        as="font" type="font/woff2" crossorigin>
+
+  <!-- Adobe Fonts: OCR A Std -->
+  <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
+
+  <!-- Your main CSS -->
   <link rel="stylesheet" href="main.css" />
 </head>
+
+<script>
+  document.documentElement.classList.add('fonts-loading');
+  Promise.all([
+    document.fonts.load('1em "Coral Pixels"')
+  ]).then(function(){
+    document.documentElement.classList.remove('fonts-loading');
+  });
+</script>
+
+
 <body>
   <div class="page">
     <header>
-      <div class="brand"><a href="/main.html">REF - HOMEROOM</a></div>
+      <div class="brand"><a href="main.html">R E F</a></div>
+
       <!-- Menu Bar -->
       <nav class="menu-bar" aria-label="site">
         <ul class="menu">
