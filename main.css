@@ -2,7 +2,11 @@
 :root {
   --thumb-h: 14px; /* thumbnails ~75% smaller */
   --maxw: 1040px;
+
+  --bg: #000;   /* black background */
+  --fg: #fff;   /* white text */
 }
+
 
 
 html, body { height: 100%; }
