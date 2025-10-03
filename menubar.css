@@ -1,7 +1,6 @@
-/* ===== shared header + menu (exact layout from your original) ===== */
+/* ===== shared header + menu (no current highlight, hover only) ===== */
 
-
-/* same container width as the page */
+/* container matches page width */
 .site-header {
   width: 100%;
   max-width: var(--maxw);
@@ -10,6 +9,18 @@
   justify-content: space-between;   /* brand left, menu right */
   align-items: center;
   box-sizing: border-box;
+
+  /* no-jump: lock the height to match the reserved slot */
+  height: 58px;
+}
+@media (max-width: 720px) {
+  .site-header { height: 44px; }
+}
+
+/* reserve space BEFORE JS runs so content doesn't shift */
+.menubar-slot { display: block; height: 58px; }
+@media (max-width: 720px) {
+  .menubar-slot { height: 44px; }
 }
 
 /* brand (REF) — font/size/color */
@@ -25,6 +36,10 @@
 }
 .site-header a { color: inherit; text-decoration: none; }
 
+@media (max-width: 720px) {
+  .site-header .brand a { font-size: 36px; }
+}
+
 /* horizontal, bullet-less menu */
 .menu {
   list-style: none;
@@ -35,7 +50,7 @@
 }
 .menu li { margin: 0; }
 
-/* default digital menu button (always same colors) */
+/* default button (all black with gray text/border) */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
@@ -49,35 +64,25 @@
   text-transform: uppercase;
   display: inline-block;
   border-radius: 0;
-  transition: none;
+  transition: all .15s ease-in-out;
   box-sizing: border-box;
 }
 
-/* remove double borders between buttons */
+/* remove double borders between adjacent buttons */
 .menu > li + li .menu-link { border-left: none; }
 
-/* hover/active/current = same styling, no color flip */
-.menu-link:hover,
+/* hover effect only */
+.menu-link:hover {
+  background: rgb(90,90,90);
+  color: #000;
+  border-color: rgb(143,143,143);
+}
+
+/* reset focus/active so nothing sticks */
 .menu-link:active,
-.menu-link:focus,
-.menu-link.is-current {
-  color: rgb(143,143,143);
+.menu-link:focus {
   background: #000;
+  color: rgb(143,143,143);
   border-color: rgb(143,143,143);
   outline: none;
-  pointer-events: auto; /* keep links clickable */
-}
-
-/* small screens */
-@media (max-width: 720px) {
-  .site-header .brand a { font-size: 36px; }
-}
-
-
-/* reserve space BEFORE JS runs */
-.menubar-slot { display:block; height:58px; }   /* was min-height */
-/* make the injected header occupy the same height */
-.site-header   { height:58px; display:flex; align-items:center; }
-@media (max-width:720px){
-  .menubar-slot, .site-header { height:44px; }
 }
