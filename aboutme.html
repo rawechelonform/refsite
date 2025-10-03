@@ -1,14 +1,76 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>about me</title>
-  <link rel="stylesheet" href="main.css?v=19">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R E F — Principal’s Office</title>
+
+  <!-- Fonts -->
+  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
+        as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="menubar.css" />
+  <link rel="stylesheet" href="aboutme.css" />
 </head>
+
 <body>
-  <main>
-    <h1>UNDER CONSTRUCTION</h1>
-    <p><a href="main.html">← back to home room</a></p>
-  </main>
+  <script>
+    document.documentElement.classList.add('fonts-loading');
+    Promise.all([document.fonts.load('1em "Coral Pixels"')])
+      .then(() => document.documentElement.classList.remove('fonts-loading'));
+  </script>
+
+<div class="page">
+  <!-- shared header with reserved space -->
+  <div data-menubar class="menubar-slot"></div>
+
+
+    <h2 class="section-title">PRINCIPAL’S OFFICE</h2>
+
+    <!-- ===== UTD block ===== -->
+    <div class="utd-wrap">
+      <section class="utd">
+        <div class="utd-bar">
+          <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
+          <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
+        </div>
+
+        <!-- entry form -->
+        <form id="utdForm" class="utd-form" hidden>
+          <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
+                    placeholder="type a thought…"></textarea>
+          <div class="utd-actions">
+            <button type="submit">post</button>
+          </div>
+        </form>
+
+        <!-- feed -->
+        <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <!-- ===== Caption section ===== -->
+    <section class="carousel" aria-roledescription="region">
+      <div class="caption" id="caption">
+        <p>hello and goodbye</p>
+        <p>
+          IG:
+          <a class="ext-link"
+             href="https://www.instagram.com/rawechelonform"
+             target="_blank"
+             rel="noopener noreferrer">
+            @rawechelonform
+          </a>
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- scripts -->
+  <script src="menubar.js" defer></script>
+  <script src="aboutme.js" defer></script>
 </body>
 </html>

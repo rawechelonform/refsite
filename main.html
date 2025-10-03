@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,50 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>R E F</title>
 
-  <!-- Preload Coral Pixels font -->
-  <link rel="preload"
-        href="fonts/coral-pixels/coralpixels-regular.woff2"
+  <!-- Fonts -->
+  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
         as="font" type="font/woff2" crossorigin>
-
-  <!-- Adobe Fonts: OCR A Std -->
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Your main CSS -->
+  <!-- CSS -->
   <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="menubar.css" />
 </head>
 
-<script>
-  document.documentElement.classList.add('fonts-loading');
-  Promise.all([
-    document.fonts.load('1em "Coral Pixels"')
-  ]).then(function(){
-    document.documentElement.classList.remove('fonts-loading');
-  });
-</script>
-
-
 <body>
+  <!-- avoid FOUT while Coral Pixels loads -->
+  <script>
+    document.documentElement.classList.add('fonts-loading');
+    Promise.all([document.fonts.load('1em "Coral Pixels"')])
+      .then(() => document.documentElement.classList.remove('fonts-loading'));
+  </script>
+
   <div class="page">
-    <header>
-      <div class="brand"><a href="main.html">REF</a></div>
+    <!-- shared header + reserved space -->
+    <div data-menubar class="menubar-slot"></div>
 
-      <!-- Menu Bar -->
-      <nav class="menu-bar" aria-label="site">
-        <ul class="menu">
-          <li><a href="aboutme.html" class="menu-link">PRINCIPAL’S OFFICE</a></li>
-          <li><a href="shop.html" class="menu-link">CAFETERIA</a></li>
-          <li><a href="girlsroom.html" class="menu-link">GIRLS’ ROOM</a></li>
-        </ul>
-      </nav>
-    </header>
-
-    <!-- Section title above the image -->
     <h2 class="section-title">SAD GIRLS</h2>
 
     <section class="carousel" aria-roledescription="carousel">
       <div class="stage" id="stage" tabindex="0" aria-label="Artwork carousel">
         <div class="stage-inner">
-          <img id="stageImg" alt="" />
+          <img id="stageImg" alt="">
         </div>
       </div>
 
@@ -61,6 +44,8 @@
     </section>
   </div>
 
+  <!-- scripts -->
+  <script src="menubar.js" defer></script>
   <script src="main.js" defer></script>
 </body>
 </html>

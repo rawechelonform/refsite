@@ -1,0 +1,83 @@
+/* ===== shared header + menu (exact layout from your original) ===== */
+
+
+/* same container width as the page */
+.site-header {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;   /* brand left, menu right */
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* brand (REF) — font/size/color */
+.site-header .brand a,
+.site-header .brand a:visited {
+  font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif;
+  font-size: 50px;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-decoration: none;
+  color: rgb(143,143,143);
+  display: inline-block;
+}
+.site-header a { color: inherit; text-decoration: none; }
+
+/* horizontal, bullet-less menu */
+.menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0; /* buttons touch */
+}
+.menu li { margin: 0; }
+
+/* default digital menu button (always same colors) */
+.menu-link,
+.menu-link:link,
+.menu-link:visited {
+  font-family: 'FS TI-92 ENO C', monospace;
+  text-decoration: none;
+  color: rgb(143,143,143);
+  background: #000;
+  padding: 4px 8px;
+  border: 2px solid rgb(143,143,143);
+  font-size: 12px;
+  text-transform: uppercase;
+  display: inline-block;
+  border-radius: 0;
+  transition: none;
+  box-sizing: border-box;
+}
+
+/* remove double borders between buttons */
+.menu > li + li .menu-link { border-left: none; }
+
+/* hover/active/current = same styling, no color flip */
+.menu-link:hover,
+.menu-link:active,
+.menu-link:focus,
+.menu-link.is-current {
+  color: rgb(143,143,143);
+  background: #000;
+  border-color: rgb(143,143,143);
+  outline: none;
+  pointer-events: auto; /* keep links clickable */
+}
+
+/* small screens */
+@media (max-width: 720px) {
+  .site-header .brand a { font-size: 36px; }
+}
+
+
+/* reserve space BEFORE JS runs */
+.menubar-slot { display:block; height:58px; }   /* was min-height */
+/* make the injected header occupy the same height */
+.site-header   { height:58px; display:flex; align-items:center; }
+@media (max-width:720px){
+  .menubar-slot, .site-header { height:44px; }
+}
