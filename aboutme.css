@@ -155,3 +155,16 @@
   .utd{ width:100%; }
   .utd-unlock{ font-size:9px; padding:1px 6px; }
 }
+
+/* pills image */
+.corner-img {
+  position: fixed;
+  bottom: 20px;    /* distance from bottom */
+  left: 20px;      /* distance from left */
+  width: 200px;    /* adjust as needed */
+  height: auto;
+  z-index: 10;     /* keeps it above background but under nav */
+  opacity: 0.9;    /* slightly translucent, tweak or remove */
+  pointer-events: none; /* so it doesn’t block clicks */
+}
+
