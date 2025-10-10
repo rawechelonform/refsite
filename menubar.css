@@ -1,21 +1,21 @@
-/* ===== Neocities: full-bleed top margin, two rules, NO GAPS, buttons fill page ===== */
+/* ===== Neocities: compact menubar — smaller bar + fonts, no gaps, fill page ===== */
 
-/* Vars */
+/* Vars (smaller) */
 :root {
-  --chrome: rgb(143,143,143);   /* gray stroke/text */
-  --bg: #000;                   /* header strip background */
-  --barh: 32px;                 /* strip height (raise if you want taller buttons) */
-  --linew: 2px;                 /* top/bottom rule thickness */
+  --chrome: rgb(143,143,143);
+  --bg: #000;
+  --barh: 24px;   /* was 32px */
+  --linew: 2px;
 }
 
 @media (max-width: 720px) {
-  :root { --barh: 28px; }
+  :root { --barh: 22px; }
 }
 
-/* If you reserve space before JS injects */
+/* Reserve space if you inject with JS */
 .menubar-slot { display: block; height: var(--barh); }
 
-/* Full-bleed wrapper that escapes centered page margins */
+/* Full-bleed wrapper */
 .top-margin {
   position: relative;
   width: 100vw;
@@ -24,7 +24,7 @@
   background: var(--bg);
 }
 
-/* Two page-wide horizontal rules */
+/* Page-wide horizontal rules */
 .top-margin::before,
 .top-margin::after {
   content: "";
@@ -39,7 +39,7 @@
 .top-margin::before { top: 0; }
 .top-margin::after  { bottom: 0; }
 
-/* Header row sits between the rules */
+/* Header row */
 .site-header {
   position: relative;
   z-index: 1;
@@ -52,10 +52,10 @@
   box-sizing: border-box;
 }
 
-/* Nav fills the row */
+/* Nav */
 .menu-bar { width: 100%; }
 
-/* === BUTTON STRIP: equal-width items, no gaps, fill entire row === */
+/* Equal-width buttons, no gaps */
 .menu {
   list-style: none;
   margin: 0;
@@ -64,20 +64,20 @@
 
   display: flex;
   align-items: stretch;
-  justify-content: stretch;   /* all items stretch evenly */
+  justify-content: stretch;
   width: 100%;
-  gap: 0;                     /* absolutely no gaps */
+  gap: 0;
 }
 
-/* Each item takes equal width so the set covers the page */
+/* Each item fills column space */
 .menu > li {
-  flex: 1 1 0;                /* equal columns */
+  flex: 1 1 0;
   display: flex;
   margin: 0;
-  min-width: 0;               /* allow shrink to avoid overflow */
+  min-width: 0;
 }
 
-/* Buttons */
+/* Buttons (smaller font + padding) */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
@@ -87,22 +87,21 @@
   color: var(--chrome);
   background: var(--bg);
 
-  /* center the label perfectly */
   display: flex;
-  align-items: center;        /* vertical center */
-  justify-content: center;    /* horizontal center */
+  align-items: center;
+  justify-content: center;
   text-align: center;
 
   height: var(--barh);
-  width: 100%;                /* fill the li so columns touch */
+  width: 100%;
   line-height: 1;
   box-sizing: border-box;
   border-radius: 0;
 
-  font-size: 11px;
-  padding: 4px 10px;
+  font-size: 10px;           /* was 11px */
+  padding: 2px 8px;          /* was 4px 10px */
 
-  /* only vertical borders so page-wide rules form the horizontals */
+  /* vertical borders only */
   border-left: 2px solid var(--chrome);
   border-right: 2px solid var(--chrome);
   border-top: none;
@@ -114,12 +113,12 @@
 /* Remove double borders between neighbors */
 .menu > li + li .menu-link { border-left: none; }
 
-/* REF button — use your pixel font at 17px */
+/* REF button — smaller too (you mentioned 17px earlier; this version makes it compact) */
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
-  font-size: 17px !important;     /* per your note */
-  padding: 4px 20px !important;   /* a touch wider; tweak if you like */
+  font-size: 15px !important;   /* reduce here if you want even smaller */
+  padding: 2px 14px !important; /* keep proportionate to smaller bar */
 }
 
 /* Hover (works even on current page) */
@@ -146,8 +145,8 @@
   outline: none;
 }
 
-/* Small screens */
+/* Extra-compact on small screens */
 @media (max-width: 720px) {
-  .brand-link { font-size: 16px !important; padding: 3px 16px !important; }
-  .menu-link  { font-size: 10.5px; padding: 3px 8px; }
+  .brand-link { font-size: 14px !important; padding: 2px 12px !important; }
+  .menu-link  { font-size: 9.5px; padding: 2px 6px; }
 }

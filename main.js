@@ -2,6 +2,9 @@
 (() => {
 const IMAGES = [
 { src: "homeroom/sadgirls/girl1.png", thumb: null, title: "Girl 1", caption: "" },
+{ src: "homeroom/sadgirls/girl2temp.png", thumb: null, title: "Girl 2", caption: "" },
+{ src: "homeroom/sadgirls/girl3temp.png", thumb: null, title: "Girl 3", caption: "" },
+{ src: "homeroom/sadgirls/girl5temp.png", thumb: null, title: "Girl 5", caption: "" },
 { src: "homeroom/sadgirls/girl6.png", thumb: null, title: "Girl 6", caption: "" },
 { src: "homeroom/sadgirls/girl8.png", thumb: null, title: "Girl 8", caption: "" }
 ];

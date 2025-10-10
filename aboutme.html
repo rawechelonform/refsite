@@ -17,42 +17,52 @@
 </head>
 
 <body>
+  <!-- avoid FOUT while Coral Pixels loads -->
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
   </script>
 
-<div class="page">
-  <!-- shared header with reserved space -->
-  <div data-menubar class="menubar-slot"></div>
-
+  <div class="page">
+    <!-- shared header with reserved space (menu bar) -->
+    <div data-menubar class="menubar-slot"></div>
 
     <h2 class="section-title">PRINCIPAL’S OFFICE</h2>
 
-    <!-- ===== UTD block ===== -->
-    <div class="utd-wrap">
-      <section class="utd">
-        <div class="utd-bar">
-          <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
-          <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
-        </div>
-
-        <!-- entry form -->
-        <form id="utdForm" class="utd-form" hidden>
-          <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
-                    placeholder="type a thought…"></textarea>
-          <div class="utd-actions">
-            <button type="submit">post</button>
-          </div>
-        </form>
-
-        <!-- feed -->
-        <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
+    <!-- two-column layout: blurb (left) | UTD (right) -->
+    <div class="about-grid">
+      <!-- left column: continuous blurb -->
+      <section class="about-blurb">
+        <p class="bio">
+          I am a terminal user from a vanished future. Post-industrial artist. Archivist of dead pixels. This site is a memory dump of my obsolete selves.
+        </p>
       </section>
+
+      <!-- right column: UTD block -->
+      <div class="utd-wrap">
+        <section class="utd">
+          <div class="utd-bar">
+            <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
+            <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
+          </div>
+
+          <!-- entry form -->
+          <form id="utdForm" class="utd-form" hidden>
+            <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
+                      placeholder="type a thought…"></textarea>
+            <div class="utd-actions">
+              <button type="submit">post</button>
+            </div>
+          </form>
+
+          <!-- feed -->
+          <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
+        </section>
+      </div>
     </div>
 
-    <!-- ===== Caption section ===== -->
+    <!-- caption / links block (kept) -->
     <section class="carousel" aria-roledescription="region">
       <div class="caption" id="caption">
         <p>hello and goodbye</p>
@@ -73,9 +83,7 @@
   <script src="menubar.js" defer></script>
   <script src="aboutme.js" defer></script>
 
-
-   <!-- ===== upload pills image ===== -->
+  <!-- pills image (kept) -->
   <img src="aboutme/pills.png" alt="pills" class="corner-img">
-
 </body>
 </html>

@@ -1,6 +1,6 @@
 /* aboutme.css — scoped styles for About page only */
 
-/* Instagram link styling */
+/* ===== Instagram link styling ===== */
 .ext-link {
   color: rgb(143,143,143);
   text-decoration: none;
@@ -11,18 +11,40 @@
   text-decoration: underline;
 }
 
-/* ===== UTD (Useless Thought of the Day) ===== */
-
-.utd-wrap{
+/* ===== two-column about layout ===== */
+.about-grid{
   width:100%;
   max-width:var(--maxw);
-  margin:0 auto;
-  display:flex;
-  justify-content:flex-end;
+  margin:0 auto 20px;
+  display:grid;
+  grid-template-columns: 1fr 0.9fr; /* left blurb | right UTD */
+  gap: 20px;
+  align-items:start;
 }
 
+/* left column */
+.about-blurb{
+  box-sizing:border-box;
+}
+.bio{
+  font-family:'FS TI-92 ENO C', monospace;
+  font-size:14px;
+  line-height:1.6;
+  color: rgb(143,143,143);
+  text-transform:none;
+  margin: 4px 0 0;
+  text-align:left;
+}
+
+/* right column (UTD) */
+.utd-wrap{
+  width:100%;
+  margin:0;
+  display:block; /* prevent flex from pushing beyond grid cell */
+}
+
+/* Keep your prior UTD look */
 .utd{
-  width:45%;
   background:#000;
   color:rgb(143,143,143);
   border:2px solid rgb(143,143,143);
@@ -151,20 +173,22 @@
   color:#000;
 }
 
+/* Responsive: stack columns on narrow screens */
 @media (max-width: 900px){
-  .utd{ width:100%; }
-  .utd-unlock{ font-size:9px; padding:1px 6px; }
+  .about-grid{
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
 
-/* pills image */
+/* pills image (kept) */
 .corner-img {
   position: fixed;
-  bottom: 20px;    /* distance from bottom */
-  left: 20px;      /* distance from left */
-  width: 200px;    /* adjust as needed */
+  bottom: 20px;
+  left: 20px;
+  width: 200px;
   height: auto;
-  z-index: 10;     /* keeps it above background but under nav */
-  opacity: 0.9;    /* slightly translucent, tweak or remove */
-  pointer-events: none; /* so it doesn’t block clicks */
+  z-index: 10;
+  opacity: 0.9;
+  pointer-events: none;
 }
-
