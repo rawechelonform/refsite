@@ -1,0 +1,138 @@
+/* ===== Local font faces (same as main) ===== */
+@font-face { font-family: 'Pixel Warden'; src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'FS TI-92 ENO C'; src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'RetroByte'; src: url('fonts/retrobyte/RetroByte.ttf') format('truetype'); font-display: block; }
+
+/* hide any old section title to remove underline entirely */
+.section-title { display: none; border-bottom: none; }
+
+/* ===== Base + tokens ===== */
+:root {
+  --maxw: 1200px;
+  --bg: #000;
+  --fg: #fff;
+  --muted: #aaa;
+  --border: #2a2a2a;
+  --card: #0a0a0a;
+  --gap: 16px;
+
+  /* Banner */
+  --hero-title-size: clamp(36px, 8vw, 96px);
+  --hero-title-alpha: 0.75;   /* transparency for "MACHINES" overlay */
+}
+
+.fonts-loading .section-title { visibility: hidden; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+
+.page {
+  padding: 24px 0 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ===== HERO (banner + overlay title) ===== */
+.hero {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.hero-img {
+  width: 100%;
+  max-width: var(--maxw);
+  height: auto;
+  display: block;
+  object-fit: cover; /* change to 'contain' if you prefer */
+}
+.hero-title {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;            /* center text over the banner */
+  font-family: 'RetroByte', monospace; /* same family as your header */
+  font-size: var(--hero-title-size);
+  line-height: 1;
+  color: rgba(255,255,255,var(--hero-title-alpha));
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 6px rgba(0,0,0,.45);
+  pointer-events: none;           /* clicks go through */
+}
+
+/* ===== 3-column grid ===== */
+.grid { width: 100%; display: flex; justify-content: center; }
+.cols { width: 100%; max-width: var(--maxw); display: flex; gap: var(--gap); padding: 0 24px; }
+.col  { flex: 1 1 0; display: flex; flex-direction: column; gap: var(--gap); }
+
+/* cards */
+.card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0;            /* sharp edges */
+  overflow: hidden;
+  box-shadow: none;
+}
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0;            /* sharp corners */
+  image-rendering: crisp-edges;
+}
+
+/* hover overlay (green tint + centered title) */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,200,0,0.35); /* green tint */
+  opacity: 0;
+  transition: opacity 120ms ease;
+  display: flex;
+  align-items: center;      /* center vertically */
+  justify-content: center;  /* center horizontally */
+  pointer-events: none;     /* keep image clickable */
+}
+.overlay .label {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  letter-spacing: .2px;
+}
+.card:hover .overlay,
+.card:focus-within .overlay { opacity: 1; }
+
+/* hover affordance */
+.card:hover { outline: 1px solid #666; background: #111; }
+
+/* ===== Lightbox ===== */
+.lightbox { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 9999; }
+.lightbox.open { display: flex; }
+.lightbox .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.82); }
+.lightbox .frame { position: relative; max-width: 92vw; max-height: 92vh; background: #000; border: 1px solid #666; border-radius: 0; }
+.lightbox .frame img { display: block; max-width: 92vw; max-height: 92vh; }
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .cols { gap: 14px; }
+}
+@media (max-width: 720px) {
+  .cols { padding: 0 10px; gap: 12px; }
+  /* collapse to 2 cols on small screens for readability */
+  .col { width: 50%; }
+  .cols { flex-wrap: wrap; }
+  #col3 { flex-basis: 100%; display: none; }
+
+  .hero-title { font-size: clamp(28px, 12vw, 64px); }
+}
+@media (max-width: 480px) {
+  /* single-column on very small screens */
+  .cols { flex-direction: column; }
+  #col2, #col3 { display: none; }
+}

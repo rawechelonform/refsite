@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REF · Machines</title>
+
+  <!-- Fonts -->
+  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
+        as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="machines.css" />
+  <link rel="stylesheet" href="menubar.css" />
+</head>
+
+<body>
+  <!-- avoid FOUT while Coral Pixels loads -->
+  <script>
+    document.documentElement.classList.add('fonts-loading');
+    Promise.all([document.fonts.load('1em "Coral Pixels"')])
+      .then(() => document.documentElement.classList.remove('fonts-loading'));
+  </script>
+
+  <div class="page">
+    <!-- shared header + reserved space -->
+    <div data-menubar class="menubar-slot"></div>
+
+    <!-- HERO banner with overlaid title -->
+    <section class="hero" aria-label="Machines banner">
+      <img class="hero-img" src="homeroom/machines/machinebanner.png" alt="Machines banner">
+      <div class="hero-title" aria-hidden="true">MACHINES</div>
+    </section>
+
+    <!-- 3-column Pinterest-like grid -->
+    <section class="grid" id="grid" aria-label="Machines gallery">
+      <div class="cols">
+        <div class="col" id="col1"></div>
+        <div class="col" id="col2"></div>
+        <div class="col" id="col3"></div>
+      </div>
+    </section>
+
+    <!-- optional diagnostics -->
+    <div class="diag" id="diag" hidden></div>
+  </div>
+
+  <!-- scripts -->
+  <script src="menubar.js" defer></script>
+  <script src="machines.js" defer></script>
+</body>
+</html>

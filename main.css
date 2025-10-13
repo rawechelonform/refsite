@@ -1,4 +1,4 @@
-/* ===== Local font faces used elsewhere on the page ===== */
+/* ===== Local font faces ===== */
 @font-face {
   font-family: 'Pixel Warden';
   src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype');
@@ -21,7 +21,7 @@
   font-display: block;
 }
 
-/* hide the section title while Coral Pixels is loading to avoid FOUT */
+/* avoid FOUT while Coral Pixels loads */
 .fonts-loading .section-title { visibility: hidden; }
 
 /* ===== Theme tokens ===== */
@@ -32,12 +32,18 @@
   --fg: #fff;
   --border: #444;
   --muted: #aaa;
-  --accent: #0af;
+
+  /* shared right rail for stage & thumbs (keeps right edges aligned) */
+  --rail-w: 90%;
+  --right-gutter: 80px;
+
+  /* caption next to image */
+  --caption-gap: 20px;  /* space between caption and image */
+  --caption-maxw: 260px;
 }
 
 /* ===== Base ===== */
 html, body { height: 100%; }
-
 body {
   margin: 0;
   background: var(--bg);
@@ -47,17 +53,16 @@ body {
 
 /* page wrapper */
 .page {
-  padding: 24px 0px 48px;
+  padding: 24px 0 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
 }
 
-/* header + menu styles live in menubar.css */
-
+/* header (menu styles in menubar.css) */
 .section-title {
-  width: 100vw;                  
+  width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   font-family: 'RetroByte', monospace;
@@ -69,56 +74,72 @@ body {
   margin-top: 10px;
   margin-bottom: 6px;
 }
-
 .section-title > span {
   display: inline-block;
-  padding-left: 50px;   /* change this number to adjust the left gap */
-  padding-bottom: 4px;  /* space above the underline */
+  padding-left: 50px;
+  padding-bottom: 4px;
 }
 
-
-
-/* ===== Carousel ===== */
+/* ===== Carousel container ===== */
 .carousel {
   width: 100%;
   max-width: var(--maxw);
   user-select: none;
+  display: block;
 }
 
-/* Stage (main image) */
+/* ===== Stage (image area) — image flush-right with thumbs ===== */
 .stage {
-  display: flex;
-  justify-content: flex-end;
-  padding-right: 80px;     /* matches thumbnail gutter */
+  position: relative;
+  padding: 0; /* gutter handled in .stage-inner */
 }
-.stage-inner { display: block; text-align: right; }
+
+/* RIGHT-ALIGNED FLEX ROW: [caption] —gap— [image]
+   align-items:flex-end keeps bottoms aligned. */
+.stage-inner {
+  position: relative;
+  width: var(--rail-w);
+  margin-left: auto;                 /* push rail to the right edge */
+  padding-right: var(--right-gutter);
+  display: flex;
+  justify-content: flex-end;         /* whole row flush-right */
+  align-items: flex-end;             /* caption bottom == image bottom */
+  gap: var(--caption-gap);
+}
+
+/* Make sure order is caption then image (even if DOM differs) */
+.caption { order: 1; }
+#stageImg { order: 2; }
 
 #stageImg {
-  max-width: 90%;
+  display: block;
+  margin-left: 0;
+  max-width: 90%;                    /* visual scale of artwork */
   max-height: 76vh;
   height: auto;
-  display: inline-block;
 }
 
-.meta {
-  position: absolute;
-  left: 0;
-  bottom: -28px;
-  color: var(--muted);
-  font-size: 13px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
+/* Caption: sits to the LEFT of the image, hugs it by --caption-gap */
+.caption {
+  margin: 0;
+  padding: 0;
+  color: #ddd;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: right;                 /* lean text toward the image */
+  width: max-content;                /* shrink-wrap to text */
+  max-width: var(--caption-maxw);    /* but don’t exceed this width */
+  overflow-wrap: anywhere;           /* wrap long bits if needed */
 }
-.meta .count { color: var(--fg); font-variant-numeric: tabular-nums; }
+.caption em { font-style: italic; }
 
-/* Thumbnails bar — same gutter as stage */
+/* ===== Thumbnails — same right rail/gutter as stage ===== */
 .thumbBarWrap {
-  max-width: 90%;
+  width: var(--rail-w);
   margin-left: auto;
   margin-top: 12px;
-  padding-right: 80px;
-  text-align: right;
+  padding-right: var(--right-gutter);
+  text-align: right;                 /* thumbs flush-right */
 }
 
 .thumbBar {
@@ -128,7 +149,7 @@ body {
 .thumbBar::-webkit-scrollbar { height: 10px; }
 .thumbBar::-webkit-scrollbar-thumb { background: #cfcfcf; }
 
-/* thumbnails — no default box */
+/* thumbnails */
 .thumb {
   background: none;
   border: none;
@@ -143,46 +164,42 @@ body {
   border: none;
 }
 
-/* PERSISTENT box on the selected thumbnail (use your old default border color) */
-.thumb.active {
-  outline: 2px solid #444;   /* ← original “all thumbs” grey */
-  outline-offset: 0;
-}
+/* selected thumbnail outline */
+.thumb.active { outline: 2px solid #444; outline-offset: 0; }
 
-/* Do NOT clear outline on focus (this was hiding the active box) */
-/* Remove any `.thumb:focus { outline: none; }` rule you had */
-
-/* Optional: keyboard-only focus style that doesn't cancel active */
-.thumb:focus-visible {
-  outline: 2px dashed #777;
-  outline-offset: 0;
-}
-
-/* Make sure focus never overrides the active border */
+/* keyboard focus visible without breaking active box */
+.thumb:focus-visible { outline: 2px dashed #777; outline-offset: 0; }
 .thumb.active:focus,
-.thumb.active:focus-visible {
-  outline: 2px solid #444 !important;
-  outline-offset: 0;
-}
+.thumb.active:focus-visible { outline: 2px solid #444 !important; outline-offset: 0; }
 
-
-
-.caption {
-  max-width: var(--maxw);
-  color: #333;
-  font-size: 14px;
-  line-height: 1.5;
-  margin-top: 6px;
-}
-
-/* Diagnostics */
+/* Diagnostics (optional) */
 .diag { margin-top: 10px; font-size: 12px; color: #555; }
 .diag code { background: #f5f5f5; padding: 2px 4px; border: 1px solid #eee; }
 
 /* ===== Responsive ===== */
 @media (max-width: 720px) {
-  :root { --thumb-h: 50px; }
-  .page { padding: 16px 10px 32px; } /*change middle nubmer for margin*/
-  .meta { position: static; margin-top: 6px; }
-  .thumbBar { justify-content: flex-start; }
+  .page { padding: 16px 10px 32px; }
+
+  .stage-inner {
+    padding-right: 16px;
+    gap: 8px;
+  }
+
+  #stageImg { max-width: 100%; }
+
+  /* on small screens, drop caption below the image for readability */
+  .caption {
+    order: 2;                   /* after image */
+    width: auto;
+    max-width: none;
+    text-align: left;
+    padding: 6px 10px 0;
+    margin-top: 6px;
+  }
+
+  .thumbBarWrap {
+    width: 100%;
+    padding-right: 16px;
+    text-align: right;
+  }
 }
