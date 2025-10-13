@@ -1,0 +1,145 @@
+/* ===== Local font faces (optional, keeps site consistent) ===== */
+@font-face { font-family: 'Pixel Warden'; src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'FS TI-92 ENO C'; src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'RetroByte'; src: url('fonts/retrobyte/RetroByte.ttf') format('truetype'); font-display: block; }
+
+/* ===== Tokens ===== */
+:root {
+  --bg: #000;
+  --fg: #fff;
+  --muted: #aaa;
+  --maxw: 1200px;
+
+  --grid-gap: 16px;
+  --grid-pad: 24px;
+
+  /* Overlay title style */
+  --soon-size: clamp(28px, 7vw, 72px);
+  --soon-alpha: 0.78;
+}
+
+/* ===== Base ===== */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  color: var(--fg);
+  /* Full-page background image */
+  background: var(--bg) url('shop/cafeteria.jpeg') center / cover no-repeat fixed;
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+/* Reserve space for the menu bar (fallback to 32px if var not present) */
+.menubar-slot { display: block; height: var(--barh, 32px); }
+
+/* Page wrapper — add top padding to match other pages */
+.page {
+  padding: 24px 0 48px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Remove any old section header/underline if present */
+.section-title { display: none; border: none; }
+
+/* ===== Full-page overlay text ===== */
+.coming-soon {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 999;               /* over EVERYTHING, including menubar */
+  pointer-events: none;       /* don't block clicks */
+}
+.coming-soon > span {
+  font-family: 'RetroByte', monospace;
+  font-size: var(--soon-size);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,var(--soon-alpha));
+  text-shadow: 0 2px 6px rgba(0,0,0,.45);
+}
+
+/* ===== Shop grid (3 columns) ===== */
+.shop { width: 100%; display: flex; justify-content: center; }
+.shop-inner { width: 100%; max-width: var(--maxw); padding: 0 var(--grid-pad); }
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--grid-gap);
+
+  /* Push the grid down so the single item sits lower on the page (desktop) */
+  margin-top: 16vh; /* increase to move lower; decrease to move higher */
+}
+
+/* Item card */
+.item {
+  background: rgba(0,0,0,0.55);    /* translucent so bg photo shows through */
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0;                 /* sharp edges */
+  overflow: hidden;
+}
+.item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: crisp-edges;
+}
+
+/* Optional label area (hidden for now) */
+.item .meta { display: none; color: var(--muted); padding: 8px 10px; }
+
+/* ===== Menubar: transparent only on this page ===== */
+.menu-transparent .top-margin {
+  background: transparent;                 /* remove header strip fill */
+}
+.menu-transparent .menu-link,
+.menu-transparent .menu-link:link,
+.menu-transparent .menu-link:visited,
+.menu-transparent .brand-link {
+  background: transparent;                 /* transparent buttons */
+  color: #fff;                             /* improve contrast on photo */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.menu-transparent .menu-link:hover,
+.menu-transparent .menu-link.is-current:hover,
+.menu-transparent .brand-link:hover {
+  background: rgba(0,0,0,0.25);            /* subtle hover */
+  color: #fff;
+}
+/* Optional: lighten the borders/rules on this page
+.menu-transparent .menu-link {
+  border-left-color: rgba(255,255,255,0.6);
+  border-right-color: rgba(255,255,255,0.6);
+}
+.menu-transparent .top-margin::before,
+.menu-transparent .top-margin::after {
+  border-top-color: rgba(255,255,255,0.6);
+}
+*/
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14vh; /* tablet push (adjust as needed) */
+  }
+}
+
+@media (max-width: 600px) {
+  .shop-inner { padding: 0 10px; }
+  .shop-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12vh; /* mobile push (adjust as needed) */
+  }
+  .coming-soon > span { font-size: clamp(24px, 10vw, 52px); }
+}
+
+
+/* Make the "She's So Lucky" image semi-transparent */
+.shop-grid img[src$="shessolucky.png"] {
+  opacity: 0.7;          /* tweak: 0.5–0.9 */
+}

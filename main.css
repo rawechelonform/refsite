@@ -37,9 +37,15 @@
   --rail-w: 90%;
   --right-gutter: 80px;
 
-  /* caption next to image */
-  --caption-gap: 20px;  /* space between caption and image */
+  /* caption spacing */
+  --caption-gap: 16px;           /* distance between caption and image (desktop) */
   --caption-maxw: 260px;
+
+  /* responsive caption typography — smaller desktop defaults */
+  --caption-size-min: 9px;
+  --caption-size-ideal: 0.75vw;
+  --caption-size-max: 11px;
+  --caption-track: 0.005em;
 }
 
 /* ===== Base ===== */
@@ -89,10 +95,7 @@ body {
 }
 
 /* ===== Stage (image area) — image flush-right with thumbs ===== */
-.stage {
-  position: relative;
-  padding: 0; /* gutter handled in .stage-inner */
-}
+.stage { position: relative; padding: 0; } /* gutter handled in .stage-inner */
 
 /* RIGHT-ALIGNED FLEX ROW: [caption] —gap— [image]
    align-items:flex-end keeps bottoms aligned. */
@@ -119,19 +122,27 @@ body {
   height: auto;
 }
 
-/* Caption: sits to the LEFT of the image, hugs it by --caption-gap */
+/* ===== Caption (left of image) ===== */
 .caption {
   margin: 0;
   padding: 0;
   color: #ddd;
-  font-size: 14px;
-  line-height: 1.5;
   text-align: right;                 /* lean text toward the image */
   width: max-content;                /* shrink-wrap to text */
   max-width: var(--caption-maxw);    /* but don’t exceed this width */
   overflow-wrap: anywhere;           /* wrap long bits if needed */
+
+  /* OCR-A font + responsive size */
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+  font-size: clamp(var(--caption-size-min),
+                   var(--caption-size-ideal),
+                   var(--caption-size-max));
+  letter-spacing: var(--caption-track);
+  line-height: 1.45;
 }
-.caption em { font-style: italic; }
+
+/* No italics even if <em> appears */
+.caption em { font-style: normal; font-synthesis: none; transform: none; }
 
 /* ===== Thumbnails — same right rail/gutter as stage ===== */
 .thumbBarWrap {
@@ -141,28 +152,13 @@ body {
   padding-right: var(--right-gutter);
   text-align: right;                 /* thumbs flush-right */
 }
-
-.thumbBar {
-  display: inline-flex;
-  gap: 12px;
-}
+.thumbBar { display: inline-flex; gap: 12px; }
 .thumbBar::-webkit-scrollbar { height: 10px; }
 .thumbBar::-webkit-scrollbar-thumb { background: #cfcfcf; }
 
 /* thumbnails */
-.thumb {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-}
-.thumb img {
-  height: 50px;
-  width: auto;
-  display: block;
-  border: none;
-}
+.thumb { background: none; border: none; padding: 0; margin: 0; cursor: pointer; }
+.thumb img { height: 50px; width: auto; display: block; border: none; }
 
 /* selected thumbnail outline */
 .thumb.active { outline: 2px solid #444; outline-offset: 0; }
@@ -178,12 +174,18 @@ body {
 
 /* ===== Responsive ===== */
 @media (max-width: 720px) {
+  /* phones: even smaller + tighter + closer to image */
+  :root {
+    --caption-size-min: 6.5px;
+    --caption-size-ideal: 1.0vw;
+    --caption-size-max: 8px;
+    --caption-track: 0.005em;
+    --caption-gap: 6px;             /* bring text a bit closer to image */
+  }
+
   .page { padding: 16px 10px 32px; }
 
-  .stage-inner {
-    padding-right: 16px;
-    gap: 8px;
-  }
+  .stage-inner { padding-right: 16px; }
 
   #stageImg { max-width: 100%; }
 
@@ -195,6 +197,7 @@ body {
     text-align: left;
     padding: 6px 10px 0;
     margin-top: 6px;
+    line-height: 1.35;
   }
 
   .thumbBarWrap {
@@ -203,3 +206,7 @@ body {
     text-align: right;
   }
 }
+
+/* Prevent caption "flash" before JS moves it into the stage */
+.caption { visibility: hidden; }
+.stage .stage-inner .caption { visibility: visible; }

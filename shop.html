@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>REF</title>
+  <title>REF · Cafeteria</title>
 
   <!-- Fonts -->
   <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
@@ -11,11 +11,12 @@
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
   <!-- CSS -->
-  <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="shop.css" />
   <link rel="stylesheet" href="menubar.css" />
 </head>
 
-<body>
+<!-- Make menubar transparent on this page only -->
+<body class="menu-transparent">
   <!-- avoid FOUT while Coral Pixels loads -->
   <script>
     document.documentElement.classList.add('fonts-loading');
@@ -23,21 +24,25 @@
       .then(() => document.documentElement.classList.remove('fonts-loading'));
   </script>
 
+  <!-- Overlay message (on top of everything) -->
+  <div class="coming-soon" aria-hidden="true">
+    <span>C O M I N G&nbsp;&nbsp; S O O N</span>
+  </div>
+
   <div class="page">
-    <!-- shared header + reserved space to prevent jump -->
+    <!-- shared header + reserved space -->
     <div data-menubar class="menubar-slot"></div>
 
-    <h2 class="section-title">CAFETERIA</h2>
-
-    <section class="carousel" aria-roledescription="region">
-      <div class="caption" id="caption">
-        <p>C O M I N G&nbsp; S O O N</p>
+    <!-- Shop grid -->
+    <section class="shop" aria-label="Cafeteria items">
+      <div class="shop-inner">
+        <div id="shopGrid" class="shop-grid" aria-live="polite"></div>
       </div>
     </section>
   </div>
 
   <!-- scripts -->
   <script src="menubar.js" defer></script>
-  <!-- <script src="shop.js" defer></script> -->
+  <script src="shop.js" defer></script>
 </body>
 </html>
