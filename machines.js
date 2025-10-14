@@ -2,8 +2,8 @@
   // Images in homeroom/machines — order: BBG, Tonic, Commodore
   const IMAGES = [
     { src: "homeroom/machines/bbgterminal.png",       title: "BBG Terminal",   caption: "" },
-    { src: "homeroom/machines/tonicoperatortemp.png", title: "Tonic Operator", caption: "" },
-    { src: "homeroom/machines/commodoretemp.png",     title: "Commodore",      caption: "" }
+    { src: "homeroom/machines/tonic.png", title: "Tonic Operator", caption: "" },
+    { src: "homeroom/machines/commodore.png",     title: "Commodore",      caption: "" }
   ];
 
   const colEls = [
