@@ -1,10 +1,18 @@
 /* aboutme.css — scoped styles for About page only */
 
+/* === Input Mono (from your Adobe Fonts kit) === */
+:root{
+  --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 /* ===== Instagram link styling ===== */
 .ext-link {
   color: rgb(143,143,143);
   text-decoration: none;
   transition: color 0.15s ease-in-out;
+  font-family: var(--ui-mono);
+  text-transform: none;
+  font-variant-ligatures: none;
 }
 .ext-link:hover {
   color: rgb(110,110,110);
@@ -15,7 +23,7 @@
 .about-grid{
   width:100%;
   max-width:var(--maxw);
-  margin:0 auto 20px;
+  margin:96px auto 20px;   /* moved down ~1 inch */
   display:grid;
   grid-template-columns: 1fr 0.9fr; /* left blurb | right UTD */
   gap: 20px;
@@ -23,11 +31,11 @@
 }
 
 /* left column */
-.about-blurb{
-  box-sizing:border-box;
-}
+.about-blurb{ box-sizing:border-box; }
+
+/* Bio text */
 .bio{
-  font-family:'FS TI-92 ENO C', monospace;
+  font-family: var(--ui-mono);
   font-size:14px;
   line-height:1.6;
   color: rgb(143,143,143);
@@ -36,15 +44,19 @@
   text-align:left;
 }
 
-/* right column (UTD) */
-.utd-wrap{
-  width:100%;
-  margin:0;
-  display:block; /* prevent flex from pushing beyond grid cell */
+/* If your IG text lives in the caption block, give it Input Mono too */
+.caption p{
+  font-family: var(--ui-mono);
+  text-transform: none;
+  font-variant-ligatures: none;
 }
 
-/* Keep your prior UTD look */
+/* right column (UTD) */
+.utd-wrap{ width:100%; margin:0; display:block; }
+
+/* UTD box (unchanged look) */
 .utd{
+  position: relative;                 /* allows overlayed avatar */
   background:#000;
   color:rgb(143,143,143);
   border:2px solid rgb(143,143,143);
@@ -63,132 +75,96 @@
   border-bottom:2px solid rgb(143,143,143);
 }
 
-.utd-title {
-  font-size: 11px;
-  letter-spacing: .02em;
-  cursor: default;
-  text-transform: none;
-}
-
-.utd-title[contenteditable="true"]{
-  outline: 2px dashed rgb(143,143,143);
-  outline-offset: 2px;
-  cursor: text;
-}
+.utd-title { font-size:11px; letter-spacing:.02em; cursor:default; text-transform:none; }
+.utd-title[contenteditable="true"]{ outline:2px dashed rgb(143,143,143); outline-offset:2px; cursor:text; }
 
 .utd-unlock{
-  background:#000;
-  color:rgb(60,60,60);
+  background:#000; color:rgb(60,60,60);
   border:2px solid rgb(60,60,60);
-  padding:1px 8px;
-  font-size:10px;
-  text-transform:uppercase;
-  border-radius:0;
-  cursor:pointer;
+  padding:1px 8px; font-size:10px; text-transform:uppercase; border-radius:0; cursor:pointer;
 }
-.utd-unlock:hover{
-  background:rgb(40,40,40);
-  color:#000;
-  border-color:rgb(70,70,70);
-}
+.utd-unlock:hover{ background:rgb(40,40,40); color:#000; border-color:rgb(70,70,70); }
 
 .utd-form{ margin-bottom:8px; }
 
 .utd-textarea{
-  width:100%;
-  box-sizing:border-box;
-  background:#000;
-  color:rgb(143,143,143);
-  border:2px solid rgb(143,143,143);
-  padding:6px;
-  font-size:11px;
-  line-height:1.25;
-  font-family:'FS TI-92 ENO C', monospace;
-  max-height: calc(1.25em * 8 + 12px);
-  overflow-y:auto;
-  resize:vertical;
+  width:100%; box-sizing:border-box; background:#000; color:rgb(143,143,143);
+  border:2px solid rgb(143,143,143); padding:6px; font-size:11px; line-height:1.25;
+  font-family:'FS TI-92 ENO C', monospace; max-height: calc(1.25em * 8 + 12px);
+  overflow-y:auto; resize:vertical;
 }
 
 .utd-actions{ margin-top:6px; display:flex; gap:6px; }
 .utd-actions button{
-  background:#000;
-  color:rgb(143,143,143);
-  border:2px solid rgb(143,143,143);
-  padding:1px 8px;
-  font-size:11px;
-  text-transform:uppercase;
-  border-radius:0;
-  cursor:pointer;
+  background:#000; color:rgb(143,143,143); border:2px solid rgb(143,143,143);
+  padding:1px 8px; font-size:11px; text-transform:uppercase; border-radius:0; cursor:pointer;
 }
-.utd-actions button:hover{
-  background:rgb(90,90,90);
-  color:#000;
-}
+.utd-actions button:hover{ background:rgb(90,90,90); color:#000; }
 
-.utd-feed{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-}
+.utd-feed{ display:flex; flex-direction:column; gap:4px; }
 
 .utd-line{
-  display:block;
-  font-size:9.5px;
-  line-height:1.3;
-  white-space:normal;
-  overflow-wrap:anywhere;
-  word-break:break-word;
+  display:block; font-size:9.5px; line-height:1.3;
+  white-space:normal; overflow-wrap:anywhere; word-break:break-word;
 }
+.utd-line .ts{ white-space:nowrap; margin-right:2ch; font-variant-numeric:tabular-nums; }
+.utd-line .sep{ white-space:nowrap; margin-right:2ch; }
 
-.utd-line .ts{
-  white-space:nowrap;
-  margin-right: 2ch;
-  font-variant-numeric: tabular-nums;
-}
-
-.utd-line .sep{
-  white-space:nowrap;
-  margin-right: 2ch;
-}
-
-.utd-icons{
-  display:none;
-  gap:6px;
-  margin-left:8px;
-}
+.utd-icons{ display:none; gap:6px; margin-left:8px; }
 .utd.is-owner .utd-icons{ display:inline-flex; }
 .utd-icon{
-  background:#000;
-  color:rgb(143,143,143);
-  border:2px solid rgb(143,143,143);
-  padding:0 6px;
-  height:18px;
-  line-height:14px;
-  font-size:10px;
-  border-radius:0;
-  cursor:pointer;
+  background:#000; color:rgb(143,143,143); border:2px solid rgb(143,143,143);
+  padding:0 6px; height:18px; line-height:14px; font-size:10px; border-radius:0; cursor:pointer;
 }
-.utd-icon:hover{
-  background:rgb(90,90,90);
-  color:#000;
-}
+.utd-icon:hover{ background:rgb(90,90,90); color:#000; }
 
 /* Responsive: stack columns on narrow screens */
 @media (max-width: 900px){
-  .about-grid{
-    grid-template-columns: 1fr;
-    gap: 14px;
+  .about-grid{ margin-top:72px; grid-template-columns:1fr; gap:14px; }
+}
+
+/* mini avatar perched on UTD top-right */
+.avatar-overlay{
+  position: absolute;
+  top: -70px;                      /* raise more to perch */
+  right: -8px;                     /* hang past the corner slightly */
+  width: clamp(68px, 10vw, 100px);
+  height: auto;
+  z-index: 3;                      /* above the bar + button */
+  pointer-events: none;
+  image-rendering: pixelated;
+  opacity: 0.95;
+}
+
+@media (max-width: 900px){
+  .avatar-overlay{
+    top: -18px;
+    right: -6px;
+    width: clamp(60px, 18vw, 92px);
   }
 }
 
-/* pills image (kept) */
-.corner-img {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 200px;
-  height: auto;
-  z-index: 10;
-  opacity: 0.9;
-  pointer-events: none;
+/* remove any old fixed-image rule if it exists */
+.corner-img{ display:none; }
+
+/* === Make IG line match .bio exactly === */
+.carousel .caption p{
+  font-family: var(--ui-mono);
+  font-size: 14px;      /* same as .bio */
+  line-height: 1.6;     /* same as .bio */
+  color: rgb(143,143,143);
+  text-transform: none;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  font-weight: 400;
 }
+
+.carousel .caption p .ext-link{
+  font: inherit;        /* inherit family/size/line-height/weight */
+  color: inherit;       /* same gray as text */
+  text-decoration: none;
+}
+.carousel .caption p .ext-link:hover{ text-decoration: underline; }
+
+/* If main.css still overrides, uncomment this hard override: */
+/* .page .carousel .caption p{ font-size:14px !important; line-height:1.6 !important; } */
