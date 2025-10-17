@@ -9,7 +9,7 @@
     const hover  = img.getAttribute('data-hover-src');
     if (!normal || !hover) return;
 
-    // Preload hover for instant swap
+    // Preload hover for instant swap 
     const pre = new Image();
     pre.src = hover;
 
