@@ -2,7 +2,7 @@
   // ==== CONFIG ====
   // Published CSV of your sheet (File → Share → Publish to web → CSV)
   const SHEET_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/1D60iEzPocS3x-Rb3b8Y0eefuyqXHTR0N802U5_6K95Y/export?format=csv";
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQLOF_grXlykm3EZrQC6m7oeO4NSZsxu2qXCJsCzzIFyna_3Br4f4-YPj0fitcv1X1kBuVr_2TUmVsP/pub?output=csv";
   // Which page to pull rows for
   const PAGE_SLUG = "sadgirls";             // main page = "sadgirls"; machines page would be "machines"
   const IMG_ROOT  = "homeroom";             // your site’s image root folder
