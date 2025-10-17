@@ -1,75 +1,264 @@
 (() => {
-  // Images in homeroom/machines — order: BBG, Tonic, Commodore
+  // ===== Thumbnails on the grid =====
   const IMAGES = [
-    { src: "homeroom/machines/bbgterminal.png",       title: "BBG Terminal",   caption: "" },
-    { src: "homeroom/machines/tonic.png", title: "Tonic Operator", caption: "" },
-    { src: "homeroom/machines/commodore.png",     title: "Commodore",      caption: "" }
+    { src: "homeroom/machines/bbgterminal.png", title: "The Terminal" },
+    { src: "homeroom/machines/tonic.png",       title: "Tonic Operator" },
+    { src: "homeroom/machines/commodore.png",   title: "How to Produce Sound Effects" }
   ];
+
+  // ===== CSV config (same format as Sad Girls) =====
+  const SHEET_CSV_URL = "homeroom/REFsiteartdescriptions.csv";
+  const PAGE_SLUG     = "machines";
+  const DEFAULT_EXT   = "png";
 
   const colEls = [
-    document.getElementById('col1'),
-    document.getElementById('col2'),
-    document.getElementById('col3')
+    document.getElementById("col1"),
+    document.getElementById("col2"),
+    document.getElementById("col3"),
   ];
 
-  // Lightbox (click backdrop or press Esc to close)
+  let currentIndex = 0;
+  let META_BY_KEY = {};
+
+  // ===== Boot: load CSV, map metadata, then render grid =====
+  (async () => {
+    try {
+      const res = await fetch(`${SHEET_CSV_URL}?t=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`CSV HTTP ${res.status}`);
+      const rows = parseCSV(await res.text());
+      META_BY_KEY = buildMetaMap(rows, PAGE_SLUG);
+
+      IMAGES.forEach(img => {
+        const key = base(img.src);
+        img.meta =
+          META_BY_KEY[key] ||
+          fuzzyFindMeta(key, META_BY_KEY) ||
+          { title: img.title || "", year: "", medium: "", size: "" };
+      });
+    } catch (e) {
+      console.warn("Machines: CSV load failed; continuing without metadata.", e);
+      IMAGES.forEach(img => { img.meta = { title: img.title || "", year: "", medium: "", size: "" }; });
+    } finally {
+      render();
+    }
+  })();
+
+  // ===== Helpers: filenames, CSV → meta map =====
+  function base(path) {
+    return path.split("/").pop().replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+  }
+
+  function buildMetaMap(rows, pageSlug) {
+    if (!rows.length) return {};
+    const header = rows[0].map(h => h.trim().toLowerCase());
+    const idx = (n) => header.indexOf(n);
+
+    const iSite   = idx("site page");
+    const iFile   = idx("file");
+    const iTitle  = idx("title");
+    const iYear   = idx("year");
+    const iMedium = idx("medium");
+    const iSize   = idx("size");
+
+    const map = {};
+    rows.slice(1).forEach(r => {
+      if (!r[iSite] || r[iSite].trim().toLowerCase() !== pageSlug) return;
+
+      const fileRaw = (r[iFile] || "").trim();
+      const file = /\.[a-z0-9]+$/i.test(fileRaw) ? fileRaw : `${fileRaw}.${DEFAULT_EXT}`;
+      const key = file.replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+
+      map[key] = {
+        title:  r[iTitle]  || "",
+        year:   r[iYear]   || "",
+        medium: r[iMedium] || "",
+        size:   r[iSize]   || ""
+      };
+    });
+    return map;
+  }
+
+  function fuzzyFindMeta(key, map) {
+    if (map[key]) return map[key];
+    const keys = Object.keys(map);
+    const k1 = keys.find(k => key.includes(k));
+    if (k1) return map[k1];
+    const k2 = keys.find(k => k.includes(key));
+    if (k2) return map[k2];
+    return null;
+  }
+
+  // ===== Fit math used by both the grow animation and final size =====
+  function computeFit(natW, natH) {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const maxW = Math.floor(vw * 0.92);
+    const maxH = Math.floor(vh * 0.92);
+    const scale = Math.min(maxW / natW, maxH / natH);
+    const targetW = Math.round(natW * scale);
+    const targetH = Math.round(natH * scale);
+    const targetLeft = Math.round((vw - targetW) / 2);
+    const targetTop  = Math.round((vh - targetH) / 2);
+    return { targetW, targetH, targetLeft, targetTop };
+  }
+
+  // ===== Caption formatter (Sad Girls style, multiline) =====
+  function formatMeta(m) {
+    if (!m) return "";
+    const line1 = [ m.title ? `<em>${m.title}</em>` : "", m.year ].filter(Boolean).join(", ");
+    const line2 = (m.medium || "");
+    const line3 = (m.size || "");
+    return [line1, line2, line3].filter(Boolean).join("<br>");
+  }
+
+  // ===== Lightbox scaffold + controls =====
   function ensureLightbox() {
-    let root = document.querySelector('.lightbox');
+    let root = document.querySelector(".lightbox");
     if (root) return root;
-    root = document.createElement('div');
-    root.className = 'lightbox';
-    root.setAttribute('role', 'dialog');
-    root.setAttribute('aria-modal', 'true');
+
+    root = document.createElement("div");
+    root.className = "lightbox";
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
     root.innerHTML = `
       <div class="backdrop" data-close></div>
       <div class="frame" aria-live="polite">
-        <img alt="" />
-      </div>`;
+        <div class="edge left"  data-prev></div>
+        <div class="img-wrap">
+          <img alt="" />
+          <div class="lb-caption" id="lbCaption"></div>
+        </div>
+        <div class="edge right" data-next></div>
+      </div>
+    `;
     document.body.appendChild(root);
-    root.addEventListener('click', (e) => { if (e.target.matches('[data-close]')) closeLightbox(); });
-    window.addEventListener('keydown', (e) => { if (root.classList.contains('open') && e.key === 'Escape') closeLightbox(); });
+
+    root.addEventListener("click", (e) => {
+      if (e.target.matches("[data-close]")) closeLightbox();
+      if (e.target.matches("[data-prev]"))  showRelative(-1);
+      if (e.target.matches("[data-next]"))  showRelative(+1);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (!root.classList.contains("open")) return;
+      if (e.key === "Escape")     closeLightbox();
+      if (e.key === "ArrowLeft")  showRelative(-1);
+      if (e.key === "ArrowRight") showRelative(+1);
+    });
+
+    let startX = null;
+    root.addEventListener("touchstart", (e) => {
+      if (!root.classList.contains("open")) return;
+      startX = e.touches?.[0]?.clientX ?? null;
+    }, { passive: true });
+    root.addEventListener("touchend", (e) => {
+      if (startX == null) return;
+      const endX = e.changedTouches?.[0]?.clientX ?? null;
+      if (endX == null) return;
+      const dx = endX - startX;
+      if (dx > 40)  showRelative(-1);
+      if (dx < -40) showRelative(+1);
+      startX = null;
+    }, { passive: true });
+
     return root;
   }
 
-  function openLightbox(src, alt) {
-    const lb = ensureLightbox();
-    const img = lb.querySelector('img');
-    img.src = src;
-    img.alt = alt || "";
-    lb.classList.add('open');
+  function setLightboxImage(idx) {
+    const lb  = ensureLightbox();
+    const img = lb.querySelector(".img-wrap > img");
+    const cap = lb.querySelector("#lbCaption");
+    const item = IMAGES[idx];
+
+    const temp = new Image();
+    temp.onload = () => {
+      const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
+      img.style.width = `${targetW}px`;
+      img.style.height = "auto";
+      img.src = temp.src;
+      img.alt = item.title || "";
+      cap.innerHTML = formatMeta(item.meta);
+    };
+    temp.src = item.src;
   }
+
+  function openLightboxFromThumb(idx, thumbEl) {
+    currentIndex = idx;
+
+    const lb = ensureLightbox();
+    const backdrop = lb.querySelector(".backdrop");
+    lb.classList.add("open");
+    requestAnimationFrame(() => { backdrop.style.opacity = "1"; });
+
+    const rect = thumbEl.getBoundingClientRect();
+    const clone = thumbEl.cloneNode();
+    Object.assign(clone.style, {
+      position: "fixed",
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      zIndex: "10000",
+      margin: "0",
+      transform: "translateZ(0)",
+      willChange: "left, top, width, height, transform",
+      cursor: "zoom-out"
+    });
+    document.body.appendChild(clone);
+
+    const natW = thumbEl.naturalWidth || rect.width;
+    const natH = thumbEl.naturalHeight || rect.height;
+    const { targetW, targetH, targetLeft, targetTop } = computeFit(natW, natH);
+
+    clone.style.transition = "left 260ms ease, top 260ms ease, width 260ms ease, height 260ms ease";
+    requestAnimationFrame(() => {
+      clone.style.left   = `${targetLeft}px`;
+      clone.style.top    = `${targetTop}px`;
+      clone.style.width  = `${targetW}px`;
+      clone.style.height = `${targetH}px`;
+    });
+
+    clone.addEventListener("transitionend", () => {
+      clone.remove();
+      setLightboxImage(currentIndex);
+    }, { once: true });
+  }
+
   function closeLightbox() {
     const lb = ensureLightbox();
-    lb.classList.remove('open');
+    const backdrop = lb.querySelector(".backdrop");
+    backdrop.style.opacity = "0";
+    setTimeout(() => lb.classList.remove("open"), 160);
   }
 
-  function makeCard(item){
-    const card = document.createElement('article');
-    card.className = 'card';
+  function showRelative(delta) {
+    currentIndex = (currentIndex + delta + IMAGES.length) % IMAGES.length;
+    setLightboxImage(currentIndex);
+  }
+
+  // ===== Cards (grid) =====
+  function makeCard(item, index) {
+    const card = document.createElement("article");
+    card.className = "card";
     card.tabIndex = 0;
 
-    const img = document.createElement('img');
-    img.alt = item.title || '';
-    img.loading = 'lazy';
-    img.decoding = 'async';
+    const img = document.createElement("img");
+    img.alt = item.title || "";
+    img.loading = "lazy";
+    img.decoding = "async";
     img.src = item.src;
+    img.addEventListener("error", () => { card.remove(); }, { once: true });
 
-    // If an image fails to load, remove the card so layout stays clean
-    img.addEventListener('error', () => { card.remove(); }, { once: true });
-
-    // Green hover tint with centered title
-    const overlay = document.createElement('div');
-    overlay.className = 'overlay';
-    const label = document.createElement('div');
-    label.className = 'label';
-    label.textContent = item.title || '';
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = item.title || "";
     overlay.appendChild(label);
 
-    // Click to open lightbox
-    const open = () => openLightbox(item.src, item.title);
-    img.addEventListener('click', open);
-    card.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    const open = () => openLightboxFromThumb(index, img);
+    img.addEventListener("click", open);
+    card.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
     });
 
     card.appendChild(img);
@@ -77,13 +266,35 @@
     return card;
   }
 
-  function render(){
+  function render() {
     if (!colEls.every(Boolean)) return;
     IMAGES.forEach((it, i) => {
       const col = colEls[i % 3];
-      col.appendChild(makeCard(it));
+      col.appendChild(makeCard(it, i));
     });
   }
 
-  render();
+  // ===== Tiny CSV parser =====
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], cell = "", inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i], n = text[i + 1];
+      if (inQuotes) {
+        if (c === '"' && n === '"') { cell += '"'; i++; }
+        else if (c === '"') { inQuotes = false; }
+        else { cell += c; }
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(cell); cell = ""; }
+        else if (c === '\n' || c === '\r') {
+          if (cell !== "" || row.length) { row.push(cell); rows.push(row); row = []; cell = ""; }
+          if (c === '\r' && n === '\n') i++;
+        } else { cell += c; }
+      }
+    }
+    if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
 })();
