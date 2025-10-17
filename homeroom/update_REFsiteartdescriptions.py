@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import urllib.request, os
 
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1D60iEzPocS3x-Rb3b8Y0eefuyqXHTR0N802U5_6K95Y/export?format=csv"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1D60iEzPocS3x-Rb3b8Y0eefuyqXHTR0N802U5_6K95Y/export?format=csv&gid=0"
 LOCAL_PATH = "/Users/penguinsenior/Documents/GitHub/refsite/homeroom/REFsiteartdescriptions.csv"
 
 print("updating REFsiteartdescriptions.csv...")
