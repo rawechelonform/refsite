@@ -1,9 +1,9 @@
 // Usage in each page:
 //
 // <meta name="viewport" content="width=device-width, initial-scale=1" />
-// <link rel="stylesheet" href="/menubar.css?v=mobilefix1">
+// <link rel="stylesheet" href="/menubar.css?v=force-nav-1">
 // <div data-menubar class="menubar-slot"></div>
-// <script src="/menubar-inject.js?v=mobilefix1" defer></script>
+// <script src="/menubar-inject.js?v=force-nav-1" defer></script>
 
 (function () {
   async function injectMenu() {
@@ -13,8 +13,7 @@
     if (!slot) return;
 
     try {
-      // hard cache-bust
-      const res = await fetch(`/menubar.html?v=mobilefix1&t=${Date.now()}`, { cache: 'no-cache' });
+      const res = await fetch(`/menubar.html?v=force-nav-1&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const html = await res.text();
@@ -26,54 +25,54 @@
 
       normalizeMenuHrefs();
       highlightCurrentNav();
-      hardenClicks();          // force correct navigation on mobile taps
-      neutralizeOverlaps();    // stop top-of-page images/headers from stealing taps
+      forceAbsoluteNavigation();  // fixes "SAD GIRLS → main.html" on mobile
+      untrapOverlaps();           // disable any overlapping hero/header at the very top
     } catch (_) {
       /* ignore */
     }
   }
 
-  // make all menu hrefs root-absolute and store absolute targets
+  // normalize every href to root-absolute and cache absolute URL
   function normalizeMenuHrefs() {
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const raw = (a.getAttribute('href') || '').trim();
       if (!raw) return;
-      if (/^https?:\/\//i.test(raw)) return; // external
-
+      if (/^https?:\/\//i.test(raw)) return;
       const clean = '/' + raw.replace(/^\/+/, '');
       a.setAttribute('href', clean);
       a.dataset.abs = new URL(clean, location.origin).href;
     });
   }
 
-  // on mobile, explicitly navigate to absolute URL so nothing reroutes to main.html
-  function hardenClicks() {
+  // explicitly navigate to each link's absolute URL on tap/click
+  function forceAbsoluteNavigation() {
     const links = document.querySelectorAll('.menu a.menu-link');
     links.forEach(a => {
       const go = ev => {
+        // let modifier-clicks behave normally on desktop
         if (ev.type === 'click' && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0)) return;
-        const targetHref = a.dataset.abs || a.href;
-        if (!targetHref) return;
+        const url = a.dataset.abs || a.href;
+        if (!url) return;
         ev.preventDefault();
         ev.stopPropagation();
-        location.href = targetHref;
+        window.location.href = url;   // hard navigate to exact target
       };
-      a.addEventListener('touchend', go, { passive: false, capture: true });
+      a.addEventListener('touchend', go, { passive: false, capture: true }); // beats ghost overlays
       a.addEventListener('click', go, { capture: true });
     });
   }
 
-  // if a big hero image or header overlaps the bar, disable its hit-testing
-  function neutralizeOverlaps() {
-    // Any element that visually covers the very top 40px should not intercept taps
-    const topElements = document.elementsFromPoint(10, 10);
-    topElements.forEach(el => {
-      if (!el.closest('.top-margin') && el !== document.documentElement && el !== document.body) {
-        // apply only if it sits above the bar
+  // if a hero image or sticky header overlaps the top 1–2 rows of pixels, disable its hit-test
+  function untrapOverlaps() {
+    const pts = [[8, 8], [window.innerWidth - 8, 8], [window.innerWidth / 2, 8]];
+    pts.forEach(([x, y]) => {
+      const stack = document.elementsFromPoint(x, y);
+      for (const el of stack) {
+        if (el.closest('.top-margin')) break; // our bar is visible here
+        if (el === document.documentElement || el === document.body) continue;
+        // if it's above us, turn off hit testing
         const z = parseInt(getComputedStyle(el).zIndex) || 0;
-        if (z >= 2147483647 - 1) {
-          el.style.pointerEvents = 'none';
-        }
+        if (z >= 4) el.style.pointerEvents = 'none';
       }
     });
   }

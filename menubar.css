@@ -1,6 +1,6 @@
-/* ===== menubar.css — mobile-first, spill-proof, tap-safe ===== */
+/* ===== menubar.css — mobile-safe routing + smaller mobile labels ===== */
 
-/* Base vars */
+/* Vars */
 :root {
   --chrome: rgb(143,143,143);
   --bg: #000;
@@ -8,21 +8,16 @@
   --linew: 2px;
 }
 
-/* Global resets that affect the bar and anything near it */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: #000; }
-img, video { max-width: 100%; height: auto; display: block; }
-
 /* Reserve space if injected with JS */
 .menubar-slot { display: block; height: var(--barh); }
 
 /* Full-bleed wrapper with visible rules */
 .top-margin {
-  position: sticky;            /* pins menu; also fixes overlapping heroes */
+  position: sticky;
   top: 0;
-  z-index: 2147483647;         /* win every z-index fight */
+  z-index: 2147483647;
   width: 100%;
-  margin: 0;                   /* avoid viewport math on mobile */
+  margin: 0;
   background: var(--bg);
 }
 .top-margin::before,
@@ -41,7 +36,7 @@ img, video { max-width: 100%; height: auto; display: block; }
 /* Header row */
 .site-header {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   width: 100%;
   height: var(--barh);
   display: flex;
@@ -50,7 +45,7 @@ img, video { max-width: 100%; height: auto; display: block; }
   color: var(--chrome);
 }
 
-/* Nav container */
+/* Nav */
 .menu-bar { width: 100%; }
 
 /* Equal-width buttons, no gaps */
@@ -61,16 +56,12 @@ img, video { max-width: 100%; height: auto; display: block; }
   height: var(--barh);
   display: flex;
   align-items: stretch;
-  justify-content: stretch;
   width: 100%;
   gap: 0;
 }
-
-/* Each item fills available space */
 .menu > li {
   flex: 1 1 0;
   display: flex;
-  margin: 0;
   min-width: 0;
 }
 
@@ -79,7 +70,7 @@ img, video { max-width: 100%; height: auto; display: block; }
 .menu-link:link,
 .menu-link:visited {
   position: relative;
-  z-index: 3;
+  z-index: 4;                      /* ensure on top of anything behind */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 
@@ -107,17 +98,17 @@ img, video { max-width: 100%; height: auto; display: block; }
   border-top: none;
   border-bottom: none;
 
-  transition: background .15s, color .15s;
-
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: clip; /* we will downsize before it clips */
+  text-overflow: clip;
+
+  transition: background .15s, color .15s;
 }
 
 /* Remove double borders between neighbors */
 .menu > li + li .menu-link { border-left: none; }
 
-/* Brand button */
+/* Brand */
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
@@ -125,51 +116,39 @@ img, video { max-width: 100%; height: auto; display: block; }
   padding: 2px 14px !important;
 }
 
-/* Hover */
+/* Hover/current */
 .menu-link:hover,
 .menu-link.is-current:hover,
-.brand-link:hover {
-  background: rgb(90,90,90);
-  color: #000;
-}
-
-/* Current page baseline */
-.menu-link.is-current {
-  background: var(--bg);
-  color: var(--chrome);
-}
-
-/* Focus/active reset */
-.menu-link:focus,
-.menu-link:active,
-.brand-link:focus,
-.brand-link:active {
-  background: var(--bg);
-  color: var(--chrome);
-  outline: none;
-}
+.brand-link:hover { background: rgb(90,90,90); color: #000; }
+.menu-link.is-current { background: var(--bg); color: var(--chrome); }
 
 /* =========================
-   Aggressive mobile sizing
+   Mobile sizing — more aggressive
    ========================= */
-
-/* Tablets / small laptops */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
-  .menu-link  { font-size: 8.8px; padding: 2px 6px; letter-spacing: 0; }
-  .brand-link { font-size: 12.8px !important; padding: 2px 10px !important; letter-spacing: 0; }
+  .menu-link  { font-size: 8.6px; padding: 2px 6px; letter-spacing: 0; }
+  .brand-link { font-size: 12.6px !important; padding: 2px 10px !important; letter-spacing: 0; }
 }
 
-/* Phones */
 @media (max-width: 480px) {
   :root { --barh: 26px; --linew: 1px; }
-  .menu-link  { font-size: 7.6px; padding: 1px 5px; letter-spacing: 0; }
-  .brand-link { font-size: 11px !important; padding: 1px 8px !important; letter-spacing: 0; }
+  .menu-link  { font-size: 7.2px; padding: 1px 5px; letter-spacing: 0; }
+  .brand-link { font-size: 10.8px !important; padding: 1px 8px !important; letter-spacing: 0; }
+
+  /* Target the long label specifically */
+  .menu a[href="/aboutme.html"] {
+    font-size: 6.6px !important;    /* force smaller so it fits */
+    letter-spacing: 0 !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    transform: scaleX(0.98);         /* tiny width squish as a last resort */
+  }
 }
 
-/* Very small phones */
 @media (max-width: 360px) {
   :root { --barh: 24px; }
-  .menu-link  { font-size: 7px; padding: 1px 4px; }
-  .brand-link { font-size: 10.5px !important; padding: 1px 6px !important; }
+  .menu-link  { font-size: 6.8px; padding: 1px 4px; }
+  .brand-link { font-size: 10.4px !important; padding: 1px 6px !important; }
+  .menu a[href="/aboutme.html"] { font-size: 6.2px !important; transform: scaleX(0.97); }
 }
