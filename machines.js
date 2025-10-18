@@ -468,18 +468,16 @@
 
 
 
-
-
-
-// ===== Crosshair (desktop only) ==========================================
+// ===== Crosshair (desktop + touch) =========================================
 (function initCrosshair() {
-  const showCrosshair = window.matchMedia &&
-    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (!showCrosshair) return;
+  const mm = (q) => window.matchMedia && window.matchMedia(q).matches;
+  const isDesktopMouse = mm('(hover: hover) and (pointer: fine)');
+  const isTouchDevice  = mm('(hover: none)') || mm('(pointer: coarse)');
+  if (!isDesktopMouse && !isTouchDevice) return;
 
   // Build overlay
   const root = document.createElement('div');
-  root.className = 'crosshair';
+  root.className = 'crosshair' + (isTouchDevice ? ' crosshair--hidden' : '');
   root.innerHTML = `
     <div class="crosshair__h"></div>
     <div class="crosshair__v"></div>
@@ -497,77 +495,86 @@
   const ease = 0.15;
   let rafId = null;
 
-  function loop() {
+  function paint() {
     curX += (targetX - curX) * ease;
     curY += (targetY - curY) * ease;
     h.style.top    = `${curY}px`;
     v.style.left   = `${curX}px`;
     dot.style.left = `${curX}px`;
     dot.style.top  = `${curY}px`;
-    rafId = requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(paint);
   }
+  function ensureLoop() { if (rafId == null) rafId = requestAnimationFrame(paint); }
 
-  function onMove(e) {
+  // Desktop mouse: follow the mouse
+  function onMouseMove(e) {
     targetX = e.clientX; targetY = e.clientY;
-    if (rafId == null) rafId = requestAnimationFrame(loop);
+    ensureLoop();
   }
-  addEventListener('mousemove', onMove, { passive: true });
+  if (isDesktopMouse) {
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+  }
 
-  // Helper to make a boom box (expands via width/height so border stays thin)
-  function boomAt(x, y) {
+  // Touch: show on first tap; jump to tap position on each subsequent tap
+  function onPointerDown(e) {
+    if (e.pointerType !== 'touch') return;
+    // reveal the crosshair on first touch
+    if (root.classList.contains('crosshair--hidden')) {
+      root.classList.remove('crosshair--hidden');
+    }
+    targetX = e.clientX; targetY = e.clientY;
+    ensureLoop();
+    spawnBoom(targetX, targetY); // boom on tap too
+  }
+  if (isTouchDevice) {
+    // pointerdown works across iOS/Android; passive so it never blocks scroll
+    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+  }
+
+  // Boom box (JS-driven expansion keeps border razor thin)
+  function spawnBoom(x, y) {
     const box = document.createElement('div');
     box.className = 'crosshair__boomBox';
-
-    // start tiny (0x0) centered
-    box.style.width  = '0px';
+    // start at center as 0×0
+    box.style.width = '0px';
     box.style.height = '0px';
-    box.style.left   = `${x}px`;
-    box.style.top    = `${y}px`;
+    box.style.left = `${x}px`;
+    box.style.top  = `${y}px`;
     root.appendChild(box);
 
-    // target size: bigger than the page diagonal so it flies off-screen
     const diagonal = Math.hypot(innerWidth, innerHeight);
-    const finalSize = diagonal * 2.2; // overshoot so it clears every edge
-    const duration = 1100;            // ms, pure linear motion
-    const fadeTail = 120;             // fade out near the end
+    const finalSize = diagonal * 2.2;  // overshoot to clear every edge
+    const duration  = 650;             // keep your slow, clean expansion
+    const fadeTail  = 90;
 
-    const start = performance.now();
-    (function tick(now) {
-      const t = Math.min(1, (now - start) / duration); // 0..1
+    const t0 = performance.now();
+    (function step(tNow) {
+      const t = Math.min(1, (tNow - t0) / duration);
       const size = finalSize * t;
-
-      // keep centered on (x, y): left/top = center - size/2
       const half = size / 2;
       box.style.width  = `${size}px`;
       box.style.height = `${size}px`;
       box.style.left   = `${x - half}px`;
       box.style.top    = `${y - half}px`;
 
-      // fade only at the very end (no ghost trail)
       if (t > (duration - fadeTail) / duration) {
         const k = (t - (duration - fadeTail)/duration) / (fadeTail/duration);
         box.style.opacity = String(1 - k);
       }
 
-      if (t < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        box.remove();
-      }
-    })(start);
+      if (t < 1) requestAnimationFrame(step);
+      else box.remove();
+    })(t0);
   }
 
-  function boom() {
-    boomAt(curX, curY); // single clean burst
-
-    // If you want a subtle triple (still no tails), uncomment:
-    // setTimeout(() => boomAt(curX, curY), 200);
-    // setTimeout(() => boomAt(curX, curY), 400);
+  // Desktop: click booms at current crosshair
+  function onClick() {
+    if (isDesktopMouse) spawnBoom(curX, curY);
   }
-  addEventListener('click', boom, { passive: true });
+  window.addEventListener('click', onClick, { passive: true });
 
-  // Center if resized before first move
-  addEventListener('resize', () => {
+  // Keep centered if resized before first movement
+  window.addEventListener('resize', () => {
     if (rafId == null) {
       curX = targetX = innerWidth/2;
       curY = targetY = innerHeight/2;

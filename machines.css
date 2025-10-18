@@ -241,9 +241,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
 
 
 
-
-
-/* ===== Crosshair overlay (desktop only; thin-outline boom with no transform) ===== */
+/* ===== Crosshair overlay (desktop + touch) — thin outline boom ===== */
 :root{
   --ch-color: rgba(255,255,255,0.9);      /* crosshair + center square (white) */
   --ch-explode-color: rgba(0,255,0,0.95); /* explosion outline (green) */
@@ -251,36 +249,33 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   --ch-dot: 6px;                          /* center square size */
 }
 
+/* ---------- Desktop/laptop (mouse) ---------- */
 @media (hover: hover) and (pointer: fine) {
   .crosshair {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     z-index: 100000;        /* above your lightbox (9999) */
     pointer-events: none;   /* never blocks clicks */
     contain: layout paint;
   }
 
-  /* crosshair lines + center */
-  .crosshair__h,
-  .crosshair__v {
+  .crosshair__h, .crosshair__v {
     position: absolute;
     background: var(--ch-color);
     will-change: top, left;
-    mix-blend-mode: screen; /* looks nice on dark bg; remove if undesired */
+    mix-blend-mode: screen;           /* optional glow on dark bg */
   }
   .crosshair__h { left: 0; right: 0; height: var(--ch-thick); top: 0; }
   .crosshair__v { top: 0; bottom: 0; width: var(--ch-thick); left: 0; }
 
   .crosshair__dot {
     position: absolute;
-    width: var(--ch-dot);
-    height: var(--ch-dot);
+    width: var(--ch-dot); height: var(--ch-dot);
     background: var(--ch-color);
     transform: translate(-50%, -50%);
     will-change: transform, top, left;
   }
 
-  /* Boom box driven by JS (no transforms, no tails) */
+  /* Boom box driven by JS (expands via width/height so border stays thin) */
   .crosshair__boomBox {
     position: absolute;
     box-sizing: border-box;
@@ -291,7 +286,40 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   }
 }
 
-/* Touch devices: crosshair off */
+/* ---------- Touch devices (phones/tablets) ---------- */
 @media (hover: none), (pointer: coarse) {
-  .crosshair { display: none !important; }
+  .crosshair {
+    position: fixed; inset: 0;
+    z-index: 100000;
+    pointer-events: none;
+    contain: layout paint;
+  }
+  /* hidden until first tap */
+  .crosshair--hidden { display: none; }
+
+  .crosshair__h, .crosshair__v {
+    position: absolute;
+    background: var(--ch-color);
+    will-change: top, left;
+    /* no blend mode on mobile to avoid perf artifacts */
+  }
+  .crosshair__h { left: 0; right: 0; height: var(--ch-thick); top: 0; }
+  .crosshair__v { top: 0; bottom: 0; width: var(--ch-thick); left: 0; }
+
+  .crosshair__dot {
+    position: absolute;
+    width: var(--ch-dot); height: var(--ch-dot);
+    background: var(--ch-color);
+    transform: translate(-50%, -50%);
+    will-change: transform, top, left;
+  }
+
+  .crosshair__boomBox {
+    position: absolute;
+    box-sizing: border-box;
+    border: var(--ch-thick) solid var(--ch-explode-color);
+    opacity: 1;
+    pointer-events: none;
+    will-change: width, height, left, top, opacity;
+  }
 }
