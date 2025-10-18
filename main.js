@@ -1,15 +1,21 @@
 // main.js — page-specific for main.html
-// Only handles hover swapping for the two tiles; does not touch the menubar
+// Handles hover swapping on desktop only.
+// On mobile (no-hover devices), we do nothing so the base image stays put
+// and the label is always visible via CSS.
 
 (() => {
   'use strict';
+
+  // Skip all swap wiring on devices that don't support hover (phones/tablets)
+  const isNoHover = window.matchMedia && window.matchMedia('(hover: none)').matches;
+  if (isNoHover) return;
 
   function wireSwap(img) {
     const normal = img.getAttribute('data-src') || img.getAttribute('src');
     const hover  = img.getAttribute('data-hover-src');
     if (!normal || !hover) return;
 
-    // Preload hover for instant swap 
+    // Preload hover for instant swap
     const pre = new Image();
     pre.src = hover;
 
@@ -20,23 +26,12 @@
     img.addEventListener('mouseenter', toHover);
     img.addEventListener('mouseleave', toNormal);
 
-    // Keyboard focus parity when tabbing to the link
+    // Keyboard focus parity when tabbing to the link (desktop)
     const link = img.closest('a');
     if (link) {
       link.addEventListener('focus', toHover);
       link.addEventListener('blur',  toNormal);
     }
-
-    // Touch: first tap previews hover; second tap follows link
-    let tapped = false;
-    img.addEventListener('touchstart', (e) => {
-      if (!tapped) {
-        tapped = true;
-        toHover();
-        setTimeout(() => { tapped = false; }, 450);
-        e.preventDefault(); // keep first tap from navigating
-      }
-    }, { passive: false });
   }
 
   function init() {

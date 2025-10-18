@@ -13,7 +13,7 @@
   --tile-ideal: 28vw;
   --tile-max: 600px;
 
-  /* spacing between images */
+  /* spacing between images (desktop row gap) */
   --gap-min: 24px;
   --gap-ideal: 8vw;
   --gap-max: 160px;
@@ -21,10 +21,10 @@
   /* overall container width cap */
   --hub-maxw: 1800px;
 
-  /* hover label */
+  /* label */
   --label-size: clamp(14px, 3vw, 32px);
   --label-shadow: 0 2px 10px rgba(0,0,0,.65), 0 0 1px rgba(0,0,0,.9);
-  --label-tint: rgba(0,0,0,.25); /* dark wash behind text on hover */
+  --label-tint: rgba(0,0,0,.25);
 }
 
 .fonts-loading .section-title { visibility: hidden; }
@@ -45,7 +45,7 @@ body {
   gap: 18px;
 }
 
-/* ===== Hub layout: centered row, distance controlled by gap ===== */
+/* ===== Hub layout: centered row on desktop ===== */
 .hub {
   width: 100%;
   max-width: var(--hub-maxw);
@@ -63,7 +63,7 @@ body {
 
 .tile {
   display: block;
-  position: relative; /* for the hover label layers */
+  position: relative; /* for label layers */
 }
 
 /* images: responsive, sharp corners */
@@ -74,11 +74,11 @@ img.swap-on-hover {
   border-radius: 0;
 }
 
-/* subtle hover lift */
+/* subtle hover lift (desktop only; overridden on mobile) */
 .tile:hover img,
 .tile:focus img { transform: translateY(-2px); }
 
-/* Hover label (no animation) */
+/* Hover label */
 .tile::after {
   content: attr(data-label);
   position: absolute;
@@ -91,44 +91,66 @@ img.swap-on-hover {
   letter-spacing: 0.5px;
   color: #fff;
   text-shadow: var(--label-shadow);
-  opacity: 0;                /* hidden by default */
-  transform: none;           /* no movement */
-  transition: none;          /* NO animation */
+  opacity: 0;                /* desktop: hidden until hover/focus */
+  transform: none;
+  transition: none;
   pointer-events: none;
 }
 
-/* Optional dark wash (no animation) */
+/* Dark wash behind label */
 .tile::before {
   content: "";
   position: absolute;
   inset: 0;
   background: var(--label-tint);
-  opacity: 0;                /* hidden by default */
-  transition: none;          /* NO animation */
+  opacity: 0;                /* desktop: hidden until hover/focus */
+  transition: none;
   pointer-events: none;
 }
 
-/* Instant show on hover/focus */
+/* Desktop: show on hover/focus */
 .tile:hover::after,
 .tile:focus::after,
 .tile:hover::before,
 .tile:focus::before {
-  opacity: 1;                /* instantly visible */
+  opacity: 1;
   transform: none;
 }
 
 /* ===== Phones & narrow screens ===== */
 @media (max-width: 900px) {
   :root {
-    --tile-ideal: 86vw;  /* each image fills most of the width */
-    --gap-ideal: 7vh;    /* vertical spacing when stacked */
+    /* each image fits within screen width with margin/border room */
+    --tile-ideal: 92vw;
+    --gap-ideal: 7vh;
+    /* bigger label on mobile for readability */
+    --label-size: clamp(18px, 6vw, 40px);
   }
 
+  /* stack vertically: sad girls first, then machines;
+     add comfortable page padding to create the "border" around images */
   .hub {
     grid-auto-flow: row;
     row-gap: clamp(24px, var(--gap-ideal), 56px);
     column-gap: 0;
     justify-content: center;
     min-height: auto;
+    padding: 4vw 4vw 8vw;   /* creates the visual border around images */
   }
+
+  /* images: never exceed container; leave some breathing room */
+  img.swap-on-hover {
+    width: min(92vw, 720px);
+    height: auto;
+  }
+
+  /* labels: ALWAYS visible on mobile; no hover needed */
+  .tile::after,
+  .tile::before {
+    opacity: 1;
+  }
+
+  /* disable hover lift on mobile */
+  .tile:hover img,
+  .tile:focus img { transform: none; }
 }
