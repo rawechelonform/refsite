@@ -380,20 +380,43 @@
     return rows;
   }
 
+  // ---------- Helper: image decode with Safari-safe fallback ----------
+  function decodeImg(img) {
+    if (img.decode) {
+      return img.decode().catch(() =>
+        new Promise(res => (img.complete ? res() : img.addEventListener('load', res, { once: true })))
+      );
+    }
+    return new Promise(res => (img.complete ? res() : img.addEventListener('load', res, { once: true })));
+  }
+
   // ======== MOBILE-ONLY ENHANCER (portrait only; restores on rotate) ========
-  function enhanceMobileStream() {
+  async function enhanceMobileStream() {
     const portrait = isPortraitMobile();
 
     if (portrait) {
       const col1 = document.getElementById('col1');
       if (!col1) return;
 
-      // move all cards into col1 to create a single vertical stream
+      // move all cards into a list and remove from DOM to avoid layout shifts
       const cards = Array.from(document.querySelectorAll('.col .card'));
-      cards.forEach(c => {
-        col1.appendChild(c);
-        if (!c.querySelector('.mobile-caption')) {
-          const img  = c.querySelector('img');
+      cards.forEach(c => c.remove());
+
+      // hide other columns (CSS also handles this)
+      if (colEls[1]) colEls[1].style.display = 'none';
+      if (colEls[2]) colEls[2].style.display = 'none';
+
+      // Preload + decode images, then add captions, then attach in order
+      const prepared = await Promise.all(cards.map(async (card) => {
+        const img = card.querySelector('img');
+        if (img) {
+          img.loading = 'eager';
+          img.decoding = 'async';
+          await decodeImg(img); // ensure pixels are ready; prevents text-first stacking & pushes
+        }
+
+        // Add mobile caption only after image is ready (so image shows before/with text)
+        if (!card.querySelector('.mobile-caption')) {
           const key  = img ? base(img.src) : null;
           const meta = (key && (META_BY_KEY[key] || fuzzyFindMeta(key, META_BY_KEY))) || {
             title: img?.alt || "", year: "", medium: "", size: ""
@@ -401,13 +424,21 @@
           const cap = document.createElement('div');
           cap.className = 'mobile-caption';
           cap.innerHTML = formatMeta(meta);
-          c.appendChild(cap);
+          card.appendChild(cap);
         }
-        c.tabIndex = -1;
-      });
 
-      if (colEls[1]) colEls[1].style.display = 'none';
-      if (colEls[2]) colEls[2].style.display = 'none';
+        // portrait disables keyboard/lightbox
+        card.tabIndex = -1;
+        return card;
+      }));
+
+      // Insert all finished cards at once → no in-flow movement during load
+      const frag = document.createDocumentFragment();
+      prepared.forEach(c => frag.appendChild(c));
+
+      col1.innerHTML = '';
+      col1.appendChild(frag);
+
     } else {
       // restore desktop columns and interactions (used on rotate to landscape)
       if (colEls[1]) colEls[1].style.removeProperty('display');
