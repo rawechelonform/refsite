@@ -54,7 +54,7 @@ function forceAbsoluteNavigation() {
 
   links.forEach(a => {
     a.addEventListener('click', ev => {
-      // allow modifier/middle clicks on desktop
+      // allow modifier/middle clicks on desktop 
       if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return;
 
       const url = a.dataset.abs || a.href;
