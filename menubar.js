@@ -1,9 +1,9 @@
-// Usage in each page:
+// Usage (in each page):
 //
 // <meta name="viewport" content="width=device-width, initial-scale=1" />
-// <link rel="stylesheet" href="/menubar.css?v=routefix2">
+// <link rel="stylesheet" href="menubar.css?v=routefix3">
 // <div data-menubar class="menubar-slot"></div>
-// <script src="/menubar.js?v=routefix2" defer></script>
+// <script src="menubar.js?v=routefix3" defer></script>
 
 (function () {
   async function injectMenu() {
@@ -12,7 +12,7 @@
 
     try {
       // cache-bust so phones pull the latest HTML
-      const res = await fetch(`/menubar.html?v=routefix2&t=${Date.now()}`, { cache: 'no-cache' });
+      const res = await fetch(`menubar.html?v=routefix3&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
@@ -23,61 +23,60 @@
 
       normalizeMenuHrefs();
       highlightCurrentNav();
-      forceAbsoluteNavigation();   // ← fixes "SAD GIRLS → main.html" on mobile
+      forceAbsoluteNavigation();   // single captured click; robust on mobile
       twoLinePrincipalOnPhones();  // keep the two-line label on phones
     } catch (_) { /* ignore */ }
   }
 
-// Make internal hrefs consistent and store a safe absolute target
-function normalizeMenuHrefs() {
-  document.querySelectorAll('.menu a.menu-link').forEach(a => {
-    const raw = (a.getAttribute('href') || '').trim();
-    if (!raw) return;
+  // Make internal hrefs consistent and store a safe absolute target (do NOT rewrite href)
+  function normalizeMenuHrefs() {
+    document.querySelectorAll('.menu a.menu-link').forEach(a => {
+      const raw = (a.getAttribute('href') || '').trim();
+      if (!raw) return;
 
-    if (/^https?:\/\//i.test(raw)) {
-      // external stays as-is
-      a.dataset.abs = raw;
-    } else {
-      // keep relative path; compute absolute safely from the current page
-      a.dataset.abs = new URL(raw, document.baseURI).href;
-    }
+      if (/^https?:\/\//i.test(raw)) {
+        a.dataset.abs = raw;                    // external as-is
+      } else {
+        // keep relative path; compute absolute safely from the current page
+        a.dataset.abs = new URL(raw, document.baseURI).href;
+      }
 
-    // ensure normal in-tab nav
-    a.setAttribute('target', '_self');
-    a.setAttribute('rel', 'noopener');
-  });
-}
+      // ensure normal in-tab navigation
+      a.setAttribute('target', '_self');
+      a.setAttribute('rel', 'noopener');
+    });
+  }
 
-// Explicitly navigate to the absolute URL on click (capture to beat stray overlays)
-function forceAbsoluteNavigation() {
-  const links = document.querySelectorAll('.menu a.menu-link');
+  // Use ONE captured click handler; avoid pointerdown/touchend races on iOS
+  function forceAbsoluteNavigation() {
+    const links = document.querySelectorAll('.menu a.menu-link');
 
-  links.forEach(a => {
-    a.addEventListener('click', ev => {
-      // allow modifier/middle clicks on desktop 
-      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return;
+    links.forEach(a => {
+      a.addEventListener('click', ev => {
+        // allow modifier/middle clicks on desktop
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return;
 
-      const url = a.dataset.abs || a.href;
-      if (!url) return;
+        const url = a.dataset.abs || a.href;
+        if (!url) return;
 
-      ev.preventDefault();
-      ev.stopPropagation();
+        ev.preventDefault();
+        ev.stopPropagation();
 
-      // tiny one-time debug log; comment out if you prefer
-      try { console.log('[menubar] nav ->', url); } catch {}
+        // Optional debug — comment out if you like
+        try { console.log('[menubar] nav ->', url); } catch (_) {}
 
-      // single, reliable navigation path (prevents falling back to wrong page)
-      window.location.href = url;
-    }, { capture: true });
-  });
-}
+        // single reliable path
+        window.location.href = url;
+      }, { capture: true });
+    });
+  }
 
-  // Keep highlight logic
+  // Highlight the current page
   function highlightCurrentNav() {
     let path = location.pathname;
     if (path.endsWith('/')) path = 'index.html';
     else path = path.split('/').pop() || 'index.html';
-    if (path === 'index.html') path = 'main.html';
+    if (path === 'index.html') path = 'main.html'; // treat index as main
 
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const hrefFile = (a.getAttribute('href') || '').split('/').pop();
@@ -91,7 +90,8 @@ function forceAbsoluteNavigation() {
   // Force PRINCIPAL’S OFFICE to wrap on phones
   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
-    const a = document.querySelector('.menu a[href="/aboutme.html"]');
+    const a = Array.from(document.querySelectorAll('.menu a.menu-link'))
+      .find(x => (x.getAttribute('href') || '').endsWith('aboutme.html'));
     if (!a) return;
     const txt = (a.textContent || '').trim();
     if (!a.innerHTML.includes('<br>')) {

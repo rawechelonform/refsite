@@ -1,4 +1,4 @@
-/* ==== menubar.css — pixel-aligned borders via gradients, mobile tweaks ==== */
+/* ===== menubar.css — pixel-aligned borders via gradients, mobile tweaks ===== */
 
 /* Vars */
 :root {
@@ -6,6 +6,10 @@
   --bg: #000;
   --barh: 24px;     /* visual bar height */
   --linew: 2px;
+
+  /* tiny baseline nudges */
+  --text-nudge: -0.5px;
+  --brand-nudge: var(--text-nudge);
 }
 
 /* Reserve space if injected with JS */
@@ -76,6 +80,7 @@
   min-width: 0;
 }
 
+/* Buttons (no borders; header paints all lines) */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
@@ -109,47 +114,24 @@
 
   transition: background .15s, color .15s;
 
-  /* optional tiny optical nudge for this pixel font */
-  --text-nudge: -0.5px;
+  /* tiny optical nudge for this pixel font */
   transform: translateY(var(--text-nudge));
 }
-
 
 /* Brand button */
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
   font-size: 15px !important;
-  padding: 2px 14px !important;
-}
-
-/* Normalize REF alignment across pages */
-:root {
-  /* tweak if needed: values from -1px .. +1px */
-  --text-nudge: -0.5px;
-  --brand-nudge: var(--text-nudge);
-}
-
-/* all menu items use grid-centering + baseline nudge */
-.menu-link,
-.menu-link:link,
-.menu-link:visited {
-  display: grid;
-  place-items: center;
-  line-height: 1;
-  padding: 0 8px;          /* no vertical padding */
-  transform: translateY(var(--text-nudge));
-}
-
-/* make REF behave exactly the same */
-.brand-link {
+  padding: 0 14px !important;   /* horizontal only */
   display: grid !important;
   place-items: center !important;
   line-height: 1 !important;
-  padding: 0 14px !important;    /* keep only horizontal padding */
   transform: translateY(var(--brand-nudge)) !important;
 }
 
+/* Ensure menu links always receive the tap/click (beats stray overlays) */
+.site-header, .menu, .menu-link { position: relative; z-index: 10; pointer-events: auto; }
 
 /* Hover/current */
 .menu-link:hover,
@@ -182,16 +164,16 @@
   .menu-link  { font-size: 7px; padding: 1px 5px; letter-spacing: 0; }
   .brand-link { font-size: 10.6px !important; padding: 1px 8px !important; letter-spacing: 0; }
 
-  /* new: matches relative or absolute forms */
-.menu a[href$="aboutme.html"] {
-  white-space: normal !important;
-  line-height: 1.06;
-  word-break: normal;
-  text-wrap: balance;
-  padding-left: 4px !important;
-  padding-right: 4px !important;
+  /* Wrap only the long label (works with relative or absolute href) */
+  .menu a[href$="aboutme.html"] {
+    white-space: normal !important;         /* enable wrap */
+    line-height: 1.06;
+    word-break: normal;
+    text-wrap: balance;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
 }
-
 
 /* Very small phones */
 @media (max-width: 360px) {
