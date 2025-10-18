@@ -122,7 +122,7 @@ body {
   height: auto;
 }
 
-/* ===== Caption (left of image) ===== */
+/* ===== Caption (left of image on desktop) ===== */
 .caption {
   margin: 0;
   padding: 0;
@@ -174,36 +174,56 @@ body {
 
 /* ===== Responsive ===== */
 @media (max-width: 720px) {
-  /* phones: even smaller + tighter + closer to image */
   :root {
     --caption-size-min: 6.5px;
     --caption-size-ideal: 1.0vw;
     --caption-size-max: 8px;
     --caption-track: 0.005em;
-    --caption-gap: 6px;             /* bring text a bit closer to image */
+    --caption-gap: 8px;
   }
 
   .page { padding: 16px 10px 32px; }
 
-  .stage-inner { padding-right: 16px; }
-
-  #stageImg { max-width: 100%; }
-
-  /* on small screens, drop caption below the image for readability */
-  .caption {
-    order: 2;                   /* after image */
-    width: auto;
-    max-width: none;
-    text-align: left;
-    padding: 6px 10px 0;
-    margin-top: 6px;
-    line-height: 1.35;
+  /* stack image → caption (flush right), caption sits above thumbnails */
+  .stage-inner {
+    width: var(--rail-w);
+    margin-left: auto;          /* keeps the rail flush right */
+    padding-right: 16px;        /* right gutter on phones */
+    display: flex;
+    flex-direction: column;     /* stack vertically */
+    align-items: flex-end;      /* flush right */
+    gap: var(--caption-gap);
   }
 
+  /* image first, full width of rail */
+  #stageImg {
+    order: 1;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* caption second, between image and thumbnails, flush right */
+  .caption {
+    order: 2;
+    width: auto;
+    max-width: 90%;             /* keeps lines from getting too long */
+    text-align: right;
+    margin: 0;
+    padding: 0;
+    line-height: 1.35;
+
+    /* prevent single-letter wrapping */
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  /* thumbnails below, aligned to same right rail */
   .thumbBarWrap {
-    width: 100%;
+    width: var(--rail-w);
+    margin-left: auto;
     padding-right: 16px;
     text-align: right;
+    margin-top: 10px;
   }
 }
 
