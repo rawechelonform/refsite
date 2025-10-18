@@ -23,6 +23,9 @@
   /* Lightbox caption geometry */
   --lb-gap: 12px;            /* distance from caption to image */
   --lb-edge-margin: 32px;    /* margin from viewport's left edge */
+
+  /* mobile portrait padding for image/caption edge space */
+  --mobile-pad: 22px;
 }
 
 .fonts-loading .section-title { visibility: hidden; }
@@ -166,9 +169,9 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
 .lightbox .edge.left  { left: 0; }
 .lightbox .edge.right { right: 0; }
 
-/* ===== Responsive ===== */
+/* ===== Responsive (original behavior retained) ===== */
 
-/* Tablet & down: wrap columns but SHOW them all (original behavior) */
+/* Tablet & down: wrap columns but SHOW them all */
 @media (max-width: 720px) {
   .cols { padding: 0 10px; gap: 12px; flex-wrap: wrap; }
   .col { flex: 1 1 100%; width: 100%; }
@@ -176,6 +179,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
 
   .hero-title { font-size: clamp(28px, 12vw, 64px); }
 
+  /* on phones/tablets, optionally drop caption below image for readability */
   .lb-caption {
     position: static;
     margin-top: 6px;
@@ -185,22 +189,30 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   }
 }
 
-/* Phone: stack columns (original behavior) */
+/* Phone: stack columns (still show all) */
 @media (max-width: 480px) {
   .cols { flex-direction: column; }
   .col  { width: 100%; }
   #col2, #col3 { display: block; }
 }
 
-/* ======== MOBILE-ONLY ADDENDUM (does not affect desktop) ======== */
+/* ======== MOBILE-ONLY ADDENDUM ======== */
+/* default hidden; only shown in portrait rule below */
 .card .mobile-caption { display: none; }
 
-@media (max-width: 720px) {
-  /* Hide hover label + disable image clicks to “deactivate expand” on mobile */
+/* Portrait phones: stacked with extra edge padding; expand disabled */
+@media (max-width: 720px) and (orientation: portrait) {
+  .cols { padding: 0 var(--mobile-pad); gap: 12px; flex-wrap: nowrap; }
+  .col  { flex: 1 1 100%; width: 100%; }
+  #col2, #col3 { display: none; }
+
+  /* keep hero/banner flush to edges — no change */
+
+  /* deactivate expand/hovers */
   .overlay { display: none !important; }
   .card img { cursor: default; pointer-events: none; }
 
-  /* Mobile captions appear under each image, flush-right to the image edge */
+  /* captions under image, flush-right to image edge */
   .card .mobile-caption {
     display: block;
     margin-top: 6px;
@@ -212,4 +224,14 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
     letter-spacing: 0.005em;
     text-shadow: 0 1px 2px rgba(0,0,0,.55);
   }
+}
+
+/* Landscape phones/tablets: revert to desktop layout + interactions */
+@media (max-width: 720px) and (orientation: landscape) {
+  .cols { padding: 0 24px; gap: var(--gap); flex-wrap: wrap; }
+  .col  { flex: 1 1 0; width: auto; }
+  #col2, #col3 { display: block; }
+  .overlay { display: flex; }
+  .card img { cursor: zoom-in; pointer-events: auto; }
+  .card .mobile-caption { display: none; }
 }

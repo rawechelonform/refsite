@@ -20,8 +20,9 @@
   let currentIndex = 0;
   let META_BY_KEY = {};
 
-  // Helper: mobile breakpoint aligned with CSS
-  const isMobile = () => window.matchMedia("(max-width: 720px)").matches;
+  // Helper: portrait-only mobile matches CSS
+  const isPortraitMobile = () =>
+    window.matchMedia("(max-width: 720px) and (orientation: portrait)").matches;
 
   // ===== Boot: load CSV, map metadata, then render grid =====
   (async () => {
@@ -43,8 +44,8 @@
       console.warn("Machines: CSV load failed; continuing without metadata.", e);
       IMAGES.forEach(img => { img.meta = { title: img.title || "", year: "", medium: "", size: "" }; });
     } finally {
-      render();
-      enhanceMobileStream(); // mobile-only; no-ops on desktop
+      render();              // desktop layout by default
+      enhanceMobileStream(); // adjust if portrait mobile
     }
   })();
 
@@ -115,7 +116,7 @@
     return [l1, l2, l3].filter(Boolean).join("<br>");
   }
 
-  // ===== Lightbox scaffold + controls (unchanged for desktop) =====
+  // ===== Lightbox scaffold + controls (desktop) =====
   function ensureLightbox() {
     let root = document.querySelector(".lightbox");
     if (root) return root;
@@ -264,17 +265,11 @@
     cap.style.removeProperty('max-width');
   }
 
-  window.addEventListener('resize', () => {
-    const lb = document.querySelector('.lightbox.open');
-    if (lb) updateCaptionWidth(lb);
-    // Also re-apply mobile enhancement if needed
-    debounce(enhanceMobileStream, 120)();
-  });
-
   // ===== Cards (grid) =====
   function makeCard(item, index) {
     const card = document.createElement("article");
     card.className = "card";
+    card.dataset.index = String(index); // used to re-bind on rotate
     card.tabIndex = 0;
 
     const img = document.createElement("img");
@@ -291,15 +286,33 @@
     label.textContent = item.title || "";
     overlay.appendChild(label);
 
-    const open = () => openLightboxFromThumb(index, img);
+    // Bind desktop interactions only if not portrait mobile at creation time
+    if (!isPortraitMobile()) {
+      enableDesktopInteractions(card);
+    } else {
+      // reduce keyboard activation in portrait
+      card.tabIndex = -1;
+    }
+
+    card.appendChild(img);
+    card.appendChild(overlay);
+    return card;
+  }
+
+  function enableDesktopInteractions(card) {
+    if (card.dataset.bound === "1") return;
+    const idx = Number(card.dataset.index);
+    const img = card.querySelector("img");
+    if (!img || Number.isNaN(idx)) return;
+
+    const open = () => openLightboxFromThumb(idx, img);
     img.addEventListener("click", open);
     card.addEventListener("keypress", (e) => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
     });
 
-    card.appendChild(img);
-    card.appendChild(overlay);
-    return card;
+    card.tabIndex = 0;
+    card.dataset.bound = "1";
   }
 
   function render() {
@@ -334,54 +347,61 @@
     return rows;
   }
 
-  // ======== MOBILE-ONLY ENHANCER (no-ops on desktop) ========
+  // ======== MOBILE-ONLY ENHANCER (portrait only; restores on rotate) ========
   function enhanceMobileStream() {
-    if (!isMobile()) {
-      // Restore visibility if user resized back to desktop
+    const portrait = isPortraitMobile();
+
+    if (portrait) {
+      const col1 = document.getElementById('col1');
+      if (!col1) return;
+
+      // move all cards into col1 to create a single vertical stream
+      const cards = Array.from(document.querySelectorAll('.col .card'));
+      cards.forEach(c => {
+        col1.appendChild(c);
+        // insert a mobile caption under each image once
+        if (!c.querySelector('.mobile-caption')) {
+          const img  = c.querySelector('img');
+          const key  = img ? base(img.src) : null;
+          const meta = (key && (META_BY_KEY[key] || fuzzyFindMeta(key, META_BY_KEY))) || {
+            title: img?.alt || "", year: "", medium: "", size: ""
+          };
+          const cap = document.createElement('div');
+          cap.className = 'mobile-caption';
+          cap.innerHTML = formatMeta(meta);
+          c.appendChild(cap);
+        }
+        // reduce keyboard activation in portrait
+        c.tabIndex = -1;
+      });
+
+      // hide other columns to remove gaps
+      if (colEls[1]) colEls[1].style.display = 'none';
+      if (colEls[2]) colEls[2].style.display = 'none';
+    } else {
+      // restore desktop columns and interactions (used on rotate to landscape)
       if (colEls[1]) colEls[1].style.removeProperty('display');
       if (colEls[2]) colEls[2].style.removeProperty('display');
-      // Restore tabindex (accessibility) in case it was removed on mobile
-      document.querySelectorAll('.card').forEach(card => {
-        if (card.getAttribute('tabindex') === '-1') card.setAttribute('tabindex', '0');
+
+      // gather all cards in DOM order, then redistribute round-robin
+      const cards = Array.from(document.querySelectorAll('#col1 .card, #col2 .card, #col3 .card'));
+      colEls.forEach(c => c.innerHTML = '');
+      cards.forEach((card, i) => {
+        colEls[i % 3].appendChild(card);
+        enableDesktopInteractions(card);   // ensure clicks/keyboard are live again
+        card.tabIndex = 0;
       });
-      return;
     }
-
-    const col1 = document.getElementById('col1');
-    if (!col1) return;
-
-    // Move ALL cards into col1 to create a single vertical stream (original DOM order)
-    const cards = Array.from(document.querySelectorAll('.col .card'));
-    cards.forEach(c => col1.appendChild(c));
-
-    // Hide other columns so they don't take up space
-    if (colEls[1]) colEls[1].style.display = 'none';
-    if (colEls[2]) colEls[2].style.display = 'none';
-
-    // Insert a mobile caption under each image (flush-right), once
-    cards.forEach(card => {
-      if (!card.querySelector('.mobile-caption')) {
-        const img  = card.querySelector('img');
-        const key  = img ? base(img.src) : null;
-        const meta = (key && (META_BY_KEY[key] || fuzzyFindMeta(key, META_BY_KEY))) || {
-          title: img?.alt || "", year: "", medium: "", size: ""
-        };
-        const cap = document.createElement('div');
-        cap.className = 'mobile-caption';
-        cap.innerHTML = formatMeta(meta);
-        card.appendChild(cap);
-      }
-      // Prevent keyboard-triggered expand on small screens
-      card.setAttribute('tabindex', '-1');
-    });
   }
 
-  // tiny debounce helper reused above
-  function debounce(fn, ms) {
-    let t;
-    return function() {
-      clearTimeout(t);
-      t = setTimeout(fn, ms);
-    };
-  }
+  // resize + rotate handling
+  window.addEventListener("resize", () => {
+    clearTimeout(window.__machines_rerender);
+    window.__machines_rerender = setTimeout(() => {
+      enhanceMobileStream();
+      // keep lightbox caption width correct if open
+      const lb = document.querySelector('.lightbox.open');
+      if (lb) updateCaptionWidth(lb);
+    }, 120);
+  });
 })();
