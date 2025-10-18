@@ -159,48 +159,51 @@ html, body { margin: 0; padding: 0; }
 /* Tablets / small laptops */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
-  .menu-link  { font-size: clamp(7.4px, 1.5vw, 8.4px); padding: 0 6px; letter-spacing: 0; }
-  .brand-link { font-size: clamp(11px, 2.1vw, 12.4px) !important; padding: 0 8px !important; letter-spacing: 0; }
+  .menu-link  { font-size: clamp(7.0px, 1.5vw, 8.2px); padding: 0 6px; letter-spacing: 0; }
+  .brand-link { font-size: clamp(10.8px, 2.1vw, 12.2px) !important; padding: 0 8px !important; letter-spacing: 0; }
 }
 
 /* Phones */
 @media (max-width: 480px) {
-  :root { --barh: 36px; --linew: 1px; } /* taller to accommodate the two-line item */
-  .menu-link  { font-size: clamp(6px, 2.7vw, 7.2px); padding: 0 4px; letter-spacing: 0; }
-  .brand-link { font-size: clamp(9px, 3.4vw, 11px) !important; padding: 0 6px !important; letter-spacing: 0; }
+  :root { --barh: 36px; --linew: 1px; }  /* taller to accommodate two lines */
 
-  /* Two-line wrap for the long label + center the text */
+  .menu-link  { font-size: clamp(5.8px, 2.6vw, 7.0px); padding: 0 4px; letter-spacing: 0; }
+  .brand-link { font-size: clamp(8.8px, 3.3vw, 10.8px) !important; padding: 0 6px !important; letter-spacing: 0; }
+
+  /* PRINCIPAL’S OFFICE → two lines, centered, tiny gap between lines */
   .menu a[href$="aboutme.html"] {
     white-space: normal !important;
-    line-height: 1.06;
     text-wrap: balance;
     word-break: normal;
+    text-align: center;
+    justify-items: center;      /* pairs with display:grid on .menu-link */
+    line-height: 1.14;          /* tiny space between the two lines */
     padding-left: 4px !important;
     padding-right: 4px !important;
-
-    /* center two-line label */
-    text-align: center;
-    justify-items: center; /* uses display:grid from .menu-link */
   }
 }
 
 /* Very small phones */
 @media (max-width: 360px) {
   :root { --barh: 34px; }
-  .menu-link  { font-size: clamp(5.6px, 3.4vw, 6.2px); padding: 0 4px; }
-  .brand-link { font-size: clamp(8.4px, 3.6vw, 10.2px) !important; padding: 0 6px !important; }
+
+  .menu-link  { font-size: clamp(5.4px, 3.3vw, 6.0px); padding: 0 4px; }
+  .brand-link { font-size: clamp(8.2px, 3.6vw, 9.8px) !important; padding: 0 6px !important; }
+
+  /* keep the same tiny interline gap on the smallest screens */
+  .menu a[href$="aboutme.html"] { line-height: 1.14; }
 }
 
 /* --- OVERRIDES: phones — shrink everything EXCEPT REF (placed last so it wins) --- */
 @media (max-width: 480px) {
   .menu-link:not(.brand-link) {
-    font-size: clamp(5.2px, 2.5vw, 6.6px);
+    font-size: clamp(5.0px, 2.5vw, 6.4px);
     letter-spacing: 0;
     padding: 0 4px;
   }
 }
 @media (max-width: 360px) {
   .menu-link:not(.brand-link) {
-    font-size: clamp(4.8px, 3.2vw, 6px);
+    font-size: clamp(4.6px, 3.2vw, 5.8px);
   }
 }
