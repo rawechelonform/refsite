@@ -1,20 +1,18 @@
 // Usage in each page:
 //
 // <meta name="viewport" content="width=device-width, initial-scale=1" />
-// <link rel="stylesheet" href="/menubar.css?v=routefix">
+// <link rel="stylesheet" href="/menubar.css?v=routefix2">
 // <div data-menubar class="menubar-slot"></div>
-// <script src="/menubar-inject.js?v=routefix" defer></script>
+// <script src="/menubar.js?v=routefix2" defer></script>
 
 (function () {
   async function injectMenu() {
-    if (document.body.hasAttribute('data-no-menubar')) return;
-
     const slot = document.querySelector('[data-menubar]');
     if (!slot) return;
 
     try {
-      // cache-bust so phones don’t serve the old HTML
-      const res = await fetch(`/menubar.html?v=routefix&t=${Date.now()}`, { cache: 'no-cache' });
+      // cache-bust so phones pull the latest HTML
+      const res = await fetch(`/menubar.html?v=routefix2&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
@@ -25,12 +23,12 @@
 
       normalizeMenuHrefs();
       highlightCurrentNav();
-      forceAbsoluteNavigation();   // <- key fix
-      twoLinePrincipalOnPhones();  // keep your 2-line label on mobile
+      forceAbsoluteNavigation();   // ← fixes "SAD GIRLS → main.html" on mobile
+      twoLinePrincipalOnPhones();  // keep the two-line label on phones
     } catch (_) { /* ignore */ }
   }
 
-  // Make internal hrefs root-absolute and store the absolute target
+  // Make internal hrefs root-absolute and store absolute targets
   function normalizeMenuHrefs() {
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const raw = (a.getAttribute('href') || '').trim();
@@ -44,23 +42,19 @@
     });
   }
 
-  // On mobile, explicitly navigate to the absolute URL on pointerdown/click
+  // Explicitly navigate to the absolute URL on mobile taps (wins against overlays)
   function forceAbsoluteNavigation() {
     const links = document.querySelectorAll('.menu a.menu-link');
     links.forEach(a => {
       const go = ev => {
-        // allow modifier/middle clicks to behave on desktop
+        // allow modifier/middle clicks on desktop
         if (ev.type === 'click' && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0)) return;
-
         const url = a.dataset.abs || a.href;
         if (!url) return;
-
         ev.preventDefault();
         ev.stopPropagation();
-        window.location.assign(url);  // no chance to fall back to main.html
+        window.location.assign(url);  // no fallback to main.html
       };
-
-      // capture phase ensures we win against stray overlays
       a.addEventListener('pointerdown', go, { capture: true });
       a.addEventListener('touchend', go, { passive: false, capture: true });
       a.addEventListener('click', go, { capture: true });
@@ -89,8 +83,9 @@
     const a = document.querySelector('.menu a[href="/aboutme.html"]');
     if (!a) return;
     const txt = (a.textContent || '').trim();
-    if (a.innerHTML.includes('<br>')) return;
-    a.innerHTML = txt.replace(/(PRINCIPAL[’']?S)\s+(OFFICE)/i, '$1<br>$2');
+    if (!a.innerHTML.includes('<br>')) {
+      a.innerHTML = txt.replace(/(PRINCIPAL[’']?S)\s+(OFFICE)/i, '$1<br>$2');
+    }
   }
 
   if (document.readyState === 'loading') {
