@@ -155,6 +155,7 @@ html, body { margin: 0; padding: 0; }
 /* ==========================
    Responsive sizing
    ========================== */
+
 /* Tablets / small laptops */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
@@ -164,11 +165,11 @@ html, body { margin: 0; padding: 0; }
 
 /* Phones */
 @media (max-width: 480px) {
-  :root { --barh: 36px; --linew: 1px; }       /* taller to accommodate the two-line item */
+  :root { --barh: 36px; --linew: 1px; } /* taller to accommodate the two-line item */
   .menu-link  { font-size: clamp(6px, 2.7vw, 7.2px); padding: 0 4px; letter-spacing: 0; }
   .brand-link { font-size: clamp(9px, 3.4vw, 11px) !important; padding: 0 6px !important; letter-spacing: 0; }
 
-  /* Two-line wrap for the long label (works with relative or absolute href) */
+  /* Two-line wrap for the long label + center the text */
   .menu a[href$="aboutme.html"] {
     white-space: normal !important;
     line-height: 1.06;
@@ -176,6 +177,10 @@ html, body { margin: 0; padding: 0; }
     word-break: normal;
     padding-left: 4px !important;
     padding-right: 4px !important;
+
+    /* center two-line label */
+    text-align: center;
+    justify-items: center; /* uses display:grid from .menu-link */
   }
 }
 
@@ -196,6 +201,6 @@ html, body { margin: 0; padding: 0; }
 }
 @media (max-width: 360px) {
   .menu-link:not(.brand-link) {
-    font-size: clamp(4.8px, 3.2vw, 6.0px);
+    font-size: clamp(4.8px, 3.2vw, 6px);
   }
 }

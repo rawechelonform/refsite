@@ -1,8 +1,21 @@
 /* aboutme.css — scoped styles for About page only */
 
-/* === Input Mono (from your Adobe Fonts kit) === */
+/* === Tokens / fonts === */
 :root{
+  /* match other pages so widths/layout feel identical */
+  --maxw: 1200px;
+
+  /* Input Mono (from your Adobe Fonts kit) */
   --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Make this page's content spacing match Machines/Sad Girls */
+.page {
+  padding: 24px 0 48px;           /* top/bottom padding like the other pages */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
 }
 
 /* ===== Instagram link styling ===== */
@@ -23,7 +36,7 @@
 .about-grid{
   width:100%;
   max-width:var(--maxw);
-  margin:96px auto 20px;   /* moved down ~1 inch */
+  margin:96px auto 20px;   /* sits below the menubar + .page padding */
   display:grid;
   grid-template-columns: 1fr 0.9fr; /* left blurb | right UTD */
   gap: 20px;
@@ -54,7 +67,7 @@
 /* right column (UTD) */
 .utd-wrap{ width:100%; margin:0; display:block; }
 
-/* UTD box (unchanged look) */
+/* UTD box */
 .utd{
   position: relative;                 /* allows overlayed avatar */
   background:#000;
@@ -120,7 +133,11 @@
 
 /* Responsive: stack columns on narrow screens */
 @media (max-width: 900px){
-  .about-grid{ margin-top:72px; grid-template-columns:1fr; gap:14px; }
+  .about-grid{
+    margin-top:72px;     /* slightly closer on smaller screens */
+    grid-template-columns:1fr;
+    gap:14px;
+  }
 }
 
 /* mini avatar perched on UTD top-right */
@@ -174,7 +191,7 @@
   .avatar-overlay{
     top: 0;                     /* anchor to UTD top edge */
     right: -6px;                /* slight overhang */
-    transform: translateY(-100%);/* lift by ~2/3 of own height */
+    transform: translateY(-100%);/* lift by ~full height so it perches */
     width: clamp(60px, 18vw, 92px);
   }
 }
