@@ -28,6 +28,7 @@
       const rows = parseCSV(await res.text());
       META_BY_KEY = buildMetaMap(rows, PAGE_SLUG);
 
+      // attach meta to IMAGES by fuzzy filename key
       IMAGES.forEach(img => {
         const key = base(img.src);
         img.meta =
@@ -101,13 +102,13 @@
     return { targetW, targetH, targetLeft, targetTop };
   }
 
-  // ===== Caption formatter (Sad Girls style, multiline) =====
-  function formatMeta(m) {
-    if (!m) return "";
-    const line1 = [ m.title ? `<em>${m.title}</em>` : "", m.year ].filter(Boolean).join(", ");
-    const line2 = (m.medium || "");
-    const line3 = (m.size || "");
-    return [line1, line2, line3].filter(Boolean).join("<br>");
+  // ===== Caption (Sad Girls style: 3 lines) =====
+  function formatMeta(meta) {
+    if (!meta) return "";
+    const l1 = [ meta.title ? `<em>${meta.title}</em>` : "", meta.year ].filter(Boolean).join(", ");
+    const l2 = (meta.medium || "");
+    const l3 = (meta.size || "");
+    return [l1, l2, l3].filter(Boolean).join("<br>");
   }
 
   // ===== Lightbox scaffold + controls =====
@@ -132,12 +133,14 @@
     `;
     document.body.appendChild(root);
 
+    // clicks
     root.addEventListener("click", (e) => {
       if (e.target.matches("[data-close]")) closeLightbox();
       if (e.target.matches("[data-prev]"))  showRelative(-1);
       if (e.target.matches("[data-next]"))  showRelative(+1);
     });
 
+    // keyboard
     window.addEventListener("keydown", (e) => {
       if (!root.classList.contains("open")) return;
       if (e.key === "Escape")     closeLightbox();
@@ -145,6 +148,7 @@
       if (e.key === "ArrowRight") showRelative(+1);
     });
 
+    // touch swipe
     let startX = null;
     root.addEventListener("touchstart", (e) => {
       if (!root.classList.contains("open")) return;
@@ -169,6 +173,7 @@
     const cap = lb.querySelector("#lbCaption");
     const item = IMAGES[idx];
 
+    // Load into a temp image to get natural size, then size the displayed img
     const temp = new Image();
     temp.onload = () => {
       const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
@@ -176,7 +181,12 @@
       img.style.height = "auto";
       img.src = temp.src;
       img.alt = item.title || "";
+
+      // 3-line caption (Sad Girls style), placed to the LEFT of image
       cap.innerHTML = formatMeta(item.meta);
+
+      // adjust caption width to fill the available space to the left (minus edge margin)
+      updateCaptionWidth(lb);
     };
     temp.src = item.src;
   }
@@ -187,8 +197,8 @@
     const lb = ensureLightbox();
     const backdrop = lb.querySelector(".backdrop");
     lb.classList.add("open");
-    requestAnimationFrame(() => { backdrop.style.opacity = "1"; });
 
+    // grow-from-thumb animation
     const rect = thumbEl.getBoundingClientRect();
     const clone = thumbEl.cloneNode();
     Object.assign(clone.style, {
@@ -201,7 +211,8 @@
       margin: "0",
       transform: "translateZ(0)",
       willChange: "left, top, width, height, transform",
-      cursor: "zoom-out"
+      cursor: "zoom-out",
+      transition: "left 260ms ease, top 260ms ease, width 260ms ease, height 260ms ease"
     });
     document.body.appendChild(clone);
 
@@ -209,7 +220,6 @@
     const natH = thumbEl.naturalHeight || rect.height;
     const { targetW, targetH, targetLeft, targetTop } = computeFit(natW, natH);
 
-    clone.style.transition = "left 260ms ease, top 260ms ease, width 260ms ease, height 260ms ease";
     requestAnimationFrame(() => {
       clone.style.left   = `${targetLeft}px`;
       clone.style.top    = `${targetTop}px`;
@@ -225,15 +235,51 @@
 
   function closeLightbox() {
     const lb = ensureLightbox();
-    const backdrop = lb.querySelector(".backdrop");
-    backdrop.style.opacity = "0";
-    setTimeout(() => lb.classList.remove("open"), 160);
+    lb.classList.remove("open");
   }
 
   function showRelative(delta) {
     currentIndex = (currentIndex + delta + IMAGES.length) % IMAGES.length;
     setLightboxImage(currentIndex);
   }
+
+  // ===== Caption width logic (screen-size aware + enforced) =====
+  function cssPx(varName, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function updateCaptionWidth(lb) {
+    const img = lb.querySelector('.img-wrap > img');
+    const cap = lb.querySelector('#lbCaption');
+    if (!img || !cap) return;
+
+    const imgRect     = img.getBoundingClientRect();
+    const edgeMargin  = cssPx('--lb-edge-margin', 32);   // keep away from left screen edge
+    const available   = Math.max(0, imgRect.left - edgeMargin); // px from left edge to image
+    const usable      = Math.floor(available * 0.98);            // fill ~98% of it
+    const minReadable = 220;                                     // don't crush to nothing
+    const finalW      = Math.max(minReadable, usable);
+
+    // DEBUG: verify it's being called and what it computes
+    console.log('updateCaptionWidth', {
+      imgLeft: imgRect.left,
+      edgeMargin, available, usable, finalW
+    });
+
+    // Force width so changes actually apply (avoid shrink-to-fit surprises)
+    cap.style.setProperty('width', `${finalW}px`, 'important');
+
+    // Make sure no old max-width clamps it
+    cap.style.removeProperty('max-width');
+  }
+
+  // Recompute on resize so it stays perfect
+  window.addEventListener('resize', () => {
+    const lb = document.querySelector('.lightbox.open');
+    if (lb) updateCaptionWidth(lb);
+  });
 
   // ===== Cards (grid) =====
   function makeCard(item, index) {

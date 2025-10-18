@@ -16,12 +16,13 @@
   --card: #0a0a0a;
   --gap: 16px;
 
+  /* Banner */
   --hero-title-size: clamp(36px, 8vw, 96px);
   --hero-title-alpha: 0.75;
 
-  /* Lightbox caption geometry (Option C) */
-  --lb-gap: 18px;                       /* distance between caption and image */
-  --lb-cap-max: min(90ch, 60vw);        /* wide on desktop, but still bounded */
+  /* Lightbox caption geometry */
+  --lb-gap: 12px;            /* distance from caption to image */
+  --lb-edge-margin: 32px;    /* margin from viewport's left edge */
 }
 
 .fonts-loading .section-title { visibility: hidden; }
@@ -36,14 +37,35 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   gap: 18px;
 }
 
-/* ===== HERO ===== */
-.hero { position: relative; width: 100%; display: flex; justify-content: center; margin-bottom: 12px; }
-.hero-img { width: 100%; max-width: var(--maxw); height: auto; display: block; object-fit: cover; }
+/* ===== HERO (banner + overlay title) ===== */
+.hero {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.hero-img {
+  width: 100%;
+  max-width: var(--maxw);
+  height: auto;
+  display: block;
+  object-fit: cover; /* change to 'contain' if you prefer */
+}
 .hero-title {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  font-family: 'RetroByte', monospace; font-size: var(--hero-title-size); line-height: 1;
-  color: rgba(255,255,255,var(--hero-title-alpha)); text-transform: uppercase; text-align: center;
-  letter-spacing: .02em; text-shadow: 0 2px 6px rgba(0,0,0,.45); pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;            /* center text over the banner */
+  font-family: 'RetroByte', monospace;
+  font-size: var(--hero-title-size);
+  line-height: 1;
+  color: rgba(255,255,255,var(--hero-title-alpha));
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 6px rgba(0,0,0,.45);
+  pointer-events: none;           /* clicks go through */
 }
 
 /* ===== 3-column grid ===== */
@@ -55,40 +77,53 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
 .card {
   position: relative;
   background: var(--card);
-  border: none;                /* remove thumbnail border */
+  border: none;                   /* no border on originals */
   border-radius: 0;
   overflow: hidden;
   box-shadow: none;
 }
-.card img { display: block; width: 100%; height: auto; border-radius: 0; image-rendering: crisp-edges; cursor: zoom-in; }
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+  image-rendering: crisp-edges;
+  cursor: zoom-in;
+}
 
-/* hover overlay */
+/* hover overlay (green tint + centered title) */
 .overlay {
-  position: absolute; inset: 0; background: rgba(0,200,0,0.35);
-  opacity: 0; transition: opacity 120ms ease; display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,200,0,0.35); /* green tint */
+  opacity: 0;
+  transition: opacity 120ms ease;
+  display: flex;
+  align-items: center;      /* center vertically */
+  justify-content: center;  /* center horizontally */
+  pointer-events: none;     /* keep image clickable */
 }
 .overlay .label {
-  color: #fff; font-size: 16px; font-weight: 400; text-shadow: 0 1px 2px rgba(0,0,0,.5); letter-spacing: 0.02em;
-  font-family: "input-mono","Input Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",Monaco,"Courier New",monospace;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  letter-spacing: .02em;
+  font-family:
+    "input-mono","Input Mono",
+    ui-monospace, SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", Monaco, "Courier New", monospace;
 }
-.card:hover .overlay, .card:focus-within .overlay { opacity: 1; }
+.card:hover .overlay,
+.card:focus-within .overlay { opacity: 1; }
 .card:hover { background: #111; outline: none; }
 
 /* ===== Lightbox ===== */
-/* Center the frame itself with CSS grid so the image column is truly centered */
-.lightbox {
-  position: fixed; inset: 0; display: none; z-index: 9999;
-  place-items: center;
-}
-.lightbox.open { display: grid; }
+.lightbox { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 9999; }
+.lightbox.open { display: flex; }
+.lightbox .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.82); }
 
-.lightbox .backdrop {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.82);
-  opacity: 0; transition: opacity 180ms ease; cursor: zoom-out;
-}
-
-/* Frame is a container; image is centered; caption is anchored to the image */
+/* frame with centered image + caption anchor */
 .lightbox .frame {
   position: relative;
   max-width: 92vw; max-height: 92vh;
@@ -96,30 +131,27 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   border: none; border-radius: 0;
 }
 
-/* wrapper around the image to anchor caption */
+/* anchor for caption */
 .img-wrap {
-  position: relative;
-  display: grid;                 /* shrink-wrap to image */
+  position: relative;             /* caption positions against this */
+  display: grid;
   place-items: center;
-  max-width: 92vw;               /* viewport-fit bounds */
+  max-width: 92vw;
   max-height: 92vh;
 }
-.img-wrap > img {
-  display: block;
-  /* JS sets precise width to match the grow animation */
-  max-width: none; max-height: none;
-  height: auto;
-  z-index: 1;
-}
+.img-wrap > img { display: block; height: auto; max-width: none; max-height: none; z-index: 1; }
 
-/* caption LEFT of the image, bottom-aligned; does not affect centering */
+/* LEFT caption; JS sets explicit width so your tweaks take effect */
 .lb-caption {
   position: absolute;
+  right: calc(100% + var(--lb-gap));
   bottom: 0;
-  right: calc(100% + var(--lb-gap));     /* place left of the image */
-  max-width: var(--lb-cap-max);
-  white-space: nowrap;                    /* no wrapping on desktop */
-  overflow-wrap: normal; word-break: keep-all;
+
+  /* Let JS fully control width (we set width, not max-width) */
+  max-width: none;
+  white-space: normal;
+  box-sizing: border-box;
+
   color: #ddd; text-align: right; background: transparent;
   font-family: "ocr-a-std","OCR A Std","OCR A",monospace;
   font-size: clamp(8px, 0.9vw, 11px);
@@ -129,12 +161,8 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   z-index: 2;
 }
 
-/* invisible edge click zones for prev/next */
-.lightbox .edge {
-  position: absolute; top: 0; height: 100%;
-  width: 24vw; max-width: 240px;
-  background: transparent; cursor: pointer; z-index: 3;
-}
+/* invisible edge click zones (no visible arrows) */
+.lightbox .edge { position: absolute; top: 0; height: 100%; width: 24vw; max-width: 240px; background: transparent; cursor: pointer; z-index: 3; }
 .lightbox .edge.left  { left: 0; }
 .lightbox .edge.right { right: 0; }
 
@@ -146,16 +174,16 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   .col { width: 50%; }
   .cols { flex-wrap: wrap; }
   #col3 { flex-basis: 100%; display: none; }
+
   .hero-title { font-size: clamp(28px, 12vw, 64px); }
 
-  /* Option C: on phones, caption drops below and wraps naturally */
+  /* on phones, caption drops below image for readability */
   .lb-caption {
     position: static;
     margin-top: 6px;
     right: auto; bottom: auto;
     text-align: left;
     max-width: none;
-    white-space: normal;
   }
 }
 
