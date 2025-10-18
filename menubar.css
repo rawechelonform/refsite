@@ -150,9 +150,8 @@ html, body { margin: 0; padding: 0; }
   color: var(--chrome);
   outline: none;
 }
-
 /* ==========================
-   Responsive sizing
+   Responsive sizing (v: mb8)
    ========================== */
 
 /* Tablets / small laptops */
@@ -162,56 +161,52 @@ html, body { margin: 0; padding: 0; }
   .brand-link { font-size: clamp(11px, 2.1vw, 12.2px) !important; padding: 0 8px !important; letter-spacing: 0; }
 }
 
-/* Phones — PORTRAIT: make bar flatter, keep two-line wrap + add tiny interline gap */
+/* Phones — PORTRAIT: flatter bar + tiny gap in PRINCIPAL’S<br>OFFICE */
 @media (max-width: 480px) and (orientation: portrait) {
-  :root { --barh: 26px; --linew: 1px; }  /* was 36px — flatter */
-  .menu-link  { font-size: clamp(5.6px, 2.6vw, 6.8px); padding: 0 4px; letter-spacing: 0; }
-  .brand-link { font-size: clamp(9.6px, 3.4vw, 11px) !important; padding: 0 6px !important; letter-spacing: 0; }
+  :root { --barh: 26px; --linew: 1px; }  /* make the bar flatter here */
+  .menu-link  { font-size: clamp(5.6px, 2.6vw, 6.8px); padding: 0 4px; }
+  .brand-link { font-size: clamp(9.6px, 3.4vw, 11px) !important; padding: 0 6px !important; }
 
-  /* Two-line wrap for the long label + center + add 1–2px breathing room */
   .menu a[href$="aboutme.html"] {
     white-space: normal !important;
     text-align: center;
-    justify-items: center;     /* works because .menu-link is display:grid */
+    justify-items: center;      /* works because .menu-link is display:grid */
     word-break: normal;
     text-wrap: balance;
-
-    line-height: 1.12;         /* ← tiny gap between “PRINCIPAL’S” and “OFFICE” */
+    line-height: 1.12;          /* 1–2px extra breathing room between lines */
     padding-left: 4px !important;
     padding-right: 4px !important;
-  }
-}
-
-/* Phones — LANDSCAPE on short-height devices:
-   shrink text (except REF), force 2-line wrap + center */
-@media (max-height: 420px) and (orientation: landscape) {
-  :root { --barh: 24px; }  /* keep flatter */
-  .menu-link:not(.brand-link) { font-size: clamp(5.3px, 2.0vw, 6.2px); padding: 0 4px; }
-  .brand-link { font-size: clamp(9.8px, 2.2vw, 11.2px) !important; padding: 0 6px !important; }
-
-  .menu a[href$="aboutme.html"] {
-    white-space: normal !important;
-    text-align: center;
-    justify-items: center;
-    line-height: 1.12;            /* keep the tiny interline gap */
-    padding-left: 3px !important;
-    padding-right: 3px !important;
   }
 }
 
 /* Very small phones — PORTRAIT */
 @media (max-width: 360px) and (orientation: portrait) {
   :root { --barh: 26px; }
-  .menu-link  { font-size: clamp(5.2px, 3.5vw, 6.0px); padding: 0 4px; }
-  .brand-link { font-size: clamp(8.8px, 3.6vw, 10.4px) !important; padding: 0 6px !important; }
+  .menu-link  { font-size: clamp(5.2px, 3.5vw, 6.2px); padding: 0 4px; }
+  .brand-link { font-size: clamp(8.8px, 3.6vw, 10.6px) !important; padding: 0 6px !important; }
 }
 
-/* Final safety: shrink everything EXCEPT REF slightly on phones,
-   placed last so it wins if any earlier rule conflicts */
-@media (max-width: 480px) {
+/* Final portrait-only safety so it DOESN'T affect landscape */
+@media (max-width: 480px) and (orientation: portrait) {
   .menu-link:not(.brand-link) {
     font-size: clamp(5.2px, 2.5vw, 6.6px);
     letter-spacing: 0;
     padding: 0 4px;
+  }
+}
+
+/* Phones — LANDSCAPE (short height): put this LAST so it wins in landscape */
+@media (max-height: 420px) and (orientation: landscape) {
+  :root { --barh: 24px; }  /* keep the bar narrow in landscape */
+  .menu-link:not(.brand-link) { font-size: clamp(5.8px, 2.2vw, 7.4px); padding: 0 4px; }
+  .brand-link { font-size: clamp(10.2px, 2.6vw, 12.2px) !important; padding: 0 6px !important; }
+
+  .menu a[href$="aboutme.html"] {
+    white-space: normal !important;
+    text-align: center;
+    justify-items: center;
+    line-height: 1.12;             /* keep the tiny interline gap */
+    padding-left: 3px !important;
+    padding-right: 3px !important;
   }
 }
