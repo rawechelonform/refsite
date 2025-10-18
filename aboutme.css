@@ -168,3 +168,20 @@
 
 /* If sadgirls.css still overrides, uncomment this hard override: */
 /* .page .carousel .caption p{ font-size:14px !important; line-height:1.6 !important; } */
+
+
+/* Mobile: make the avatar actually perch on the top edge of the UTD box */
+@media (max-width: 900px){
+  .avatar-overlay{
+    position: absolute;
+    top: 0;                     /* anchor to the UTD top edge */
+    right: -6px;                /* let it hang over a bit */
+    transform: translateY(-65%);/* lift by ~2/3 of its own height */
+    width: clamp(60px, 18vw, 92px);
+    height: auto;
+    z-index: 3;
+    pointer-events: none;
+    image-rendering: pixelated;
+    opacity: 0.95;
+  }
+}
