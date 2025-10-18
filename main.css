@@ -1,21 +1,23 @@
 /* ===== main.css — base, layout, fonts, centered hub ===== */
 
-/* Local pixel fonts so dev works without Adobe domain allowance */
+/* Local font faces — replicate Machines so the MENUBAR font exists */
+@font-face { font-family: 'Pixel Warden';
+  src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype');
+  font-display: block;
+}
+@font-face { font-family: 'FS TI-92 ENO C';
+  src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face { font-family: 'RetroByte';
+  src: url('fonts/retrobyte/RetroByte.ttf') format('truetype');
+  font-display: block;
+}
+/* Keep Coral Pixels preload useful */
 @font-face {
   font-family: "Coral Pixels";
   src: url("fonts/coral-pixels/coralpixels-regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Optional: only if you actually have it locally */
-@font-face {
-  font-family: "Pixel Warden";
-  src: url("fonts/pixel-warden/pixel-warden.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+  font-weight: 400; font-style: normal; font-display: swap;
 }
 
 /* ---- Reset ---- */
@@ -56,25 +58,25 @@ html, body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 24px 0 48px;   /* top/bottom rhythm matches machines.css */
+  padding: 24px 0 48px;      /* matches Machines/Sadgirls spacing */
   align-items: center;
   gap: 18px;
 }
 
-/* ---- Hub layout: center in viewport below the bar ----
-   We reserve bar height via .menubar-slot, so simply make the hub fill
-   the remaining space and center its contents. */
+/* ---- Hub layout: center below the bar ----
+   Fill the remaining viewport below the menu bar and center the tiles. */
 .hub {
   width: 100%;
   max-width: var(--maxw);
   margin-inline: auto;
   padding: 0 var(--edge-pad);
 
-  /* Center the 2 tiles in the remaining viewport area */
+  /* Center the 2 tiles in the area between the bar and bottom */
   min-height: calc(100dvh - var(--barh, 32px) - 24px - 48px);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  place-items: center;          /* vertical + horizontal centering */
+  place-content: center;      /* centers the grid block vertically & horizontally */
+  align-items: center;        /* centers items inside their cells */
   gap: var(--gap);
 }
 
@@ -128,17 +130,10 @@ html, body {
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 1000px) {
-  .tile img { max-width: 400px; }
-}
-@media (max-width: 820px) {
-  .tile img { max-width: 360px; }
-}
-@media (max-width: 740px) {
+@media (max-width: 1000px) { .tile img { max-width: 400px; } }
+@media (max-width: 820px)  { .tile img { max-width: 360px; } }
+@media (max-width: 740px)  {
   :root { --gap: 16px; --edge-pad: 16px; }
-  .hub {
-    grid-template-columns: 1fr;
-    place-items: center;
-  }
+  .hub { grid-template-columns: 1fr; }
   .tile img { max-width: 320px; }
 }
