@@ -29,7 +29,7 @@
   --avatar-step-speed: 0.5s;
   --walk-duration: 1.6s;
 
-  /* responsive art width + walk distance */
+  /* responsive art width + walk distance (desktop baseline) */
   --room-w: clamp(260px, 92vw, 640px);
   --walk-end: clamp(220px, 45vw, 450px);
 }
@@ -266,49 +266,43 @@ html, body {
   .computer-btn:active .stack{ transform: none; }
 }
 
-/* === MOBILE-ONLY REFINEMENTS ============================================ */
+/* === MOBILE-ONLY: center avatar + move ACCESS GATE up ==================== */
 @media (max-width: 600px){
 
-  /* 1) make the stage have a concrete width so we can compute center */
+  /* stage sizing so centering math is stable */
   .stage{
     width: min(420px, 92vw);
+    height: clamp(180px, 36vh, 280px);
   }
 
-  /* 2) parameterize the avatar's initial left so we can offset it in calc() */
-  :root{
-    --figure-left: 120px; /* matches .figure left offset */
-    --stage-w: min(420px, 92vw);
-
-    /* center the avatar at the end of the walk:
-       final_x = ((stage_w - avatar_w)/2)
-       walk_end must counter the negative 'left', so subtract --figure-left */
-    --walk-end: calc(((var(--stage-w) - var(--avatar-w)) / 2) - var(--figure-left));
-  }
-
-  /* hook up the variable for initial offset (no change on desktop) */
-  .figure{
-    left: calc(-1 * var(--figure-left));
-  }
-
-  /* 3) move the ACCESS GATE // line higher on mobile by removing vertical centering */
+  /* move the ACCESS GATE // area higher on mobile */
   .wrap{
-    /* stop vertical centering on the gate screen */
     place-items: start center;
     align-content: start;
-    /* a little breathing room from the very top */
     padding-top: clamp(8px, 4vh, 24px);
   }
-
-  /* tighten terminal spacing so the line sits higher */
   .terminal{
     margin-top: 0;
     row-gap: clamp(4px, 1.5vh, 8px);
     padding-top: clamp(8px, 2.5vh, 16px);
     padding-bottom: clamp(8px, 3vh, 20px);
   }
+  .line{ margin-top: 0; }
 
-  /* ensure the ACCESS GATE // line itself doesn’t push down */
-  .line{
-    margin-top: 0;
+  /* avatar centers on mobile but keeps desktop animation name so JS works */
+  .figure{
+    left: 50%;
+    transform: translateX(calc(-50% - 120px));
+  }
+  .figure.forward{
+    background-position: calc(-2 * var(--avatar-w)) var(--avatar-cropY);
+    transform: translateX(-50%);
+  }
+
+  /* override existing walk-in to finish centered */
+  @keyframes walk-in{
+    0%   { transform: translateX(calc(-50% - 120px)); opacity: 0; }
+    10%  { opacity: 1; }
+    100% { transform: translateX(-50%); }
   }
 }
