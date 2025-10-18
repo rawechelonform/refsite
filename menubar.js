@@ -1,9 +1,9 @@
-// Usage (in each page):
+// Usage in each page:
 //
 // <meta name="viewport" content="width=device-width, initial-scale=1" />
-// <link rel="stylesheet" href="menubar.css?v=routefix3">
+// <link rel="stylesheet" href="menubar.css?v=mb8">
 // <div data-menubar class="menubar-slot"></div>
-// <script src="menubar.js?v=routefix3" defer></script>
+// <script src="menubar.js?v=mb8" defer></script>
 
 (function () {
   async function injectMenu() {
@@ -11,8 +11,8 @@
     if (!slot) return;
 
     try {
-      // cache-bust so phones pull the latest HTML
-      const res = await fetch(`menubar.html?v=routefix3&t=${Date.now()}`, { cache: 'no-cache' });
+      // Cache-bust so phones pull the latest HTML
+      const res = await fetch(`menubar.html?v=mb8&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
@@ -21,37 +21,40 @@
       const menuRoot = tmp.querySelector('.top-margin') || tmp.firstElementChild;
       if (menuRoot) slot.replaceWith(menuRoot);
 
-      normalizeMenuHrefs();
-      highlightCurrentNav();
-      forceAbsoluteNavigation();   // single captured click; robust on mobile
-      twoLinePrincipalOnPhones();  // keep the two-line label on phones
+      normalizeMenuHrefs();       // compute safe absolute targets per current folder
+      highlightCurrentNav();      // add .is-current + aria-current
+      forceAbsoluteNavigation();  // single captured click handler (robust on mobile)
+      twoLinePrincipalOnPhones(); // wrap the long label on phones
     } catch (_) { /* ignore */ }
   }
 
-  // Make internal hrefs consistent and store a safe absolute target (do NOT rewrite href)
+  // Compute absolute targets relative to the *current folder* (prevents root-bounce on GH Pages)
   function normalizeMenuHrefs() {
+    // Project folder of the current page (e.g. /refsite/)
+    const ROOT = location.pathname.replace(/[^/]+$/, '');
+
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const raw = (a.getAttribute('href') || '').trim();
       if (!raw) return;
 
-      if (/^https?:\/\//i.test(raw)) {
-        a.dataset.abs = raw;                    // external as-is
-      } else {
-        // keep relative path; compute absolute safely from the current page
-        a.dataset.abs = new URL(raw, document.baseURI).href;
-      }
+      // External stays as-is; internal is resolved against the current folder
+      const abs = /^https?:\/\//i.test(raw)
+        ? raw
+        : new URL(raw, location.origin + ROOT).href;
 
-      // ensure normal in-tab navigation
+      // Optional tiny cache-bust so stubborn mobile caches re-resolve
+      const u = new URL(abs);
+      if (!/^https?:\/\//i.test(raw)) u.searchParams.set('mb', 'sgfix2');
+
+      a.dataset.abs = u.href;
       a.setAttribute('target', '_self');
       a.setAttribute('rel', 'noopener');
     });
   }
 
-  // Use ONE captured click handler; avoid pointerdown/touchend races on iOS
+  // Use ONE captured click; avoid pointerdown/touchend races on iOS
   function forceAbsoluteNavigation() {
-    const links = document.querySelectorAll('.menu a.menu-link');
-
-    links.forEach(a => {
+    document.querySelectorAll('.menu a.menu-link').forEach(a => {
       a.addEventListener('click', ev => {
         // allow modifier/middle clicks on desktop
         if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return;
@@ -62,16 +65,13 @@
         ev.preventDefault();
         ev.stopPropagation();
 
-        // Optional debug — comment out if you like
-        try { console.log('[menubar] nav ->', url); } catch (_) {}
-
         // single reliable path
         window.location.href = url;
       }, { capture: true });
     });
   }
 
-  // Highlight the current page
+  // Highlight the current page in the menu
   function highlightCurrentNav() {
     let path = location.pathname;
     if (path.endsWith('/')) path = 'index.html';
@@ -87,7 +87,7 @@
     });
   }
 
-  // Force PRINCIPAL’S OFFICE to wrap on phones 
+  // Force “PRINCIPAL’S OFFICE” to wrap on phones
   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
     const a = Array.from(document.querySelectorAll('.menu a.menu-link'))
