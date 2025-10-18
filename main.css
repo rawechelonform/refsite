@@ -8,7 +8,7 @@
   --bg: #000;
   --fg: #fff;
 
-  /* image sizing */
+  /* image sizing (desktop) */
   --tile-min: 240px;
   --tile-ideal: 28vw;
   --tile-max: 600px;
@@ -72,13 +72,14 @@ img.swap-on-hover {
   width: clamp(var(--tile-min), var(--tile-ideal), var(--tile-max));
   height: auto;
   border-radius: 0;
+  margin: 0; /* desktop inline in grid */
 }
 
-/* subtle hover lift (desktop only; overridden on mobile) */
+/* subtle hover lift (desktop only; disabled on mobile below) */
 .tile:hover img,
 .tile:focus img { transform: translateY(-2px); }
 
-/* Hover label */
+/* Hover label (desktop default: hidden) */
 .tile::after {
   content: attr(data-label);
   position: absolute;
@@ -91,10 +92,11 @@ img.swap-on-hover {
   letter-spacing: 0.5px;
   color: #fff;
   text-shadow: var(--label-shadow);
-  opacity: 0;                /* desktop: hidden until hover/focus */
+  opacity: 0;
   transform: none;
   transition: none;
-  pointer-events: none;
+  pointer-events: none; /* never block clicks */
+  z-index: 1;
 }
 
 /* Dark wash behind label */
@@ -103,54 +105,55 @@ img.swap-on-hover {
   position: absolute;
   inset: 0;
   background: var(--label-tint);
-  opacity: 0;                /* desktop: hidden until hover/focus */
+  opacity: 0;
   transition: none;
-  pointer-events: none;
+  pointer-events: none; /* never block clicks */
+  z-index: 0;
 }
 
 /* Desktop: show on hover/focus */
 .tile:hover::after,
 .tile:focus::after,
 .tile:hover::before,
-.tile:focus::before {
-  opacity: 1;
-  transform: none;
-}
+.tile:focus::before { opacity: 1; }
 
-/* ===== Phones & narrow screens ===== */
-@media (max-width: 900px) {
+/* ===== Phones & touch devices ===== */
+/* Use hover:none / coarse pointer to catch real phones/tablets */
+@media (hover: none), (pointer: coarse), (max-width: 900px) {
   :root {
     /* each image fits within screen width with margin/border room */
-    --tile-ideal: 92vw;
-    --gap-ideal: 7vh;
-    /* bigger label on mobile for readability */
-    --label-size: clamp(18px, 6vw, 40px);
+    --label-size: clamp(18px, 6vw, 40px); /* bigger label on mobile */
   }
 
-  /* stack vertically: sad girls first, then machines;
-     add comfortable page padding to create the "border" around images */
+  /* stack vertically: sad girls first (HTML order), then machines */
   .hub {
-    grid-auto-flow: row;
-    row-gap: clamp(24px, var(--gap-ideal), 56px);
-    column-gap: 0;
-    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;    /* center tiles horizontally */
+    justify-content: flex-start;
+    gap: min(7vh, 56px);    /* vertical space between tiles */
     min-height: auto;
-    padding: 4vw 4vw 8vw;   /* creates the visual border around images */
+    padding: 4vw;           /* creates the visual border around images */
   }
 
-  /* images: never exceed container; leave some breathing room */
+  /* tiles centered; width auto so image sets width */
+  .tile {
+    width: auto;
+  }
+
+  /* CENTER images and keep within viewport width */
   img.swap-on-hover {
-    width: min(92vw, 720px);
+    width: 92vw !important;    /* fit with small border */
+    max-width: 720px;
     height: auto;
+    margin: 0 auto;            /* center */
   }
 
   /* labels: ALWAYS visible on mobile; no hover needed */
   .tile::after,
-  .tile::before {
-    opacity: 1;
-  }
+  .tile::before { opacity: 1; }
 
-  /* disable hover lift on mobile */
+  /* disable any hover lift */
   .tile:hover img,
   .tile:focus img { transform: none; }
 }

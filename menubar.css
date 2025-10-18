@@ -1,15 +1,11 @@
-/* ===== menubar.css — compact, responsive, auto-shrinking labels ===== */
+/* ===== menubar.css — compact, responsive, fixed z-index ===== */
 
 /* Vars */
 :root {
   --chrome: rgb(143,143,143);
   --bg: #000;
-  --barh: 24px;
+  --barh: 24px;   /* default bar height */
   --linew: 2px;
-
-  /* min font sizes for autoshrink */
-  --minfs-link: 7px;
-  --minfs-brand: 11px;
 }
 
 /* Reserve space if injected with JS */
@@ -18,6 +14,7 @@
 /* Full-bleed wrapper with top/bottom rules */
 .top-margin {
   position: relative;
+  z-index: 999;            /* raised to sit above any overlays */
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
@@ -39,7 +36,7 @@
 /* Header row */
 .site-header {
   position: relative;
-  z-index: 1;
+  z-index: 1000;          /* above page content */
   width: 100%;
   height: var(--barh);
   display: flex;
@@ -71,7 +68,7 @@
   flex: 1 1 0;
   display: flex;
   margin: 0;
-  min-width: 0; /* allow ellipsis/shrink */
+  min-width: 0; /* allow shrink/ellipsis */
 }
 
 /* Buttons */
@@ -95,20 +92,19 @@
   box-sizing: border-box;
   border-radius: 0;
 
-  font-size: 10px;        /* base size; JS may shrink from here */
+  font-size: 10px;
   padding: 2px 8px;
 
-  border-left: 2px solid var(--chrome);
-  border-right: 2px solid var(--chrome);
+  border-left: var(--linew) solid var(--chrome);
+  border-right: var(--linew) solid var(--chrome);
   border-top: none;
   border-bottom: none;
 
   transition: background .15s, color .15s;
 
-  /* keep on one line; JS will shrink before this overflows */
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
 }
 
 /* Remove double borders between neighbors */
@@ -118,7 +114,7 @@
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
-  font-size: 15px !important;   /* base size; JS may shrink */
+  font-size: 15px !important;
   padding: 2px 14px !important;
 }
 
@@ -147,23 +143,22 @@
 }
 
 /* =========================
-   Responsiveness (still useful as ceilings)
+   Responsiveness
    ========================= */
 @media (max-width: 720px) {
-  :root { --barh: 22px; }
+  :root { --barh: 22px; --linew: 1.5px; }
   .brand-link { font-size: 14px !important; padding: 2px 12px !important; }
   .menu-link  { font-size: 9.5px; padding: 2px 6px; }
 }
 
-/* Small phones — JS will shrink below these if needed */
 @media (max-width: 480px) {
-  :root { --barh: 26px; }
-  .menu-link  { font-size: 9.5px; padding: 1px 6px; }
-  .brand-link { font-size: 13.5px !important; padding: 1px 10px !important; }
+  :root { --barh: 26px; --linew: 1px; }
+  .menu-link  { font-size: 9.4px; padding: 1px 5px; }
+  .brand-link { font-size: 13.2px !important; padding: 1px 9px !important; }
 }
 
 @media (max-width: 360px) {
   :root { --barh: 24px; }
-  .menu-link  { font-size: 9px; }
-  .brand-link { font-size: 13px !important; }
+  .menu-link  { font-size: 9px; padding: 1px 4px; }
+  .brand-link { font-size: 12.8px !important; }
 }

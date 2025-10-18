@@ -1,15 +1,27 @@
 // main.js — page-specific for main.html
-// Handles hover swapping on desktop only.
-// On mobile (no-hover devices), we do nothing so the base image stays put
-// and the label is always visible via CSS.
+// Desktop: swap to hover image on hover/focus.
+// Mobile (no hover / coarse pointer): disable swapping entirely so taps scroll/click cleanly.
 
 (() => {
   'use strict';
 
-  // Skip all swap wiring on devices that don't support hover (phones/tablets)
-  const isNoHover = window.matchMedia && window.matchMedia('(hover: none)').matches;
-  if (isNoHover) return;
+  // Only enable swapping on devices that *actually* support hover + fine pointer (desktops)
+  const supportsHoverFine =
+    window.matchMedia &&
+    window.matchMedia('(hover: hover)').matches &&
+    window.matchMedia('(pointer: fine)').matches;
 
+  if (!supportsHoverFine) {
+    // On mobile/touch: ensure base images are shown and no touch handlers interfere
+    // If a previous script added hover src into `src`, restore data-src if present
+    document.querySelectorAll('img.swap-on-hover').forEach(img => {
+      const normal = img.getAttribute('data-src');
+      if (normal) img.src = normal;
+    });
+    return; // no listeners; tapping will follow links, and scrolling works
+  }
+
+  // Desktop hover wiring
   function wireSwap(img) {
     const normal = img.getAttribute('data-src') || img.getAttribute('src');
     const hover  = img.getAttribute('data-hover-src');
@@ -26,7 +38,7 @@
     img.addEventListener('mouseenter', toHover);
     img.addEventListener('mouseleave', toNormal);
 
-    // Keyboard focus parity when tabbing to the link (desktop)
+    // Keyboard focus parity when tabbing to the link
     const link = img.closest('a');
     if (link) {
       link.addEventListener('focus', toHover);
