@@ -466,9 +466,13 @@
 })();
 
 
+
+
+
+
+
 // ===== Crosshair (desktop only) ==========================================
 (function initCrosshair() {
-  // Only run on mouse/desktop devices
   const showCrosshair = window.matchMedia &&
     window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (!showCrosshair) return;
@@ -487,70 +491,86 @@
   const v   = root.querySelector('.crosshair__v');
   const dot = root.querySelector('.crosshair__dot');
 
-  // Smoothed follower (lerp) so the crosshair lags the mouse slightly
-  let targetX = window.innerWidth  / 2;
-  let targetY = window.innerHeight / 2;
+  // Lagged follower
+  let targetX = innerWidth/2, targetY = innerHeight/2;
   let curX = targetX, curY = targetY;
-  const ease = 0.15; // lower = more lag
-
+  const ease = 0.15;
   let rafId = null;
+
   function loop() {
     curX += (targetX - curX) * ease;
     curY += (targetY - curY) * ease;
-
-    // Position lines and center square
     h.style.top    = `${curY}px`;
     v.style.left   = `${curX}px`;
     dot.style.left = `${curX}px`;
     dot.style.top  = `${curY}px`;
-
     rafId = requestAnimationFrame(loop);
   }
 
-  // Start following after first mouse move
   function onMove(e) {
-    targetX = e.clientX;
-    targetY = e.clientY;
+    targetX = e.clientX; targetY = e.clientY;
     if (rafId == null) rafId = requestAnimationFrame(loop);
   }
-  window.addEventListener('mousemove', onMove, { passive: true });
+  addEventListener('mousemove', onMove, { passive: true });
 
-  // Explosion builder (SVG with non-scaling stroke)
-  function createBoom(x, y, delayMs = 0) {
-    const svg  = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('class','crosshair__boom');
-    svg.setAttribute('viewBox','0 0 100 100');
-    svg.style.left = `${x}px`;
-    svg.style.top  = `${y}px`;
-    if (delayMs) svg.style.animationDelay = `${delayMs}ms`;
+  // Helper to make a boom box (expands via width/height so border stays thin)
+  function boomAt(x, y) {
+    const box = document.createElement('div');
+    box.className = 'crosshair__boomBox';
 
-    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    rect.setAttribute('class','crosshair__boomRect');
-    rect.setAttribute('x','0'); rect.setAttribute('y','0');
-    rect.setAttribute('width','100'); rect.setAttribute('height','100');
+    // start tiny (0x0) centered
+    box.style.width  = '0px';
+    box.style.height = '0px';
+    box.style.left   = `${x}px`;
+    box.style.top    = `${y}px`;
+    root.appendChild(box);
 
-    svg.appendChild(rect);
-    root.appendChild(svg);
-    svg.addEventListener('animationend', () => svg.remove(), { once: true });
+    // target size: bigger than the page diagonal so it flies off-screen
+    const diagonal = Math.hypot(innerWidth, innerHeight);
+    const finalSize = diagonal * 2.2; // overshoot so it clears every edge
+    const duration = 1100;            // ms, pure linear motion
+    const fadeTail = 120;             // fade out near the end
+
+    const start = performance.now();
+    (function tick(now) {
+      const t = Math.min(1, (now - start) / duration); // 0..1
+      const size = finalSize * t;
+
+      // keep centered on (x, y): left/top = center - size/2
+      const half = size / 2;
+      box.style.width  = `${size}px`;
+      box.style.height = `${size}px`;
+      box.style.left   = `${x - half}px`;
+      box.style.top    = `${y - half}px`;
+
+      // fade only at the very end (no ghost trail)
+      if (t > (duration - fadeTail) / duration) {
+        const k = (t - (duration - fadeTail)/duration) / (fadeTail/duration);
+        box.style.opacity = String(1 - k);
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        box.remove();
+      }
+    })(start);
   }
 
-  // Single continuous explosion per click (cleanest look)
   function boom() {
-    const x = curX, y = curY;
-    createBoom(x, y);
+    boomAt(curX, curY); // single clean burst
 
-    // If you want a triple-burst later WITHOUT tailing, uncomment with larger gaps:
-    // createBoom(x, y, 0);
-    // createBoom(x, y, 240);
-    // createBoom(x, y, 480);
+    // If you want a subtle triple (still no tails), uncomment:
+    // setTimeout(() => boomAt(curX, curY), 200);
+    // setTimeout(() => boomAt(curX, curY), 400);
   }
-  window.addEventListener('click', boom, { passive: true });
+  addEventListener('click', boom, { passive: true });
 
-  // Keep centered if resized before the first mouse move
-  window.addEventListener('resize', () => {
+  // Center if resized before first move
+  addEventListener('resize', () => {
     if (rafId == null) {
-      curX = targetX = window.innerWidth  / 2;
-      curY = targetY = window.innerHeight / 2;
+      curX = targetX = innerWidth/2;
+      curY = targetY = innerHeight/2;
       h.style.top    = `${curY}px`;
       v.style.left   = `${curX}px`;
       dot.style.left = `${curX}px`;
