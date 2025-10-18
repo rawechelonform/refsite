@@ -28,38 +28,39 @@
     } catch (_) { /* ignore */ }
   }
 
-  // Make internal hrefs root-absolute and store absolute targets
-  function normalizeMenuHrefs() {
-    document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      const raw = (a.getAttribute('href') || '').trim();
-      if (!raw) return;
-      if (/^https?:\/\//i.test(raw)) return; // external
+  // Make internal hrefs consistent and store a safe absolute target
+function normalizeMenuHrefs() {
+  document.querySelectorAll('.menu a.menu-link').forEach(a => {
+    const raw = (a.getAttribute('href') || '').trim();
+    if (!raw) return;
+    if (/^https?:\/\//i.test(raw)) {        // external stays as-is
+      a.dataset.abs = raw;
+      return;
+    }
+    // Keep relative paths (works in subfolders), but compute a safe absolute
+    a.dataset.abs = new URL(raw, document.baseURI).href;
+    a.setAttribute('rel', 'noopener');
+  });
+}
 
-      const clean = '/' + raw.replace(/^\/+/, '');
-      a.setAttribute('href', clean);
-      a.dataset.abs = new URL(clean, location.origin).href;
-      a.setAttribute('rel', 'noopener');
-    });
-  }
-
-  // Explicitly navigate to the absolute URL on mobile taps (wins against overlays)
-  function forceAbsoluteNavigation() {
-    const links = document.querySelectorAll('.menu a.menu-link');
-    links.forEach(a => {
-      const go = ev => {
-        // allow modifier/middle clicks on desktop
-        if (ev.type === 'click' && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0)) return;
-        const url = a.dataset.abs || a.href;
-        if (!url) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        window.location.assign(url);  // no fallback to main.html
-      };
-      a.addEventListener('pointerdown', go, { capture: true });
-      a.addEventListener('touchend', go, { passive: false, capture: true });
-      a.addEventListener('click', go, { capture: true });
-    });
-  }
+ // Explicitly navigate to the absolute URL on mobile taps
+function forceAbsoluteNavigation() {
+  const links = document.querySelectorAll('.menu a.menu-link');
+  links.forEach(a => {
+    const go = ev => {
+      // allow modifier/middle clicks on desktop
+      if (ev.type === 'click' && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0)) return;
+      const url = a.dataset.abs || a.href;
+      if (!url) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.location.assign(url);
+    };
+    a.addEventListener('pointerdown', go, { capture: true });
+    a.addEventListener('touchend',   go, { passive: false, capture: true });
+    a.addEventListener('click',      go, { capture: true });
+  });
+}
 
   // Keep highlight logic
   function highlightCurrentNav() {

@@ -182,16 +182,16 @@
   .menu-link  { font-size: 7px; padding: 1px 5px; letter-spacing: 0; }
   .brand-link { font-size: 10.6px !important; padding: 1px 8px !important; letter-spacing: 0; }
 
-  /* Wrap only the long label */
-  .menu a[href="/aboutme.html"] {
-    white-space: normal !important;         /* enable wrap */
-    line-height: 1.06;
-    word-break: normal;
-    text-wrap: balance;
-    padding-left: 4px !important;
-    padding-right: 4px !important;
-  }
+  /* new: matches relative or absolute forms */
+.menu a[href$="aboutme.html"] {
+  white-space: normal !important;
+  line-height: 1.06;
+  word-break: normal;
+  text-wrap: balance;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
 }
+
 
 /* Very small phones */
 @media (max-width: 360px) {
