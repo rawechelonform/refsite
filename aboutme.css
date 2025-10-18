@@ -174,7 +174,7 @@
   .avatar-overlay{
     top: 0;                     /* anchor to UTD top edge */
     right: -6px;                /* slight overhang */
-    transform: translateY(-140%);/* lift by ~2/3 of own height */
+    transform: translateY(-100%);/* lift by ~2/3 of own height */
     width: clamp(60px, 18vw, 92px);
   }
 }
