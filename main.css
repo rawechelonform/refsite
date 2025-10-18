@@ -103,30 +103,33 @@ html, body {
   outline-offset: 4px;
 }
 
-/* ---- Desktop-only hover labels ---- */
+/* ---- Labels (same style as desktop hover) ----
+   Base: create the pseudo-element but keep it hidden; this preserves desktop behavior */
+.tile::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  font-family: "UnifrakturMaguntia", serif;
+  font-size: clamp(22px, 4vw, 46px);
+  color: #fff;
+  text-shadow: 0 0 6px #000, 0 0 14px #000;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  opacity: 0;                      /* hidden by default */
+  transition: opacity .15s ease-in-out;
+}
+
+/* Desktop/laptop (hover-capable): reveal on hover or keyboard focus — unchanged */
 @media (hover: hover) and (pointer: fine) {
-  .tile::after {
-    content: attr(data-label);
-    position: absolute;
-    inset: 50% auto auto 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    font-family: "UnifrakturMaguntia", serif;
-    font-size: clamp(22px, 4vw, 46px);
-    color: #fff;
-    text-shadow: 0 0 6px #000, 0 0 14px #000;
-    letter-spacing: .01em;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity .15s ease-in-out;
-  }
   .tile:hover::after,
   .tile:focus-visible::after { opacity: 1; }
 }
 
-/* no-hover devices: never show labels */
-@media (hover: none) {
-  .tile::after { content: none; }
+/* Touch/no-hover devices: always show the label so titles are visible on mobile */
+@media (hover: none), (pointer: coarse) {
+  .tile::after { opacity: 1; }
 }
 
 /* ---- Responsive ---- */
