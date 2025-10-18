@@ -1,43 +1,56 @@
+// Usage in each page:
+//
+// <link rel="stylesheet" href="/menubar.css">
+// <div data-menubar class="menubar-slot"></div>
+// <script src="/menubar-inject.js" defer></script>
+
 (function () {
   async function injectMenu() {
-    // Allow pages to opt out with <body data-no-menubar>
     if (document.body.hasAttribute('data-no-menubar')) return;
 
     const slot = document.querySelector('[data-menubar]');
     if (!slot) return;
 
     try {
-      // Cache-bust so updates to menubar.html show up
-      const res = await fetch('menubar.html?v=4', { cache: 'no-cache' });
+      const res = await fetch('/menubar.html?v=7', { cache: 'no-cache' });
       if (!res.ok) return;
 
-      // Replace the placeholder with the real menu HTML
-      slot.outerHTML = await res.text();
+      const html = await res.text();
 
-      // Highlight the current page in the menu
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html.trim();
+
+      const menuRoot = tmp.querySelector('.top-margin') || tmp.firstElementChild;
+      if (menuRoot) slot.replaceWith(menuRoot);
+
+      normalizeMenuHrefs();
       highlightCurrentNav();
     } catch (_) {
-      // silently ignore fetch errors
+      /* ignore */
     }
   }
 
+  function normalizeMenuHrefs() {
+    document.querySelectorAll('.menu a.menu-link').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (!href) return;
+      if (/^https?:\/\//i.test(href)) return;
+      if (!href.startsWith('/')) a.setAttribute('href', '/' + href.replace(/^\/+/, ''));
+    });
+  }
+
   function highlightCurrentNav() {
-    // Get the current filename only (ignore folders, query, hash)
     let path = location.pathname;
     if (path.endsWith('/')) path = 'index.html';
     else path = path.split('/').pop() || 'index.html';
 
-    // Treat index.html as main.html in this site
     if (path === 'index.html') path = 'main.html';
 
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      // Compare just the filename part of each link
       const hrefFile = (a.getAttribute('href') || '').split('/').pop();
       const isCurrent = hrefFile === path;
 
       a.classList.toggle('is-current', isCurrent);
-
-      // Expose current page to assistive tech
       if (isCurrent) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });

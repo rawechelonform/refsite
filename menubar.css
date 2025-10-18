@@ -1,21 +1,17 @@
-/* ===== Neocities: compact menubar — smaller bar + fonts, no gaps, fill page ===== */
+/* ===== menubar.css — compact, responsive, no gaps, full-bleed ===== */
 
-/* Vars (smaller) */
+/* Vars */
 :root {
   --chrome: rgb(143,143,143);
   --bg: #000;
-  --barh: 24px;   /* was 32px */
+  --barh: 24px;   /* default bar height */
   --linew: 2px;
 }
 
-@media (max-width: 720px) {
-  :root { --barh: 22px; }
-}
-
-/* Reserve space if you inject with JS */
+/* Reserve space if injected with JS */
 .menubar-slot { display: block; height: var(--barh); }
 
-/* Full-bleed wrapper */
+/* Full-bleed wrapper with top/bottom rules */
 .top-margin {
   position: relative;
   width: 100vw;
@@ -23,8 +19,6 @@
   margin-right: calc(50% - 50vw);
   background: var(--bg);
 }
-
-/* Page-wide horizontal rules */
 .top-margin::before,
 .top-margin::after {
   content: "";
@@ -52,7 +46,7 @@
   box-sizing: border-box;
 }
 
-/* Nav */
+/* Nav container */
 .menu-bar { width: 100%; }
 
 /* Equal-width buttons, no gaps */
@@ -69,15 +63,15 @@
   gap: 0;
 }
 
-/* Each item fills column space */
+/* Each item fills available space */
 .menu > li {
   flex: 1 1 0;
   display: flex;
   margin: 0;
-  min-width: 0;
+  min-width: 0; /* allow ellipsis */
 }
 
-/* Buttons (smaller font + padding) */
+/* Buttons */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
@@ -98,8 +92,8 @@
   box-sizing: border-box;
   border-radius: 0;
 
-  font-size: 10px;           /* was 11px */
-  padding: 2px 8px;          /* was 4px 10px */
+  font-size: 10px;
+  padding: 2px 8px;
 
   /* vertical borders only */
   border-left: 2px solid var(--chrome);
@@ -108,20 +102,25 @@
   border-bottom: none;
 
   transition: background .15s, color .15s;
+
+  /* prevent wrapping/spill */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Remove double borders between neighbors */
 .menu > li + li .menu-link { border-left: none; }
 
-/* REF button — smaller too (you mentioned 17px earlier; this version makes it compact) */
+/* Brand button */
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
-  font-size: 15px !important;   /* reduce here if you want even smaller */
-  padding: 2px 14px !important; /* keep proportionate to smaller bar */
+  font-size: 15px !important;
+  padding: 2px 14px !important;
 }
 
-/* Hover (works even on current page) */
+/* Hover */
 .menu-link:hover,
 .menu-link.is-current:hover,
 .brand-link:hover {
@@ -129,7 +128,7 @@
   color: #000;
 }
 
-/* Current page baseline remains black until hover */
+/* Current page baseline */
 .menu-link.is-current {
   background: var(--bg);
   color: var(--chrome);
@@ -145,8 +144,34 @@
   outline: none;
 }
 
-/* Extra-compact on small screens */
+/* =========================
+   Responsiveness
+   ========================= */
+
+/* Tablets / small laptops */
 @media (max-width: 720px) {
+  :root { --barh: 22px; }
   .brand-link { font-size: 14px !important; padding: 2px 12px !important; }
   .menu-link  { font-size: 9.5px; padding: 2px 6px; }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  :root { --barh: 26px; } /* a touch taller for legibility */
+  .menu-link  { 
+    font-size: clamp(8px, 2.8vw, 10px);
+    padding: 1px 6px;
+  }
+  .brand-link { 
+    font-size: clamp(12px, 3.4vw, 14px) !important;
+    padding: 1px 10px !important;
+    letter-spacing: .01em;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 360px) {
+  :root { --barh: 24px; }
+  .menu-link  { font-size: clamp(7px, 2.6vw, 9px); }
+  .brand-link { font-size: clamp(11px, 3.2vw, 13px) !important; }
 }
