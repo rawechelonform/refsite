@@ -151,7 +151,6 @@ html, body { margin: 0; padding: 0; }
   color: var(--chrome);
   outline: none;
 }
-
 /* ==========================
    Responsive sizing
    ========================== */
@@ -159,51 +158,58 @@ html, body { margin: 0; padding: 0; }
 /* Tablets / small laptops */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
-  .menu-link  { font-size: clamp(7.0px, 1.5vw, 8.2px); padding: 0 6px; letter-spacing: 0; }
+  .menu-link  { font-size: clamp(7.2px, 1.5vw, 8.2px); padding: 0 6px; letter-spacing: 0; }
   .brand-link { font-size: clamp(10.8px, 2.1vw, 12.2px) !important; padding: 0 8px !important; letter-spacing: 0; }
 }
 
-/* Phones */
-@media (max-width: 480px) {
-  :root { --barh: 36px; --linew: 1px; }  /* taller to accommodate two lines */
+/* Phones — PORTRAIT (flatter bar) */
+@media (max-width: 480px) and (orientation: portrait) {
+  :root { --barh: 30px; --linew: 1px; }   /* ↓ from 36px → flatter */
+  .menu-link  { font-size: clamp(5.6px, 2.6vw, 6.8px); padding: 0 3px; letter-spacing: 0; }
+  .brand-link { font-size: clamp(8.8px, 3.2vw, 10.6px) !important; padding: 0 5px !important; letter-spacing: 0; }
 
-  .menu-link  { font-size: clamp(5.8px, 2.6vw, 7.0px); padding: 0 4px; letter-spacing: 0; }
-  .brand-link { font-size: clamp(8.8px, 3.3vw, 10.8px) !important; padding: 0 6px !important; letter-spacing: 0; }
-
-  /* PRINCIPAL’S OFFICE → two lines, centered, tiny gap between lines */
+  /* Two-line wrap for the long label + center + tiny spacing between lines */
   .menu a[href$="aboutme.html"] {
     white-space: normal !important;
+    line-height: 1.02;                 /* tighter than before */
     text-wrap: balance;
     word-break: normal;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+    text-align: center;                 /* center multiline */
+    justify-items: center;              /* grid-centers the content box */
+  }
+  /* add a hairline spacer between the 2 lines when they wrap */
+  .menu a[href$="aboutme.html"] br::after {
+    content: ""; display: block; height: 2px;  /* 1–2px “air” */
+  }
+}
+
+/* Phones — LANDSCAPE (short screens; keep centered) */
+@media (max-height: 420px) and (orientation: landscape) {
+  :root { --barh: 28px; --linew: 1px; }  /* slightly flatter in landscape */
+  .menu-link  { font-size: clamp(5.8px, 1.8vw, 7.2px); padding: 0 4px; }
+  .brand-link { font-size: clamp(9px, 2.2vw, 11px) !important; padding: 0 6px !important; }
+
+  /* Ensure PRINCIPAL’S OFFICE is centered even if it becomes 1 line */
+  .menu a[href$="aboutme.html"] {
     text-align: center;
-    justify-items: center;      /* pairs with display:grid on .menu-link */
-    line-height: 1.14;          /* tiny space between the two lines */
-    padding-left: 4px !important;
-    padding-right: 4px !important;
+    justify-items: center;              /* uses .menu-link's display:grid */
+    white-space: nowrap;                /* usually one line in landscape */
   }
 }
 
 /* Very small phones */
-@media (max-width: 360px) {
-  :root { --barh: 34px; }
-
-  .menu-link  { font-size: clamp(5.4px, 3.3vw, 6.0px); padding: 0 4px; }
-  .brand-link { font-size: clamp(8.2px, 3.6vw, 9.8px) !important; padding: 0 6px !important; }
-
-  /* keep the same tiny interline gap on the smallest screens */
-  .menu a[href$="aboutme.html"] { line-height: 1.14; }
+@media (max-width: 360px) and (orientation: portrait) {
+  :root { --barh: 28px; }
+  .menu-link  { font-size: clamp(5.0px, 3.4vw, 5.8px); padding: 0 3px; }
+  .brand-link { font-size: clamp(8.2px, 3.6vw, 9.8px) !important; padding: 0 5px !important; }
 }
 
-/* --- OVERRIDES: phones — shrink everything EXCEPT REF (placed last so it wins) --- */
+/* Final override: shrink all non-REF labels a touch on phones */
 @media (max-width: 480px) {
   .menu-link:not(.brand-link) {
     font-size: clamp(5.0px, 2.5vw, 6.4px);
     letter-spacing: 0;
-    padding: 0 4px;
-  }
-}
-@media (max-width: 360px) {
-  .menu-link:not(.brand-link) {
-    font-size: clamp(4.6px, 3.2vw, 5.8px);
   }
 }
