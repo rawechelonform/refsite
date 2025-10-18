@@ -1,163 +1,162 @@
-/* ===== Local font faces ===== */
-@font-face { font-family: 'Pixel Warden'; src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype'); font-display: block; }
-@font-face { font-family: 'FS TI-92 ENO C'; src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype'); font-display: swap; }
-@font-face { font-family: 'RetroByte'; src: url('fonts/retrobyte/RetroByte.ttf') format('truetype'); font-display: block; }
+/* ===== menubar.css — pixel-aligned borders, mobile tweaks, 2-line “Principal’s Office” on phones ===== */
 
-/* ===== Global tokens ===== */
+/* Vars */
 :root {
+  --chrome: rgb(143,143,143);
   --bg: #000;
-  --fg: #fff;
-
-  /* desktop image sizing */
-  --tile-min: 240px;
-  --tile-ideal: 28vw;
-  --tile-max: 600px;
-
-  /* desktop spacing */
-  --gap-min: 24px;
-  --gap-ideal: 8vw;
-  --gap-max: 160px;
-
-  --hub-maxw: 1800px;
-
-  /* desktop label */
-  --label-size: clamp(14px, 3vw, 32px);
-  --label-shadow: 0 2px 10px rgba(0,0,0,.65), 0 0 1px rgba(0,0,0,.9);
-  --label-tint: rgba(0,0,0,.25);
-
-  /* ===== Mobile sizing knobs (adjust these) ===== */
-  --mobile-tile-w: 78vw;   /* shrink or grow the width on phones */
-  --mobile-tile-max: 520px;/* hard cap on phones */
-  --mobile-gap: 7vh;       /* vertical space between stacked tiles */
-  --mobile-label-size: clamp(18px, 6vw, 40px); /* bigger label on phones */
+  --barh: 24px;     /* visual bar height */
+  --linew: 2px;
 }
 
-.fonts-loading .section-title { visibility: hidden; }
+/* Reserve space if injected with JS */
+.menubar-slot { display: block; height: var(--barh); }
 
-html, body { height: 100%; }
-body {
+/* Wrapper */
+.top-margin {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  width: 100%;
   margin: 0;
   background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
-.page {
-  padding: 24px 0 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-
-/* ===== Hub layout: centered row on desktop ===== */
-.hub {
+/* Header owns the horizontal lines via inset shadows (perfect alignment) */
+.site-header {
+  position: relative;
+  z-index: 1000;
   width: 100%;
-  max-width: var(--hub-maxw);
-  margin: 0 auto;
+  height: var(--barh);
+  box-sizing: border-box;
 
-  display: grid;
-  grid-auto-flow: column;
+  /* Top & bottom rules drawn inside the header */
+  box-shadow:
+    inset 0 var(--linew) 0 0 var(--chrome),          /* top */
+    inset 0 calc(-1 * var(--linew)) 0 0 var(--chrome); /* bottom */
+
+  display: flex;
+  align-items: stretch;
+  background: transparent;
+  color: var(--chrome);
+}
+
+/* Nav */
+.menu-bar { width: 100%; }
+
+/* Equal-width buttons */
+.menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+}
+.menu > li {
+  flex: 1 1 0;
+  display: flex;
+  min-width: 0;
+}
+
+/* Buttons */
+.menu-link,
+.menu-link:link,
+.menu-link:visited {
+  position: relative;
+  z-index: 1500;             /* under header’s inset lines, above page */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
+  font-family: 'FS TI-92 ENO C', monospace;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--chrome);
+  background: var(--bg);
+
+  display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 
-  column-gap: clamp(var(--gap-min), var(--gap-ideal), var(--gap-max));
-  min-height: calc(100dvh - 120px);
-  padding: 16px 24px;
-}
-
-.tile {
-  display: block;
-  position: relative; /* for label layers */
-}
-
-/* images: responsive */
-img.swap-on-hover {
-  display: block;
-  width: clamp(var(--tile-min), var(--tile-ideal), var(--tile-max));
-  height: auto;
-  border-radius: 0;
-  margin: 0;
-}
-
-/* desktop hover lift */
-.tile:hover img,
-.tile:focus img { transform: translateY(-2px); }
-
-/* Hover label (desktop default: hidden) */
-.tile::after {
-  content: attr(data-label);
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: "UnifrakturMaguntia", serif;
-  font-size: var(--label-size);
+  height: 100%;              /* fill header height so verticals meet horizontals */
+  width: 100%;
   line-height: 1;
-  letter-spacing: 0.5px;
-  color: #fff;
-  text-shadow: var(--label-shadow);
-  opacity: 0;
-  transform: none;
-  transition: none;
-  pointer-events: none; /* never block clicks */
-  z-index: 1;
+  border-radius: 0;
+
+  font-size: 10px;
+  padding: 2px 8px;
+
+  /* vertical borders only */
+  border-left: var(--linew) solid var(--chrome);
+  border-right: var(--linew) solid var(--chrome);
+  border-top: none;
+  border-bottom: none;
+
+  white-space: nowrap;       /* default one line */
+  overflow: hidden;
+  text-overflow: clip;
+
+  transition: background .15s, color .15s;
 }
 
-/* Dark wash behind label */
-.tile::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--label-tint);
-  opacity: 0;
-  transition: none;
-  pointer-events: none;
-  z-index: 0;
+/* Remove double borders between neighbors */
+.menu > li + li .menu-link { border-left: none; }
+
+/* Brand */
+.brand-link {
+  font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
+  letter-spacing: .02em;
+  font-size: 15px !important;
+  padding: 2px 14px !important;
 }
 
-/* Desktop: show on hover/focus */
-.tile:hover::after,
-.tile:focus::after,
-.tile:hover::before,
-.tile:focus::before { opacity: 1; }
+/* Hover/current */
+.menu-link:hover,
+.menu-link.is-current:hover,
+.brand-link:hover { background: rgb(90,90,90); color: #000; }
+.menu-link.is-current { background: var(--bg); color: var(--chrome); }
 
-/* ===== Phones & touch devices (hard overrides) ===== */
-@media (hover: none), (pointer: coarse), (max-width: 900px) {
+/* Focus/active reset */
+.menu-link:focus,
+.menu-link:active,
+.brand-link:focus,
+.brand-link:active {
+  background: var(--bg);
+  color: var(--chrome);
+  outline: none;
+}
 
-  /* stack vertically; center content; add padding as border */
-  .hub {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;     /* centers tiles horizontally */
-    justify-content: flex-start !important;
-    gap: min(var(--mobile-gap), 56px) !important;
-    min-height: auto !important;
-    padding: 4vw !important;            /* creates border space around images */
+/* =========================
+   Responsive sizing
+   ========================= */
+@media (max-width: 720px) {
+  :root { --barh: 22px; --linew: 1.5px; }
+  .menu-link  { font-size: 8.4px; padding: 2px 6px; letter-spacing: 0; }
+  .brand-link { font-size: 12.4px !important; padding: 2px 10px !important; letter-spacing: 0; }
+}
+
+/* Phones: smaller text + allow 2-line “PRINCIPAL’S OFFICE” */
+@media (max-width: 480px) {
+  :root { --barh: 36px; --linew: 1px; }     /* taller bar to fit 2 lines cleanly */
+  .menu-link  { font-size: 7px; padding: 1px 5px; letter-spacing: 0; }
+  .brand-link { font-size: 10.6px !important; padding: 1px 8px !important; letter-spacing: 0; }
+
+  /* Wrap only the long label */
+  .menu a[href="/aboutme.html"] {
+    white-space: normal !important;         /* enable wrap */
+    line-height: 1.06;
+    word-break: normal;
+    text-wrap: balance;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
   }
+}
 
-  /* center each tile row */
-  .tile {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-  }
-
-  /* center images and constrain width using the mobile knobs above */
-  img.swap-on-hover {
-    width: min(var(--mobile-tile-w), var(--mobile-tile-max)) !important;
-    height: auto !important;
-    margin: 0 auto !important;          /* centers the image */
-    transform: none !important;         /* disable lift */
-  }
-
-  /* labels ALWAYS visible on mobile; no hover needed, and bigger */
-  .tile::after,
-  .tile::before { opacity: 1 !important; }
-  .tile::after { font-size: var(--mobile-label-size) !important; }
-
-  /* ensure no hover transforms sneak in */
-  .tile:hover img,
-  .tile:focus img { transform: none !important; }
+/* Very small phones */
+@media (max-width: 360px) {
+  :root { --barh: 34px; }
+  .menu-link  { font-size: 6.6px; padding: 1px 4px; }
+  .brand-link { font-size: 10.2px !important; padding: 1px 6px !important; }
 }

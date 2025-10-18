@@ -1,17 +1,17 @@
-/* ===== menubar.css — borders visible, mobile routing safe, 2-line "Principal’s Office" on mobile ===== */
+/* ===== menubar.css — pixel-aligned borders via gradients, mobile tweaks ===== */
 
 /* Vars */
 :root {
   --chrome: rgb(143,143,143);
   --bg: #000;
-  --barh: 24px;
+  --barh: 24px;     /* visual bar height */
   --linew: 2px;
 }
 
 /* Reserve space if injected with JS */
 .menubar-slot { display: block; height: var(--barh); }
 
-/* Full-bleed wrapper with lines ABOVE header so they don't disappear */
+/* Wrapper */
 .top-margin {
   position: sticky;
   top: 0;
@@ -20,32 +20,43 @@
   margin: 0;
   background: var(--bg);
 }
-.top-margin::before,
-.top-margin::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0;
-  height: 0;
-  border-top: var(--linew) solid var(--chrome);
-  pointer-events: none;
-  z-index: 1001;           /* above .site-header */
-}
-.top-margin::before { top: 0; }
-.top-margin::after  { bottom: 0; }
 
-/* Header row */
+/* Header draws ALL lines as backgrounds → perfect alignment */
 .site-header {
   position: relative;
-  z-index: 1000;           /* below rules, above page */
+  z-index: 1;
   width: 100%;
   height: var(--barh);
+  box-sizing: border-box;
+
   display: flex;
   align-items: stretch;
-  background: transparent;
   color: var(--chrome);
+
+  /* Layers:
+     - top horizontal
+     - bottom horizontal
+     - left edge vertical
+     - right edge vertical
+     - internal vertical separators at 20% steps (5 items)
+     - black bar background
+  */
+  background:
+    linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
+    linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
+    linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
+    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(20% - var(--linew)),
+      var(--chrome) calc(20% - var(--linew)),
+      var(--chrome) 20%
+    ),
+    var(--bg);
 }
 
-/* Nav */
+/* Nav container */
 .menu-bar { width: 100%; }
 
 /* Equal-width buttons */
@@ -53,7 +64,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  height: var(--barh);
+  height: 100%;              /* fill header */
   display: flex;
   align-items: stretch;
   width: 100%;
@@ -65,28 +76,27 @@
   min-width: 0;
 }
 
-/* Buttons */
+/* Buttons (no borders; header paints all lines) */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
   position: relative;
-  z-index: 1002;                   /* ensure on top of page content */
+  z-index: 2;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 
   font-family: 'FS TI-92 ENO C', monospace;
   text-transform: uppercase;
   text-decoration: none;
-  color: --var(chrome);
   color: var(--chrome);
-  background: var(--bg);
+  background: transparent;
 
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
 
-  height: var(--barh);
+  height: 100%;
   width: 100%;
   line-height: 1;
   border-radius: 0;
@@ -94,22 +104,14 @@
   font-size: 10px;
   padding: 2px 8px;
 
-  border-left: var(--linew) solid var(--chrome);
-  border-right: var(--linew) solid var(--chrome);
-  border-top: none;
-  border-bottom: none;
-
-  white-space: nowrap;             /* default: one line */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: clip;
 
   transition: background .15s, color .15s;
 }
 
-/* Remove double borders between neighbors */
-.menu > li + li .menu-link { border-left: none; }
-
-/* Brand */
+/* Brand button */
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
@@ -121,10 +123,20 @@
 .menu-link:hover,
 .menu-link.is-current:hover,
 .brand-link:hover { background: rgb(90,90,90); color: #000; }
-.menu-link.is-current { background: var(--bg); color: var(--chrome); }
+.menu-link.is-current { background: transparent; color: var(--chrome); }
+
+/* Focus/active reset */
+.menu-link:focus,
+.menu-link:active,
+.brand-link:focus,
+.brand-link:active {
+  background: transparent;
+  color: var(--chrome);
+  outline: none;
+}
 
 /* =========================
-   Mobile sizing — smaller across the board
+   Responsive sizing
    ========================= */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
@@ -132,15 +144,16 @@
   .brand-link { font-size: 12.4px !important; padding: 2px 10px !important; letter-spacing: 0; }
 }
 
+/* Phones: smaller text + allow 2-line “PRINCIPAL’S OFFICE” */
 @media (max-width: 480px) {
-  :root { --barh: 36px; --linew: 1px; }  /* taller bar to allow 2-line item */
-  .menu-link  { font-size: 7.0px; padding: 1px 5px; letter-spacing: 0; }
+  :root { --barh: 36px; --linew: 1px; }     /* taller bar to fit 2 lines cleanly */
+  .menu-link  { font-size: 7px; padding: 1px 5px; letter-spacing: 0; }
   .brand-link { font-size: 10.6px !important; padding: 1px 8px !important; letter-spacing: 0; }
 
-  /* Make just the "PRINCIPAL’S OFFICE" link wrap to 2 lines on phones */
+  /* Wrap only the long label */
   .menu a[href="/aboutme.html"] {
-    white-space: normal !important;    /* allow wrapping */
-    line-height: 1.05;
+    white-space: normal !important;         /* enable wrap */
+    line-height: 1.06;
     word-break: normal;
     text-wrap: balance;
     padding-left: 4px !important;
@@ -148,6 +161,7 @@
   }
 }
 
+/* Very small phones */
 @media (max-width: 360px) {
   :root { --barh: 34px; }
   .menu-link  { font-size: 6.6px; padding: 1px 4px; }
