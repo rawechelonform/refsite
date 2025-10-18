@@ -32,20 +32,27 @@ html, body { margin: 0; padding: 0; }
   background: var(--bg);
 }
 
-LL lines as backgrounds → perfect alignment */
+
+/* Header draws ALL lines as backgrounds → perfect alignment */
 .site-header {
   position: relative;
   z-index: 1;
   width: 100%;
-  /* include the notch/safe-area *inside* the bar so it’s consistent on all pages */
-  height: calc(var(--barh) + env(safe-area-inset-top, 0));
-  padding-top: env(safe-area-inset-top, 0);
-
+  height: var(--barh);
   box-sizing: border-box;
+
   display: flex;
   align-items: stretch;
   color: var(--chrome);
 
+  /* Layers:
+     - top horizontal
+     - bottom horizontal
+     - left edge vertical
+     - right edge vertical
+     - internal vertical separators at 20% steps (5 items)
+     - black bar background
+  */
   background:
     linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
     linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
