@@ -20,6 +20,9 @@
   let currentIndex = 0;
   let META_BY_KEY = {};
 
+  // Helper: mobile breakpoint aligned with CSS
+  const isMobile = () => window.matchMedia("(max-width: 720px)").matches;
+
   // ===== Boot: load CSV, map metadata, then render grid =====
   (async () => {
     try {
@@ -41,6 +44,7 @@
       IMAGES.forEach(img => { img.meta = { title: img.title || "", year: "", medium: "", size: "" }; });
     } finally {
       render();
+      enhanceMobileStream(); // mobile-only; no-ops on desktop
     }
   })();
 
@@ -111,7 +115,7 @@
     return [l1, l2, l3].filter(Boolean).join("<br>");
   }
 
-  // ===== Lightbox scaffold + controls =====
+  // ===== Lightbox scaffold + controls (unchanged for desktop) =====
   function ensureLightbox() {
     let root = document.querySelector(".lightbox");
     if (root) return root;
@@ -173,7 +177,6 @@
     const cap = lb.querySelector("#lbCaption");
     const item = IMAGES[idx];
 
-    // Load into a temp image to get natural size, then size the displayed img
     const temp = new Image();
     temp.onload = () => {
       const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
@@ -182,10 +185,7 @@
       img.src = temp.src;
       img.alt = item.title || "";
 
-      // 3-line caption (Sad Girls style), placed to the LEFT of image
       cap.innerHTML = formatMeta(item.meta);
-
-      // adjust caption width to fill the available space to the left (minus edge margin)
       updateCaptionWidth(lb);
     };
     temp.src = item.src;
@@ -197,7 +197,6 @@
     const lb = ensureLightbox();
     lb.classList.add("open");
 
-    // grow-from-thumb animation
     const rect = thumbEl.getBoundingClientRect();
     const clone = thumbEl.cloneNode();
     Object.assign(clone.style, {
@@ -242,7 +241,7 @@
     setLightboxImage(currentIndex);
   }
 
-  // ===== Caption width logic (screen-size aware + enforced) =====
+  // ===== Caption width logic (desktop lightbox) =====
   function cssPx(varName, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
     const n = parseFloat(v);
@@ -255,23 +254,21 @@
     if (!img || !cap) return;
 
     const imgRect     = img.getBoundingClientRect();
-    const edgeMargin  = cssPx('--lb-edge-margin', 32);   // keep away from left screen edge
-    const available   = Math.max(0, imgRect.left - edgeMargin); // px from left edge to image
-    const usable      = Math.floor(available * 0.98);            // fill ~98% of it
-    const minReadable = 220;                                     // don't crush to nothing
+    const edgeMargin  = cssPx('--lb-edge-margin', 32);
+    const available   = Math.max(0, imgRect.left - edgeMargin);
+    const usable      = Math.floor(available * 0.98);
+    const minReadable = 220;
     const finalW      = Math.max(minReadable, usable);
 
-    // Force width so changes actually apply (avoid shrink-to-fit surprises)
     cap.style.setProperty('width', `${finalW}px`, 'important');
-
-    // Clear any max-width clamp
     cap.style.removeProperty('max-width');
   }
 
-  // Recompute on resize so it stays perfect
   window.addEventListener('resize', () => {
     const lb = document.querySelector('.lightbox.open');
     if (lb) updateCaptionWidth(lb);
+    // Also re-apply mobile enhancement if needed
+    debounce(enhanceMobileStream, 120)();
   });
 
   // ===== Cards (grid) =====
@@ -335,5 +332,56 @@
     }
     if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
     return rows;
+  }
+
+  // ======== MOBILE-ONLY ENHANCER (no-ops on desktop) ========
+  function enhanceMobileStream() {
+    if (!isMobile()) {
+      // Restore visibility if user resized back to desktop
+      if (colEls[1]) colEls[1].style.removeProperty('display');
+      if (colEls[2]) colEls[2].style.removeProperty('display');
+      // Restore tabindex (accessibility) in case it was removed on mobile
+      document.querySelectorAll('.card').forEach(card => {
+        if (card.getAttribute('tabindex') === '-1') card.setAttribute('tabindex', '0');
+      });
+      return;
+    }
+
+    const col1 = document.getElementById('col1');
+    if (!col1) return;
+
+    // Move ALL cards into col1 to create a single vertical stream (original DOM order)
+    const cards = Array.from(document.querySelectorAll('.col .card'));
+    cards.forEach(c => col1.appendChild(c));
+
+    // Hide other columns so they don't take up space
+    if (colEls[1]) colEls[1].style.display = 'none';
+    if (colEls[2]) colEls[2].style.display = 'none';
+
+    // Insert a mobile caption under each image (flush-right), once
+    cards.forEach(card => {
+      if (!card.querySelector('.mobile-caption')) {
+        const img  = card.querySelector('img');
+        const key  = img ? base(img.src) : null;
+        const meta = (key && (META_BY_KEY[key] || fuzzyFindMeta(key, META_BY_KEY))) || {
+          title: img?.alt || "", year: "", medium: "", size: ""
+        };
+        const cap = document.createElement('div');
+        cap.className = 'mobile-caption';
+        cap.innerHTML = formatMeta(meta);
+        card.appendChild(cap);
+      }
+      // Prevent keyboard-triggered expand on small screens
+      card.setAttribute('tabindex', '-1');
+    });
+  }
+
+  // tiny debounce helper reused above
+  function debounce(fn, ms) {
+    let t;
+    return function() {
+      clearTimeout(t);
+      t = setTimeout(fn, ms);
+    };
   }
 })();
