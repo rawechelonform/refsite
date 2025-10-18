@@ -1,4 +1,4 @@
-/* ===== Local font faces (same as MACHINES) ===== */
+/* ===== Local font faces ===== */
 @font-face { font-family: 'Pixel Warden'; src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype'); font-display: block; }
 @font-face { font-family: 'FS TI-92 ENO C'; src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype'); font-display: swap; }
 @font-face { font-family: 'RetroByte'; src: url('fonts/retrobyte/RetroByte.ttf') format('truetype'); font-display: block; }
@@ -8,17 +8,16 @@
   --bg: #000;
   --fg: #fff;
 
-  /* image sizing (desktop) */
+  /* desktop image sizing */
   --tile-min: 240px;
   --tile-ideal: 28vw;
   --tile-max: 600px;
 
-  /* spacing between images (desktop row gap) */
+  /* desktop spacing */
   --gap-min: 24px;
   --gap-ideal: 8vw;
   --gap-max: 160px;
 
-  /* overall container width cap */
   --hub-maxw: 1800px;
 
   /* label */
@@ -66,16 +65,16 @@ body {
   position: relative; /* for label layers */
 }
 
-/* images: responsive, sharp corners */
+/* images: responsive */
 img.swap-on-hover {
   display: block;
   width: clamp(var(--tile-min), var(--tile-ideal), var(--tile-max));
   height: auto;
   border-radius: 0;
-  margin: 0; /* desktop inline in grid */
+  margin: 0;
 }
 
-/* subtle hover lift (desktop only; disabled on mobile below) */
+/* desktop hover lift */
 .tile:hover img,
 .tile:focus img { transform: translateY(-2px); }
 
@@ -107,7 +106,7 @@ img.swap-on-hover {
   background: var(--label-tint);
   opacity: 0;
   transition: none;
-  pointer-events: none; /* never block clicks */
+  pointer-events: none;
   z-index: 0;
 }
 
@@ -117,43 +116,48 @@ img.swap-on-hover {
 .tile:hover::before,
 .tile:focus::before { opacity: 1; }
 
-/* ===== Phones & touch devices ===== */
-/* Use hover:none / coarse pointer to catch real phones/tablets */
+/* ===== Phones & touch devices (hard overrides) ===== */
 @media (hover: none), (pointer: coarse), (max-width: 900px) {
   :root {
-    /* each image fits within screen width with margin/border room */
     --label-size: clamp(18px, 6vw, 40px); /* bigger label on mobile */
   }
 
-  /* stack vertically: sad girls first (HTML order), then machines */
+  /* stack vertically; center content; add padding as border */
   .hub {
-    display: flex;
-    flex-direction: column;
-    align-items: center;    /* center tiles horizontally */
-    justify-content: flex-start;
-    gap: min(7vh, 56px);    /* vertical space between tiles */
-    min-height: auto;
-    padding: 4vw;           /* creates the visual border around images */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: min(7vh, 56px) !important;
+    min-height: auto !important;
+    padding: 4vw !important; /* creates border */
   }
 
-  /* tiles centered; width auto so image sets width */
+  /* center each tile row */
   .tile {
-    width: auto;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
   }
 
-  /* CENTER images and keep within viewport width */
+  /* center images and constrain width */
   img.swap-on-hover {
-    width: 92vw !important;    /* fit with small border */
-    max-width: 720px;
-    height: auto;
-    margin: 0 auto;            /* center */
+    width: min(92vw, 720px) !important;  /* fits with small border */
+    height: auto !important;
+    margin: 0 auto !important;           /* centers the image */
+    transform: none !important;           /* disable lift */
   }
 
-  /* labels: ALWAYS visible on mobile; no hover needed */
+  /* labels ALWAYS visible on mobile; no hover needed */
   .tile::after,
-  .tile::before { opacity: 1; }
+  .tile::before {
+    opacity: 1 !important;
+  }
 
-  /* disable any hover lift */
+  /* ensure no hover transforms sneak in */
   .tile:hover img,
-  .tile:focus img { transform: none; }
+  .tile:focus img {
+    transform: none !important;
+  }
 }
