@@ -10,9 +10,9 @@
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- CSS -->
+  <!-- CSS (page first, then shared menubar with cache buster) -->
   <link rel="stylesheet" href="machines.css" />
-  <link rel="stylesheet" href="menubar.css" />
+  <link rel="stylesheet" href="menubar.css?v=mb7" />
 </head>
 
 <body>
@@ -46,8 +46,8 @@
     <div class="diag" id="diag" hidden></div>
   </div>
 
-  <!-- scripts -->
-  <script src="menubar.js" defer></script>
+  <!-- JS (shared menubar first is fine; both are defer) -->
+  <script src="menubar.js?v=mb7" defer></script>
   <script src="machines.js" defer></script>
 </body>
 </html>

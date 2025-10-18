@@ -14,9 +14,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
 
-  <!-- Page CSS first, then shared menubar -->
-  <link rel="stylesheet" href="main.css?v=menufontfix" />
-  <link rel="stylesheet" href="menubar.css?v=menufontfix" />
+  <!-- Page CSS first, then shared menubar (cache-busted) -->
+  <link rel="stylesheet" href="main.css?v=mb7" />
+  <link rel="stylesheet" href="menubar.css?v=mb7" />
 </head>
 
 <body>
@@ -59,8 +59,8 @@
     </main>
   </div>
 
-  <!-- scripts: shared first, then page-specific -->
-  <script src="menubar.js?v=menufontfix" defer></script>
-  <script src="main.js?v=menufontfix" defer></script>
+  <!-- scripts: shared menubar first, then page JS (both cache-busted) -->
+  <script src="menubar.js?v=mb7" defer></script>
+  <script src="main.js?v=mb7" defer></script>
 </body>
 </html>
