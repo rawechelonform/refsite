@@ -464,3 +464,77 @@
     }, 120);
   });
 })();
+
+
+  // ===== Crosshair (desktop only) ==========================================
+  (function initCrosshair() {
+    // Respect device capabilities: only run where hover + fine pointer exists
+    const showCrosshair = window.matchMedia &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!showCrosshair) return;
+
+    // Build overlay
+    const root = document.createElement('div');
+    root.className = 'crosshair';
+    root.innerHTML = `
+      <div class="crosshair__h"></div>
+      <div class="crosshair__v"></div>
+      <div class="crosshair__dot"></div>
+    `;
+    document.body.appendChild(root);
+
+    const h   = root.querySelector('.crosshair__h');
+    const v   = root.querySelector('.crosshair__v');
+    const dot = root.querySelector('.crosshair__dot');
+
+    // Smoothed follower (simple exponential smoothing / lerp)
+    let targetX = window.innerWidth  / 2;
+    let targetY = window.innerHeight / 2;
+    let curX = targetX, curY = targetY;
+    const ease = 0.15; // lower = more lag
+
+    let rafId = null;
+    function loop() {
+      curX += (targetX - curX) * ease;
+      curY += (targetY - curY) * ease;
+
+      // Position lines and center square
+      h.style.top   = `${curY}px`;
+      v.style.left  = `${curX}px`;
+      dot.style.left = `${curX}px`;
+      dot.style.top  = `${curY}px`;
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    // Kick off after the first mouse move (so it jumps to pointer)
+    function onMove(e) {
+      targetX = e.clientX;
+      targetY = e.clientY;
+      if (rafId == null) rafId = requestAnimationFrame(loop);
+    }
+    window.addEventListener('mousemove', onMove, { passive: true });
+
+    // "Explosion" on click anywhere
+    function boom() {
+      const b = document.createElement('div');
+      b.className = 'crosshair__boom';
+      b.style.left = `${curX}px`;
+      b.style.top  = `${curY}px`;
+      root.appendChild(b);
+      b.addEventListener('animationend', () => b.remove(), { once: true });
+    }
+    window.addEventListener('click', boom, { passive: true });
+
+    // Keep centered if window is resized before mouse moves again
+    window.addEventListener('resize', () => {
+      if (rafId == null) {
+        curX = targetX = window.innerWidth  / 2;
+        curY = targetY = window.innerHeight / 2;
+        h.style.top   = `${curY}px`;
+        v.style.left  = `${curX}px`;
+        dot.style.left = `${curX}px`;
+        dot.style.top  = `${curY}px`;
+      }
+    });
+  })();

@@ -235,3 +235,63 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   .card img { cursor: zoom-in; pointer-events: auto; }
   .card .mobile-caption { display: none; }
 }
+
+/* ===== Crosshair overlay (desktop only) ===== */
+:root {
+  --ch-color: rgba(0, 255, 0, 0.6);    /* neon green, tweak to taste */
+  --ch-thick: 1px;                     /* line/square thickness */
+  --ch-dot: 6px;                       /* center square size */
+}
+
+/* Only show on devices that actually have a mouse */
+@media (hover: hover) and (pointer: fine) {
+  .crosshair {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;        /* above lightbox (9999) so it always shows */
+    pointer-events: none;   /* never blocks clicks */
+    contain: layout paint;  /* minor perf hint */
+  }
+  .crosshair__h,
+  .crosshair__v {
+    position: absolute;
+    background: var(--ch-color);
+    mix-blend-mode: screen;           /* optional nice glow on dark bg */
+    will-change: top, left;
+  }
+  .crosshair__h { left: 0; right: 0; height: var(--ch-thick); top: 0; }
+  .crosshair__v { top: 0; bottom: 0; width: var(--ch-thick); left: 0; }
+
+  .crosshair__dot {
+    position: absolute;
+    width: var(--ch-dot);
+    height: var(--ch-dot);
+    background: var(--ch-color);
+    transform: translate(-50%, -50%); /* center on x/y */
+    will-change: transform, top, left;
+  }
+
+  /* Click "explosion" square that scales off the page */
+  .crosshair__boom {
+    position: absolute;
+    width: var(--ch-dot);
+    height: var(--ch-dot);
+    background: var(--ch-color);
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+    animation: ch-boom 620ms cubic-bezier(.2,.6,.1,1) forwards;
+    pointer-events: none;
+  }
+  @keyframes ch-boom {
+    60% { opacity: 0.55; }
+    100% {
+      transform: translate(-50%, -50%) scale(320); /* flies off screen */
+      opacity: 0;
+    }
+  }
+}
+
+/* On touch devices (phones/tablets), keep it off */
+@media (hover: none), (pointer: coarse) {
+  .crosshair { display: none !important; }
+}
