@@ -1,3 +1,7 @@
+/* =========================
+   SHOP.CSS — Cafeteria page
+   ========================= */
+
 /* ===== Local font faces (optional, keeps site consistent) ===== */
 @font-face { font-family: 'Pixel Warden'; src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype'); font-display: block; }
 @font-face { font-family: 'FS TI-92 ENO C'; src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype'); font-display: swap; }
@@ -91,35 +95,6 @@ body {
 /* Optional label area (hidden for now) */
 .item .meta { display: none; color: var(--muted); padding: 8px 10px; }
 
-/* ===== Menubar: transparent only on this page ===== */
-.menu-transparent .top-margin {
-  background: transparent;                 /* remove header strip fill */
-}
-.menu-transparent .menu-link,
-.menu-transparent .menu-link:link,
-.menu-transparent .menu-link:visited,
-.menu-transparent .brand-link {
-  background: transparent;                 /* transparent buttons */
-  color: #fff;                             /* improve contrast on photo */
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-.menu-transparent .menu-link:hover,
-.menu-transparent .menu-link.is-current:hover,
-.menu-transparent .brand-link:hover {
-  background: rgba(0,0,0,0.25);            /* subtle hover */
-  color: #fff;
-}
-/* Optional: lighten the borders/rules on this page
-.menu-transparent .menu-link {
-  border-left-color: rgba(255,255,255,0.6);
-  border-right-color: rgba(255,255,255,0.6);
-}
-.menu-transparent .top-margin::before,
-.menu-transparent .top-margin::after {
-  border-top-color: rgba(255,255,255,0.6);
-}
-*/
-
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
   .shop-grid {
@@ -138,33 +113,80 @@ body {
   .coming-soon > span { font-size: clamp(24px, 10vw, 52px); }
 }
 
-
 /* Make the "She's So Lucky" image semi-transparent */
 .shop-grid img[src$="shessolucky.png"] {
   opacity: 0.7;          /* tweak: 0.5–0.9 */
 }
 
+/* ===== Menubar: Cafeteria-only styles ===== */
+/* Lighter line/text color for this page */
+body.menu-transparent { --chrome: rgba(255,255,255,0.70); }
 
-/* Make the menubar transparent + light lines/text on this page only */
-body.menu-transparent {
-  /* Use lighter line color just for this page */
-  --chrome: rgba(255,255,255,0.70);
-}
+/* Fully transparent menubar (no tint, no lines, no separators) */
+body.menu-transparent .top-margin { background: transparent !important; }
 
-/* Header strip stays see-through over the photo */
-.menu-transparent .top-margin { background: transparent; }
+/* menubar.css draws borders with header backgrounds; kill them here */
+body.menu-transparent .site-header { background: none !important; }
 
-/* Text more legible over image */
-.menu-transparent .menu-link,
-.menu-transparent .brand-link {
+/* Keep text fully clear (no hover tint) and legible over photo */
+body.menu-transparent .menu-link,
+body.menu-transparent .menu-link:link,
+body.menu-transparent .menu-link:visited,
+body.menu-transparent .brand-link {
+  background: transparent !important;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+body.menu-transparent .menu-link:hover,
+body.menu-transparent .menu-link.is-current:hover,
+body.menu-transparent .brand-link:hover,
+body.menu-transparent .menu-link:focus,
+body.menu-transparent .brand-link:focus {
+  background: transparent !important;
+  color: #fff;
 }
 
-/* Hover on this page */
-.menu-transparent .menu-link:hover,
-.menu-transparent .menu-link.is-current:hover,
-.menu-transparent .brand-link:hover {
-  background: rgba(0,0,0,0.25);
+/* ===== Cafeteria-only: transparent fill BUT keep grey borders ===== */
+
+/* No background fill behind the menu */
+body.menu-transparent .top-margin { background: transparent !important; }
+
+/* Repaint the top/bottom/left/right borders + separators, no tint fill */
+body.menu-transparent .site-header {
+  background:
+    /* top */
+    linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
+    /* bottom */
+    linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
+    /* left edge */
+    linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
+    /* right edge */
+    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
+    /* vertical separators between 5 items → 20% steps */
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(20% - var(--linew)),
+      var(--chrome) calc(20% - var(--linew)),
+      var(--chrome) 20%
+    ) !important;   /* ← note: no final "var(--bg)" layer = fully transparent fill */
+}
+
+/* Keep the text fully clear (no hover tint) and legible over photo */
+body.menu-transparent { --chrome: rgba(255,255,255,0.70); } /* grey line color here */
+body.menu-transparent .menu-link,
+body.menu-transparent .menu-link:link,
+body.menu-transparent .menu-link:visited,
+body.menu-transparent .brand-link {
+  background: transparent !important;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+body.menu-transparent .menu-link:hover,
+body.menu-transparent .menu-link.is-current:hover,
+body.menu-transparent .brand-link:hover,
+body.menu-transparent .menu-link:focus,
+body.menu-transparent .brand-link:focus {
+  background: transparent !important;
   color: #fff;
 }

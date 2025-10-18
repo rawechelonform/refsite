@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>REF · Main</title>
 
-  <!-- Fonts (match MACHINES) -->
+  <!-- Fonts -->
   <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Adobe kit that contains “FS TI-92 ENO C” used by the menubar -->
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
   <!-- UnifrakturMaguntia for hover labels -->
@@ -14,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
 
-  <!-- CSS: page first, then shared menu styles -->
-  <link rel="stylesheet" href="main.css" />
-  <link rel="stylesheet" href="menubar.css" />
+  <!-- Page CSS first, then shared menubar CSS -->
+  <link rel="stylesheet" href="main.css?v=mainfix" />
+  <link rel="stylesheet" href="menubar.css?v=mainfix" />
 </head>
 
 <body>
@@ -60,7 +61,7 @@
   </div>
 
   <!-- scripts: shared first, then page-specific -->
-  <script src="menubar.js" defer></script>
-  <script src="main.js" defer></script>
+  <script src="menubar.js?v=mainfix" defer></script>
+  <script src="main.js?v=mainfix" defer></script>
 </body>
 </html>

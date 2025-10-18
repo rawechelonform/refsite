@@ -70,7 +70,6 @@ function makeBlinker(selector, minMs, maxMs){
     nodes[next].classList.add('show');
     current = next;
 
-    // refresh hit mask when FRONT track swaps (screen changes)
     if (selector === '.white-set') refreshHitMask();
 
     const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
@@ -80,8 +79,8 @@ function makeBlinker(selector, minMs, maxMs){
   setTimeout(tick, initial);
 }
 function startRoomBlinkers(){
-  makeBlinker('.white-set', 120, 380); // front track
-  makeBlinker('.black-set', 220, 520); // back track
+  makeBlinker('.white-set', 120, 380);
+  makeBlinker('.black-set', 220, 520);
 }
 
 // ===== ZOOM SEQUENCE =====
@@ -104,7 +103,6 @@ function playZoomSequence(after){
   if (zoomPlaying) return;
   zoomPlaying = true;
 
-  // Hide the clickable stack; show zoom player
   enterBtn.classList.add('hidden');
   zoomImg.classList.remove('hidden');
 
@@ -149,7 +147,6 @@ function renderMirror(){
   let start = inputEl.selectionStart ?? v.length;
   let end   = inputEl.selectionEnd   ?? v.length;
 
-  // Full-selection (Cmd/Ctrl-A): render spans with inline BLACK text
   if (v.length > 0 && start === 0 && end === v.length){
     typedEl.innerHTML = v.split("").map(ch =>
       `<span class="cursor-sel" style="color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
@@ -157,7 +154,6 @@ function renderMirror(){
     return;
   }
 
-  // Single caret block
   const idx = Math.min(Math.max(0, start), v.length);
   const ch  = v.slice(idx, idx + 1);
   const before = escapeHTML(v.slice(0, idx));
@@ -169,7 +165,6 @@ function renderMirror(){
 function bindPrompt(){
   if(!inputEl || !typedEl) return;
 
-  // Click mirror to focus hidden input
   typedEl.parentElement.addEventListener("click", () => inputEl.focus());
 
   ["input","focus","blur","keyup","click"].forEach(evt =>
@@ -180,21 +175,17 @@ function bindPrompt(){
     if(document.activeElement === inputEl) renderMirror();
   });
 
-  // Take full control of ⌘/Ctrl-A: prevent default, set range, render black
   document.addEventListener("keydown", (e) => {
     const isA = (e.key === 'a' || e.key === 'A');
     const withMeta = (e.metaKey || e.ctrlKey);
     if (!isA || !withMeta) return;
 
-    // Prevent browser's default selection
     e.preventDefault();
 
-    // Programmatically select entire input
     inputEl.focus();
     const len = (inputEl.value || "").length;
     try { inputEl.setSelectionRange(0, len); } catch(_) {}
 
-    // Render mirror as full-selection (black text on green)
     renderMirror();
   }, true);
 
@@ -238,32 +229,27 @@ function showGateView(){
 }
 
 // ===== PIXEL-PERFECT HOVER / CLICK =====
-// - Glow ON if cursor is over opaque pixels of hoverbutton.png OR screenmask.png
-// - Click ON if cursor is over (hoverbutton.png OR screenmask.png OR current front image)
 const hit = {
-  // hover (chair)
   canvasHover: document.createElement('canvas'),
   ctxHover: null,
   hoverEl: null,
   scaleXHover: 1,
   scaleYHover: 1,
 
-  // screen mask (monitor face)
   canvasScreen: document.createElement('canvas'),
   ctxScreen: null,
-  screenImg: null,         // off-DOM Image()
+  screenImg: null,
   scaleXScreen: 1,
   scaleYScreen: 1,
   screenMaskReady: false,
 
-  // front track
   canvasFront: document.createElement('canvas'),
   ctxFront: null,
   frontEl: null,
   scaleXFront: 1,
   scaleYFront: 1,
 
-  threshold: 1,  // permissive so soft edges count
+  threshold: 1,
 };
 hit.ctxHover  = hit.canvasHover.getContext('2d',  { willReadFrequently: true });
 hit.ctxScreen = hit.canvasScreen.getContext('2d', { willReadFrequently: true });
@@ -293,7 +279,6 @@ function buildScreenMask(imgElOrImage){
   hit.canvasScreen.height = el.naturalHeight;
   hit.ctxScreen.clearRect(0, 0, hit.canvasScreen.width, hit.canvasScreen.height);
   hit.ctxScreen.drawImage(el, 0, 0);
-  // screenmask must align to the stack size; use hover image's rect for scale
   const ref = document.getElementById('hover-img') || getCurrentFrontImageEl();
   if (ref) {
     const rect = ref.getBoundingClientRect();
@@ -332,11 +317,10 @@ function refreshHitMask(){
     }
   }
 
-  // screenmask.png (optional but recommended)
   if (!hit.screenImg) {
     const img = new Image();
     img.onload  = () => buildScreenMask(img);
-    img.onerror = () => { hit.screenMaskReady = false; }; // file may be absent
+    img.onerror = () => { hit.screenMaskReady = false; };
     img.src = FRAMES_DIR + "screenmask.png";
     hit.screenImg = img;
   } else if (hit.screenImg.complete && hit.screenImg.naturalWidth) {
@@ -353,7 +337,6 @@ function alphaHot(ctx, canvasW, canvasH, scaleX, scaleY, clientX, clientY, rect,
 }
 
 function pointState(clientX, clientY){
-  // Hover glow: hoverbutton.png OR screenmask.png
   let hotGlow = false;
   const refRect = (hit.hoverEl || hit.frontEl)?.getBoundingClientRect();
 
@@ -370,7 +353,6 @@ function pointState(clientX, clientY){
     );
   }
 
-  // Click: union of (hotGlow OR front image alpha)
   let hotClick = hotGlow;
   if (!hotClick && hit.frontEl) {
     const rect = hit.frontEl.getBoundingClientRect();
@@ -388,7 +370,6 @@ function enablePixelPerfectHover(){
   const hoverImg = document.getElementById('hover-img');
   if (!btn || !hoverImg) return;
 
-  // Build initial masks and keep them fresh
   const rebuild = () => refreshHitMask();
   if (hoverImg.complete && hoverImg.naturalWidth) rebuild();
   else hoverImg.addEventListener('load', rebuild, { once:true });
@@ -400,9 +381,7 @@ function enablePixelPerfectHover(){
     raf = requestAnimationFrame(() => {
       raf = 0;
       const { hotGlow, hotClick } = pointState(e.clientX, e.clientY);
-      // Glow ONLY where hoverbutton/screenmask have pixels
       btn.classList.toggle('glow', !!hotGlow);
-      // Pointer/click where union is hot
       btn.classList.toggle('hot',  !!hotClick);
     });
   }
@@ -414,7 +393,6 @@ function enablePixelPerfectHover(){
     btn.classList.remove('hot');
   });
 
-  // Re-check right before click so a still cursor works
   btn.addEventListener('click', (e) => {
     const { hotGlow, hotClick } = pointState(e.clientX, e.clientY);
     btn.classList.toggle('glow', !!hotGlow);
@@ -435,7 +413,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   enablePixelPerfectHover();
 
-  // quick log for broken images
   document.querySelectorAll('.stack img, #zoom-frame').forEach(img => {
     img.addEventListener('error', () => {
       console.warn('Image failed:', img.getAttribute('src'));

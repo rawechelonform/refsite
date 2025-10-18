@@ -4,7 +4,8 @@
   --crt: rgb(0,255,0);
   --bg: #000;
 
-  --term-font-size: 20px;
+  /* responsive terminal size */
+  --term-font-size: clamp(14px, 2.4vw + 8px, 20px);
   --term-gap: 8px;
   --hint-row-h: 1.2em;
 
@@ -27,9 +28,10 @@
 
   --avatar-step-speed: 0.5s;
   --walk-duration: 1.6s;
-  --walk-end: 450px;
 
-  --room-w: 640px; /* match your art */
+  /* responsive art width + walk distance */
+  --room-w: clamp(260px, 92vw, 640px);
+  --walk-end: clamp(220px, 45vw, 450px);
 }
 
 * { box-sizing: border-box; }
@@ -47,9 +49,10 @@ html, body {
 /* ---------- ROOM VIEW ---------- */
 .room {
   min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: clamp(12px, 3.5vw, 24px);
   background: var(--bg);
 }
 
@@ -58,7 +61,7 @@ html, body {
   border: 0;
   background: transparent;
   padding: 0;
-  cursor: default;                  /* JS toggles when "hot" */
+  cursor: default;
 }
 .computer-btn.hot { cursor: pointer; }
 .computer-btn:active .stack { transform: scale(0.985); }
@@ -84,7 +87,7 @@ html, body {
 .black-set { z-index: 10; }
 .show { opacity: 1; }
 
-/* Hover glow overlay — shown only when .computer-btn.glow is present */
+/* Hover glow overlay — visual only */
 .hover-layer {
   z-index: 30;
   opacity: 0;
@@ -104,9 +107,10 @@ html, body {
 /* ---------- GATE VIEW ---------- */
 .wrap {
   min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: clamp(12px, 3.5vw, 24px);
 }
 
 .stage, .terminal { width: 100%; }
@@ -123,14 +127,14 @@ html, body {
 
 .stage {
   position: relative;
-  height: 280px;
-  max-width: 420px;
+  height: clamp(180px, 36vh, 280px);
+  max-width: min(420px, 92vw);
   background: var(--bg);
   overflow: hidden;
 }
 
 .terminal {
-  padding: 24px;
+  padding: clamp(12px, 3.5vw, 24px);
   background: var(--bg);
   display: grid;
   grid-template-rows: auto auto var(--hint-row-h);
@@ -162,7 +166,7 @@ html, body {
   color: var(--crt);
 }
 
-/* Black text on green when the OS selection is active */
+/* Selection treatment */
 ::selection {
   background: var(--crt) !important;
   color: #000 !important;
@@ -178,7 +182,6 @@ html, body {
   color: #000 !important;
   -webkit-text-fill-color: #000 !important;
 }
-
 
 /* DO NOT force .typed to black; normal typing stays green */
 .terminal, .terminal * { -webkit-text-fill-color: unset; }
@@ -246,4 +249,19 @@ html, body {
 @keyframes avatar-walk {
   from{ background-position: 0 var(--avatar-cropY); }
   to  { background-position: calc(-2 * var(--avatar-w)) var(--avatar-cropY); }
+}
+
+/* tiny phones: nudge avatar + spacing */
+@media (max-width: 480px){
+  :root{
+    --avatar-scale: 0.18;
+    --term-gap: 6px;
+  }
+  .hint{ font-size: 14px; }
+}
+
+/* disable hover-grow on touch to avoid layout jiggle */
+@media (hover: none){
+  .computer-btn:hover .stack{ transform: none; }
+  .computer-btn:active .stack{ transform: none; }
 }
