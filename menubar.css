@@ -164,7 +164,7 @@ html, body { margin: 0; padding: 0; }
 
 /* Phones — PORTRAIT: make bar flatter, keep two-line wrap + add tiny interline gap */
 @media (max-width: 480px) and (orientation: portrait) {
-  :root { --barh: 30px; --linew: 1px; }  /* was 36px — flatter */
+  :root { --barh: 26px; --linew: 1px; }  /* was 36px — flatter */
   .menu-link  { font-size: clamp(5.6px, 2.6vw, 6.8px); padding: 0 4px; letter-spacing: 0; }
   .brand-link { font-size: clamp(9.6px, 3.4vw, 11px) !important; padding: 0 6px !important; letter-spacing: 0; }
 
@@ -201,7 +201,7 @@ html, body { margin: 0; padding: 0; }
 
 /* Very small phones — PORTRAIT */
 @media (max-width: 360px) and (orientation: portrait) {
-  :root { --barh: 28px; }
+  :root { --barh: 26px; }
   .menu-link  { font-size: clamp(5.2px, 3.2vw, 6.0px); padding: 0 4px; }
   .brand-link { font-size: clamp(8.8px, 3.6vw, 10.4px) !important; padding: 0 6px !important; }
 }
