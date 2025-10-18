@@ -15,13 +15,14 @@ html, body { margin: 0; padding: 0; }
   --brand-nudge: var(--text-nudge);
 }
 
-/* Reserve space if injected with JS */
-.menubar-slot { display: block; height: var(--barh); }
+/* Reserve space if injected with JS (bar height + notch inset) */
+.menubar-slot { display: block; height: calc(var(--barh) + env(safe-area-inset-top, 0)); }
 
 /* Wrapper */
 .top-margin {
   position: sticky;
-  top: env(safe-area-inset-top, 0); /* respect iOS notch */
+  top: 0;                                 /* stick to the very top */
+  padding-top: env(safe-area-inset-top);  /* uniform notch spacer across pages */
   z-index: 9999;
   width: 100%;
   margin: 0;
@@ -150,8 +151,9 @@ html, body { margin: 0; padding: 0; }
   color: var(--chrome);
   outline: none;
 }
+
 /* ==========================
-   Responsive sizing (v: mb8)
+   Responsive sizing (v: mb9)
    ========================== */
 
 /* Tablets / small laptops */
@@ -197,7 +199,7 @@ html, body { margin: 0; padding: 0; }
 
 /* Phones — LANDSCAPE (short height): put this LAST so it wins in landscape */
 @media (max-height: 420px) and (orientation: landscape) {
-  :root { --barh: 24px; }  /* keep the bar narrow in landscape */
+  :root { --barh: 24px; --linew: 1px; }  /* narrow bar + match portrait border thickness */
   .menu-link:not(.brand-link) { font-size: clamp(5.8px, 2.2vw, 7.4px); padding: 0 4px; }
   .brand-link { font-size: clamp(10.2px, 2.6vw, 12.2px) !important; padding: 0 6px !important; }
 
