@@ -196,7 +196,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   #col2, #col3 { display: block; }
 }
 
-/* ======== MOBILE-ONLY ADDENDUM ======== */
+/* ======== MOBILE-ONLY ADDENDUM (portrait only) ======== */
 /* default hidden; only shown in portrait rule below */
 .card .mobile-caption { display: none; }
 
