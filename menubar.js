@@ -1,9 +1,7 @@
-// Usage in each page:
-//
-// <meta name="viewport" content="width=device-width, initial-scale=1" />
-// <link rel="stylesheet" href="menubar.css?v=mb8">
-// <div data-menubar class="menubar-slot"></div>
-// <script src="menubar.js?v=mb8" defer></script>
+// menubar.js (v=mb10)
+// Include on every page like:
+//   <link rel="stylesheet" href="menubar.css?v=mb10">
+//   <script src="menubar.js?v=mb10" defer></script>
 
 (function () {
   async function injectMenu() {
@@ -11,8 +9,8 @@
     if (!slot) return;
 
     try {
-      // Cache-bust so phones pull the latest HTML
-      const res = await fetch(`menubar.html?v=mb8&t=${Date.now()}`, { cache: 'no-cache' });
+      // Hard cache-bust the fragment itself
+      const res = await fetch(`menubar.html?v=mb10&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
@@ -21,30 +19,30 @@
       const menuRoot = tmp.querySelector('.top-margin') || tmp.firstElementChild;
       if (menuRoot) slot.replaceWith(menuRoot);
 
-      normalizeMenuHrefs();       // compute safe absolute targets per current folder
-      highlightCurrentNav();      // add .is-current + aria-current
-      forceAbsoluteNavigation();  // single captured click handler (robust on mobile)
-      twoLinePrincipalOnPhones(); // wrap the long label on phones
+      normalizeMenuHrefs();
+      pinSadGirlsHref();          // ensure no accidental leading slash persists
+      forceAbsoluteNavigation();  // robust on mobile (one captured click)
+      highlightCurrentNav();
+      twoLinePrincipalOnPhones();
     } catch (_) { /* ignore */ }
   }
 
-  // Compute absolute targets relative to the *current folder* (prevents root-bounce on GH Pages)
+  // Resolve all internal links relative to the *current folder* (…/refsite/)
   function normalizeMenuHrefs() {
-    // Project folder of the current page (e.g. /refsite/)
-    const ROOT = location.pathname.replace(/[^/]+$/, '');
+    const ROOT = location.pathname.replace(/[^/]*$/, ''); // drop file part
 
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const raw = (a.getAttribute('href') || '').trim();
       if (!raw) return;
 
-      // External stays as-is; internal is resolved against the current folder
+      // external as-is; internal: resolve against current folder
       const abs = /^https?:\/\//i.test(raw)
         ? raw
         : new URL(raw, location.origin + ROOT).href;
 
-      // Optional tiny cache-bust so stubborn mobile caches re-resolve
+      // add a tiny cache-bust so stubborn mobile caches re-resolve the target
       const u = new URL(abs);
-      if (!/^https?:\/\//i.test(raw)) u.searchParams.set('mb', 'sgfix2');
+      if (!/^https?:\/\//i.test(raw)) u.searchParams.set('mb', 'mb10');
 
       a.dataset.abs = u.href;
       a.setAttribute('target', '_self');
@@ -52,31 +50,41 @@
     });
   }
 
-  // Use ONE captured click; avoid pointerdown/touchend races on iOS
+  // Extra safety: ensure SAD GIRLS points to folder-relative sadgirls.html (no leading slash)
+  function pinSadGirlsHref() {
+    const link = Array.from(document.querySelectorAll('.menu a.menu-link'))
+      .find(a => (a.textContent || '').toUpperCase().includes('SAD GIRLS'));
+    if (!link) return;
+
+    // Force its display href (what highlight uses) to be relative (no slash)
+    link.setAttribute('href', 'sadgirls.html');
+
+    // Recompute dataset.abs from the current folder
+    const ROOT = location.pathname.replace(/[^/]*$/, '');
+    const abs = new URL('sadgirls.html', location.origin + ROOT);
+    abs.searchParams.set('mb', 'mb10');
+    link.dataset.abs = abs.href;
+  }
+
+  // One captured click handler → wins over weird touch sequences on iOS
   function forceAbsoluteNavigation() {
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       a.addEventListener('click', ev => {
-        // allow modifier/middle clicks on desktop
         if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return;
-
         const url = a.dataset.abs || a.href;
         if (!url) return;
-
         ev.preventDefault();
         ev.stopPropagation();
-
-        // single reliable path
         window.location.href = url;
       }, { capture: true });
     });
   }
 
-  // Highlight the current page in the menu
   function highlightCurrentNav() {
     let path = location.pathname;
     if (path.endsWith('/')) path = 'index.html';
     else path = path.split('/').pop() || 'index.html';
-    if (path === 'index.html') path = 'main.html'; // treat index as main
+    if (path === 'index.html') path = 'main.html';
 
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const hrefFile = (a.getAttribute('href') || '').split('/').pop();
@@ -87,7 +95,6 @@
     });
   }
 
-  // Force “PRINCIPAL’S OFFICE” to wrap on phones
   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
     const a = Array.from(document.querySelectorAll('.menu a.menu-link'))
@@ -95,6 +102,7 @@
     if (!a) return;
     const txt = (a.textContent || '').trim();
     if (!a.innerHTML.includes('<br>')) {
+      // add a tiny 1px spacer row via ::after (CSS below)
       a.innerHTML = txt.replace(/(PRINCIPAL[’']?S)\s+(OFFICE)/i, '$1<br>$2');
     }
   }
