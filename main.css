@@ -140,3 +140,8 @@ html, body {
   .hub { grid-template-columns: 1fr; }
   .tile img { max-width: 320px; }
 }
+
+/* Mobile-only: keep the hub hidden until JS marks it ready */
+@media (hover: none), (pointer: coarse) {
+  .hub[data-wait="1"] { visibility: hidden; }
+}
