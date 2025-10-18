@@ -13,8 +13,8 @@
     if (!slot) return;
 
     try {
-      // Stronger cache-bust: version + timestamp
-      const res = await fetch(`/menubar.html?v=10&t=${Date.now()}`, { cache: 'no-cache' });
+      // strong cache-bust: version + timestamp
+      const res = await fetch(`/menubar.html?v=11&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const html = await res.text();
@@ -26,7 +26,7 @@
 
       normalizeMenuHrefs();
       highlightCurrentNav();
-      hardenClicks();
+      hardenClicks();    // force absolute navigation on mobile taps
     } catch (_) {
       /* ignore */
     }
@@ -53,7 +53,7 @@
     const links = document.querySelectorAll('.menu a.menu-link');
     links.forEach(a => {
       const go = ev => {
-        // if keyboard activated or right/middle click, let default happen
+        // let modifier/alt-clicks behave normally
         if (ev.type === 'click' && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0)) return;
 
         const targetHref = a.dataset.abs || a.href;
@@ -61,13 +61,14 @@
 
         ev.preventDefault();
         ev.stopPropagation();
-        // Navigate explicitly to the absolute URL
+
+        // Explicitly navigate to the absolute URL
         location.assign(targetHref);
       };
 
-      // Prefer touchend on mobile to avoid ghost clicks
-      a.addEventListener('touchend', go, { passive: false });
-      a.addEventListener('click', go);
+      // capture phase helps beat stray overlays
+      a.addEventListener('touchend', go, { passive: false, capture: true });
+      a.addEventListener('click', go, { capture: true });
     });
   }
 

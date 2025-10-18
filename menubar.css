@@ -1,10 +1,10 @@
-/* ===== menubar.css — compact, responsive, with visible top/bottom rules ===== */
+/* ===== menubar.css — compact, responsive, mobile-safe ===== */
 
 /* Vars */
 :root {
   --chrome: rgb(143,143,143);
   --bg: #000;
-  --barh: 24px;   /* default bar height */
+  --barh: 24px;
   --linew: 2px;
 }
 
@@ -14,24 +14,23 @@
 /* Full-bleed wrapper */
 .top-margin {
   position: relative;
-  z-index: 999;            /* wrapper */
+  z-index: 999;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   background: var(--bg);
 }
 
-/* Put the horizontal rules ABOVE the header so they’re visible */
+/* Horizontal rules above header */
 .top-margin::before,
 .top-margin::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 0; right: 0;
   height: 0;
   border-top: var(--linew) solid var(--chrome);
   pointer-events: none;
-  z-index: 1001;           /* higher than .site-header */
+  z-index: 1001;
 }
 .top-margin::before { top: 0; }
 .top-margin::after  { bottom: 0; }
@@ -39,7 +38,7 @@
 /* Header row */
 .site-header {
   position: relative;
-  z-index: 1000;          /* below the rules, above page */
+  z-index: 1000;
   width: 100%;
   height: var(--barh);
   display: flex;
@@ -58,7 +57,6 @@
   margin: 0;
   padding: 0;
   height: var(--barh);
-
   display: flex;
   align-items: stretch;
   justify-content: stretch;
@@ -71,13 +69,18 @@
   flex: 1 1 0;
   display: flex;
   margin: 0;
-  min-width: 0; /* allow shrink/ellipsis */
+  min-width: 0;
 }
 
 /* Buttons */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
+  position: relative;           /* ensure on top */
+  z-index: 1002;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
   font-family: 'FS TI-92 ENO C', monospace;
   text-transform: uppercase;
   text-decoration: none;
@@ -98,7 +101,6 @@
   font-size: 10px;
   padding: 2px 8px;
 
-  /* vertical borders only */
   border-left: var(--linew) solid var(--chrome);
   border-right: var(--linew) solid var(--chrome);
   border-top: none;
@@ -147,22 +149,22 @@
 }
 
 /* =========================
-   Responsiveness
+   Responsiveness — smaller on phones
    ========================= */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
-  .brand-link { font-size: 14px !important; padding: 2px 12px !important; }
-  .menu-link  { font-size: 9.5px; padding: 2px 6px; }
+  .brand-link { font-size: 13.5px !important; padding: 2px 12px !important; }
+  .menu-link  { font-size: 9px; padding: 2px 6px; letter-spacing: 0; }
 }
 
 @media (max-width: 480px) {
   :root { --barh: 26px; --linew: 1px; }
-  .menu-link  { font-size: 9.4px; padding: 1px 5px; }
-  .brand-link { font-size: 13.2px !important; padding: 1px 9px !important; }
+  .menu-link  { font-size: 8.2px; padding: 1px 5px; letter-spacing: 0; }
+  .brand-link { font-size: 11.8px !important; padding: 1px 8px !important; letter-spacing: 0; }
 }
 
 @media (max-width: 360px) {
   :root { --barh: 24px; }
-  .menu-link  { font-size: 9px; padding: 1px 4px; }
-  .brand-link { font-size: 12.8px !important; }
+  .menu-link  { font-size: 7.6px; padding: 1px 4px; }
+  .brand-link { font-size: 11.2px !important; padding: 1px 7px !important; }
 }
