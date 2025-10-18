@@ -19,6 +19,8 @@
 
   let currentIndex = 0;
   let META_BY_KEY = {};
+  let ACTIVE_LOAD = 0; // bump this for every image load to cancel stale onloads
+
 
   // Helper: portrait-only mobile matches CSS
   const isPortraitMobile = () =>
@@ -173,24 +175,31 @@
   }
 
   function setLightboxImage(idx) {
-    const lb  = ensureLightbox();
-    const img = lb.querySelector(".img-wrap > img");
-    const cap = lb.querySelector("#lbCaption");
-    const item = IMAGES[idx];
+  const lb  = ensureLightbox();
+  const img = lb.querySelector(".img-wrap > img");
+  const cap = lb.querySelector("#lbCaption");
+  const item = IMAGES[idx];
 
-    const temp = new Image();
-    temp.onload = () => {
-      const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
-      img.style.width = `${targetW}px`;
-      img.style.height = "auto";
-      img.src = temp.src;
-      img.alt = item.title || "";
+  const token = ++ACTIVE_LOAD; // invalidate any prior pending loads
 
-      cap.innerHTML = formatMeta(item.meta);
-      updateCaptionWidth(lb);
-    };
-    temp.src = item.src;
-  }
+  const temp = new Image();
+  temp.onload = () => {
+    // If another image started loading after this one, bail
+    if (token !== ACTIVE_LOAD) return;
+
+    const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
+    img.style.width = `${targetW}px`;
+    img.style.height = "auto";
+    img.src = temp.src;
+    img.alt = item.title || "";
+
+    cap.innerHTML = formatMeta(item.meta);
+
+    if (lb.classList.contains("open")) updateCaptionWidth(lb);
+  };
+  temp.src = item.src;
+}
+
 
   function openLightboxFromThumb(idx, thumbEl) {
     currentIndex = idx;
