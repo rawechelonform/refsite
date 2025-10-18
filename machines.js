@@ -19,10 +19,9 @@
 
   let currentIndex = 0;
   let META_BY_KEY = {};
-  let ACTIVE_LOAD = 0; // bump this for every image load to cancel stale onloads
+  let ACTIVE_LOAD = 0; // cancels stale image loads in the lightbox
 
-
-  // Helper: portrait-only mobile matches CSS
+  // Helpers to match CSS breakpoints/orientation
   const isPortraitMobile = () =>
     window.matchMedia("(max-width: 720px) and (orientation: portrait)").matches;
 
@@ -118,7 +117,7 @@
     return [l1, l2, l3].filter(Boolean).join("<br>");
   }
 
-  // ===== Lightbox scaffold + controls (desktop) =====
+  // ===== Lightbox scaffold + controls (desktop + mobile landscape) =====
   function ensureLightbox() {
     let root = document.querySelector(".lightbox");
     if (root) return root;
@@ -155,58 +154,81 @@
       if (e.key === "ArrowRight") showRelative(+1);
     });
 
-    // touch swipe
-    let startX = null;
+    // touch swipe (works in mobile landscape; safe elsewhere)
+    let startX = null, startY = null;
+    const THRESH_X = 40, THRESH_Y = 30;
+
     root.addEventListener("touchstart", (e) => {
       if (!root.classList.contains("open")) return;
-      startX = e.touches?.[0]?.clientX ?? null;
+      const t = e.touches?.[0]; if (!t) return;
+      startX = t.clientX; startY = t.clientY;
     }, { passive: true });
+
     root.addEventListener("touchend", (e) => {
-      if (startX == null) return;
-      const endX = e.changedTouches?.[0]?.clientX ?? null;
-      if (endX == null) return;
-      const dx = endX - startX;
-      if (dx > 40)  showRelative(-1);
-      if (dx < -40) showRelative(+1);
-      startX = null;
+      if (!root.classList.contains("open")) return;
+      const t = e.changedTouches?.[0]; if (!t || startX == null) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (Math.abs(dx) > THRESH_X && Math.abs(dy) < THRESH_Y) {
+        if (dx > 0) showRelative(-1); else showRelative(+1);
+      }
+      startX = startY = null;
     }, { passive: true });
 
     return root;
   }
 
+  // Core: load an image into the lightbox WITHOUT ever showing an old image first
   function setLightboxImage(idx) {
-  const lb  = ensureLightbox();
-  const img = lb.querySelector(".img-wrap > img");
-  const cap = lb.querySelector("#lbCaption");
-  const item = IMAGES[idx];
+    const lb  = ensureLightbox();
+    const img = lb.querySelector(".img-wrap > img");
+    const cap = lb.querySelector("#lbCaption");
+    const item = IMAGES[idx];
 
-  const token = ++ACTIVE_LOAD; // invalidate any prior pending loads
+    // Hide the currently-displayed image immediately to prevent any flash
+    img.style.opacity = "0";
 
-  const temp = new Image();
-  temp.onload = () => {
-    // If another image started loading after this one, bail
-    if (token !== ACTIVE_LOAD) return;
+    const token = ++ACTIVE_LOAD; // cancel any stale loads that complete later
 
-    const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
-    img.style.width = `${targetW}px`;
-    img.style.height = "auto";
-    img.src = temp.src;
-    img.alt = item.title || "";
+    const temp = new Image();
+    temp.onload = () => {
+      if (token !== ACTIVE_LOAD) return; // a newer request started → ignore this one
 
-    cap.innerHTML = formatMeta(item.meta);
+      // Compute target size from natural dimensions
+      const { targetW } = computeFit(temp.naturalWidth, temp.naturalHeight);
 
-    if (lb.classList.contains("open")) updateCaptionWidth(lb);
-  };
-  temp.src = item.src;
-}
+      // Swap pixels atomically
+      img.style.width = `${targetW}px`;
+      img.style.height = "auto";
+      img.src = temp.src;
+      img.alt = item.title || "";
 
+      // Update caption and geometry
+      cap.innerHTML = formatMeta(item.meta);
+      const isOpen = lb.classList.contains("open");
+      if (isOpen) updateCaptionWidth(lb);
+
+      // Reveal the new image now that it's ready
+      requestAnimationFrame(() => { img.style.opacity = "1"; });
+    };
+    temp.src = item.src;
+  }
 
   function openLightboxFromThumb(idx, thumbEl) {
+    const lb = ensureLightbox();
+    const wasOpen = lb.classList.contains("open");
+
     currentIndex = idx;
 
-    const lb = ensureLightbox();
-    lb.classList.add("open");
+    // Start loading the correct image first; image is hidden until ready
+    setLightboxImage(currentIndex);
 
+    if (wasOpen) {
+      // Already open (mobile landscape or desktop switching) → no grow animation
+      return;
+    }
+
+    // Not open yet → run the grow-from-thumb animation, then reveal
     const rect = thumbEl.getBoundingClientRect();
     const clone = thumbEl.cloneNode();
     Object.assign(clone.style, {
@@ -237,7 +259,8 @@
 
     clone.addEventListener("transitionend", () => {
       clone.remove();
-      setLightboxImage(currentIndex);
+      lb.classList.add("open");
+      updateCaptionWidth(lb);
     }, { once: true });
   }
 
@@ -251,7 +274,7 @@
     setLightboxImage(currentIndex);
   }
 
-  // ===== Caption width logic (desktop lightbox) =====
+  // ===== Caption width logic (desktop/lightbox visible states) =====
   function cssPx(varName, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
     const n = parseFloat(v);
@@ -264,6 +287,8 @@
     if (!img || !cap) return;
 
     const imgRect     = img.getBoundingClientRect();
+    if (!imgRect.width) return; // avoid 0-width while hidden
+
     const edgeMargin  = cssPx('--lb-edge-margin', 32);
     const available   = Math.max(0, imgRect.left - edgeMargin);
     const usable      = Math.floor(available * 0.98);
@@ -295,11 +320,10 @@
     label.textContent = item.title || "";
     overlay.appendChild(label);
 
-    // Bind desktop interactions only if not portrait mobile at creation time
+    // Bind desktop/lightbox interactions unless portrait mobile
     if (!isPortraitMobile()) {
       enableDesktopInteractions(card);
     } else {
-      // reduce keyboard activation in portrait
       card.tabIndex = -1;
     }
 
@@ -368,7 +392,6 @@
       const cards = Array.from(document.querySelectorAll('.col .card'));
       cards.forEach(c => {
         col1.appendChild(c);
-        // insert a mobile caption under each image once
         if (!c.querySelector('.mobile-caption')) {
           const img  = c.querySelector('img');
           const key  = img ? base(img.src) : null;
@@ -380,11 +403,9 @@
           cap.innerHTML = formatMeta(meta);
           c.appendChild(cap);
         }
-        // reduce keyboard activation in portrait
         c.tabIndex = -1;
       });
 
-      // hide other columns to remove gaps
       if (colEls[1]) colEls[1].style.display = 'none';
       if (colEls[2]) colEls[2].style.display = 'none';
     } else {
@@ -392,12 +413,11 @@
       if (colEls[1]) colEls[1].style.removeProperty('display');
       if (colEls[2]) colEls[2].style.removeProperty('display');
 
-      // gather all cards in DOM order, then redistribute round-robin
       const cards = Array.from(document.querySelectorAll('#col1 .card, #col2 .card, #col3 .card'));
       colEls.forEach(c => c.innerHTML = '');
       cards.forEach((card, i) => {
         colEls[i % 3].appendChild(card);
-        enableDesktopInteractions(card);   // ensure clicks/keyboard are live again
+        enableDesktopInteractions(card);
         card.tabIndex = 0;
       });
     }
@@ -408,7 +428,6 @@
     clearTimeout(window.__machines_rerender);
     window.__machines_rerender = setTimeout(() => {
       enhanceMobileStream();
-      // keep lightbox caption width correct if open
       const lb = document.querySelector('.lightbox.open');
       if (lb) updateCaptionWidth(lb);
     }, 120);
