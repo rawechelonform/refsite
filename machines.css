@@ -167,17 +167,18 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
 .lightbox .edge.right { right: 0; }
 
 /* ===== Responsive ===== */
-@media (max-width: 1024px) { .cols { gap: 14px; } }
 
+/* Tablet & down: wrap columns but SHOW them all (no hiding) */
 @media (max-width: 720px) {
-  .cols { padding: 0 10px; gap: 12px; }
-  .col { width: 50%; }
-  .cols { flex-wrap: wrap; }
-  #col3 { flex-basis: 100%; display: none; }
+  .cols { padding: 0 10px; gap: 12px; flex-wrap: wrap; }
+  /* Each column takes full width when wrapping so nothing disappears */
+  .col { flex: 1 1 100%; width: 100%; }
+  /* Make sure col3 isn't hidden */
+  #col3 { display: block; }
 
   .hero-title { font-size: clamp(28px, 12vw, 64px); }
 
-  /* on phones, caption drops below image for readability */
+  /* on phones/tablets, optionally drop caption below image for readability */
   .lb-caption {
     position: static;
     margin-top: 6px;
@@ -187,7 +188,10 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   }
 }
 
+/* Phone: stack columns (still show all) */
 @media (max-width: 480px) {
   .cols { flex-direction: column; }
-  #col2, #col3 { display: none; }
+  .col  { width: 100%; }
+  /* ensure these stay visible on phones */
+  #col2, #col3 { display: block; }
 }

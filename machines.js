@@ -195,7 +195,6 @@
     currentIndex = idx;
 
     const lb = ensureLightbox();
-    const backdrop = lb.querySelector(".backdrop");
     lb.classList.add("open");
 
     // grow-from-thumb animation
@@ -262,16 +261,10 @@
     const minReadable = 220;                                     // don't crush to nothing
     const finalW      = Math.max(minReadable, usable);
 
-    // DEBUG: verify it's being called and what it computes
-    console.log('updateCaptionWidth', {
-      imgLeft: imgRect.left,
-      edgeMargin, available, usable, finalW
-    });
-
     // Force width so changes actually apply (avoid shrink-to-fit surprises)
     cap.style.setProperty('width', `${finalW}px`, 'important');
 
-    // Make sure no old max-width clamps it
+    // Clear any max-width clamp
     cap.style.removeProperty('max-width');
   }
 
