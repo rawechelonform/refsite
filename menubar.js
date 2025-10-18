@@ -28,37 +28,47 @@
     } catch (_) { /* ignore */ }
   }
 
-  // Make internal hrefs consistent and store a safe absolute target
+// Make internal hrefs consistent and store a safe absolute target
 function normalizeMenuHrefs() {
   document.querySelectorAll('.menu a.menu-link').forEach(a => {
     const raw = (a.getAttribute('href') || '').trim();
     if (!raw) return;
-    if (/^https?:\/\//i.test(raw)) {        // external stays as-is
+
+    if (/^https?:\/\//i.test(raw)) {
+      // external stays as-is
       a.dataset.abs = raw;
-      return;
+    } else {
+      // keep relative path; compute absolute safely from the current page
+      a.dataset.abs = new URL(raw, document.baseURI).href;
     }
-    // Keep relative paths (works in subfolders), but compute a safe absolute
-    a.dataset.abs = new URL(raw, document.baseURI).href;
+
+    // ensure normal in-tab nav
+    a.setAttribute('target', '_self');
     a.setAttribute('rel', 'noopener');
   });
 }
 
- // Explicitly navigate to the absolute URL on mobile taps
+// Explicitly navigate to the absolute URL on click (capture to beat stray overlays)
 function forceAbsoluteNavigation() {
   const links = document.querySelectorAll('.menu a.menu-link');
+
   links.forEach(a => {
-    const go = ev => {
+    a.addEventListener('click', ev => {
       // allow modifier/middle clicks on desktop
-      if (ev.type === 'click' && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0)) return;
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return;
+
       const url = a.dataset.abs || a.href;
       if (!url) return;
+
       ev.preventDefault();
       ev.stopPropagation();
-      window.location.assign(url);
-    };
-    a.addEventListener('pointerdown', go, { capture: true });
-    a.addEventListener('touchend',   go, { passive: false, capture: true });
-    a.addEventListener('click',      go, { capture: true });
+
+      // tiny one-time debug log; comment out if you prefer
+      try { console.log('[menubar] nav ->', url); } catch {}
+
+      // single, reliable navigation path (prevents falling back to wrong page)
+      window.location.href = url;
+    }, { capture: true });
   });
 }
 
