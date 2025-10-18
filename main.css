@@ -145,3 +145,17 @@ html, body {
 @media (hover: none), (pointer: coarse) {
   .hub[data-wait="1"] { visibility: hidden; }
 }
+
+
+/* Horizontal mobile/tablets only: make tiles smaller */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  /* Option A: fixed cap */
+  .tile img { max-width: 260px; }
+
+  /* Option B (alternative): scale with viewport width, but never huge
+     .tile img { max-width: min(34vw, 300px); }
+  */
+
+  /* Optional polish: tighten spacing a bit on short heights */
+  .hub { gap: 12px; }
+}
