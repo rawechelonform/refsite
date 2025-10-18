@@ -15,40 +15,37 @@ html, body { margin: 0; padding: 0; }
   --brand-nudge: var(--text-nudge);
 }
 
-/* Reserve space if injected with JS (bar height + notch inset) */
-.menubar-slot { display: block; height: calc(var(--barh) + env(safe-area-inset-top, 0)); }
-
+/* Reserve space if injected with JS (now includes safe-area) */
+.menubar-slot {
+  display: block;
+  height: calc(var(--barh) + env(safe-area-inset-top, 0));
+}
 /* Wrapper */
 .top-margin {
   position: sticky;
-  top: 0;                                 /* stick to the very top */
-  padding-top: env(safe-area-inset-top);  /* uniform notch spacer across pages */
+  /* We no longer shift it down with top:..., we keep it at top:0
+     and add the safe-area inside the header itself (see .site-header below) */
+  top: 0;
   z-index: 9999;
   width: 100%;
   margin: 0;
   background: var(--bg);
 }
 
-/* Header draws ALL lines as backgrounds → perfect alignment */
+LL lines as backgrounds → perfect alignment */
 .site-header {
   position: relative;
   z-index: 1;
   width: 100%;
-  height: var(--barh);
-  box-sizing: border-box;
+  /* include the notch/safe-area *inside* the bar so it’s consistent on all pages */
+  height: calc(var(--barh) + env(safe-area-inset-top, 0));
+  padding-top: env(safe-area-inset-top, 0);
 
+  box-sizing: border-box;
   display: flex;
   align-items: stretch;
   color: var(--chrome);
 
-  /* Layers:
-     - top horizontal
-     - bottom horizontal
-     - left edge vertical
-     - right edge vertical
-     - internal vertical separators at 20% steps (5 items)
-     - black bar background
-  */
   background:
     linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
     linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,

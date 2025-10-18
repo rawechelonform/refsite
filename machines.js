@@ -465,9 +465,10 @@
   });
 })();
 
+
 // ===== Crosshair (desktop only) ==========================================
 (function initCrosshair() {
-  // Only run where hover + fine pointer exists
+  // Only run on mouse/desktop devices
   const showCrosshair = window.matchMedia &&
     window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (!showCrosshair) return;
@@ -486,7 +487,7 @@
   const v   = root.querySelector('.crosshair__v');
   const dot = root.querySelector('.crosshair__dot');
 
-  // Smoothed follower (simple exponential smoothing / lerp)
+  // Smoothed follower (lerp) so the crosshair lags the mouse slightly
   let targetX = window.innerWidth  / 2;
   let targetY = window.innerHeight / 2;
   let curX = targetX, curY = targetY;
@@ -497,14 +498,16 @@
     curX += (targetX - curX) * ease;
     curY += (targetY - curY) * ease;
 
-    h.style.top   = `${curY}px`;
-    v.style.left  = `${curX}px`;
+    // Position lines and center square
+    h.style.top    = `${curY}px`;
+    v.style.left   = `${curX}px`;
     dot.style.left = `${curX}px`;
     dot.style.top  = `${curY}px`;
 
     rafId = requestAnimationFrame(loop);
   }
 
+  // Start following after first mouse move
   function onMove(e) {
     targetX = e.clientX;
     targetY = e.clientY;
@@ -512,14 +515,14 @@
   }
   window.addEventListener('mousemove', onMove, { passive: true });
 
-  // SVG boom with non-scaling stroke (keeps outline as thin as crosshair)
-  function createBoom(x, y, delayMs) {
+  // Explosion builder (SVG with non-scaling stroke)
+  function createBoom(x, y, delayMs = 0) {
     const svg  = document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('class','crosshair__boom');
     svg.setAttribute('viewBox','0 0 100 100');
     svg.style.left = `${x}px`;
     svg.style.top  = `${y}px`;
-    svg.style.animationDelay = `${delayMs}ms`;
+    if (delayMs) svg.style.animationDelay = `${delayMs}ms`;
 
     const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
     rect.setAttribute('class','crosshair__boomRect');
@@ -531,20 +534,25 @@
     svg.addEventListener('animationend', () => svg.remove(), { once: true });
   }
 
+  // Single continuous explosion per click (cleanest look)
   function boom() {
-    const x = curX, y = curY;       // use smoothed position
-    createBoom(x, y, 0);            // 3-burst
-    createBoom(x, y, 110);
-    createBoom(x, y, 220);
+    const x = curX, y = curY;
+    createBoom(x, y);
+
+    // If you want a triple-burst later WITHOUT tailing, uncomment with larger gaps:
+    // createBoom(x, y, 0);
+    // createBoom(x, y, 240);
+    // createBoom(x, y, 480);
   }
   window.addEventListener('click', boom, { passive: true });
 
+  // Keep centered if resized before the first mouse move
   window.addEventListener('resize', () => {
     if (rafId == null) {
       curX = targetX = window.innerWidth  / 2;
       curY = targetY = window.innerHeight / 2;
-      h.style.top   = `${curY}px`;
-      v.style.left  = `${curX}px`;
+      h.style.top    = `${curY}px`;
+      v.style.left   = `${curX}px`;
       dot.style.left = `${curX}px`;
       dot.style.top  = `${curY}px`;
     }

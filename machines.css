@@ -235,22 +235,20 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   .card img { cursor: zoom-in; pointer-events: auto; }
   .card .mobile-caption { display: none; }
 }
-
-/* ===== Crosshair overlay (desktop only) ===== */
+/* ===== Crosshair overlay (desktop only, continuous thin-outline boom) ===== */
 :root{
-  --ch-color: rgba(255, 255, 255, 0.85);  /* crosshair + center square = white */
-  --ch-thick: 1px;                        /* line & explosion stroke thickness */
-  --ch-dot: 6px;                          /* center square size */
+  --ch-color: rgba(255, 255, 255, 0.9);      /* crosshair + center square = white */
   --ch-explode-color: rgba(0, 255, 0, 0.95); /* explosion outline = green */
+  --ch-thick: 0.6px;                         /* ultra-thin line + boom stroke */
+  --ch-dot: 6px;                             /* center square size */
 }
 
-/* Explosion as SVG so stroke stays thin while scaling */
 @media (hover: hover) and (pointer: fine) {
   .crosshair {
     position: fixed;
     inset: 0;
-    z-index: 100000;            /* above lightbox */
-    pointer-events: none;
+    z-index: 100000;            /* above your lightbox (9999) */
+    pointer-events: none;       /* never blocks clicks */
     contain: layout paint;
   }
 
@@ -258,9 +256,9 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
   .crosshair__h,
   .crosshair__v {
     position: absolute;
-    background: var(--ch-color);   /* white lines */
-    mix-blend-mode: screen;
+    background: var(--ch-color); /* white lines */
     will-change: top, left;
+    mix-blend-mode: screen;      /* optional glow on dark bg */
   }
   .crosshair__h { left: 0; right: 0; height: var(--ch-thick); top: 0; }
   .crosshair__v { top: 0; bottom: 0; width: var(--ch-thick); left: 0; }
@@ -269,37 +267,43 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system
     position: absolute;
     width: var(--ch-dot);
     height: var(--ch-dot);
-    background: var(--ch-color);   /* white */
+    background: var(--ch-color); /* white center square */
     transform: translate(-50%, -50%);
     will-change: transform, top, left;
   }
 
-  /* Explosion container (SVG element positioned at the cursor) */
+  /* Explosion SVG positioned at cursor */
   .crosshair__boom {
     position: absolute;
     width: var(--ch-dot);
     height: var(--ch-dot);
     transform: translate(-50%, -50%) scale(1);
-    opacity: 0.9;
-    animation: ch-boom 900ms cubic-bezier(.2,.6,.1,1) forwards;
+    opacity: 1;
+    animation: ch-boom-linear 1400ms linear forwards; /* single continuous growth */
     pointer-events: none;
     will-change: transform, opacity;
   }
 
-  /* The outline square inside the SVG — stays 1px no matter the scale */
+  /* Outline square inside the SVG — stroke stays constant thickness */
   .crosshair__boomRect {
     fill: none;
-    stroke: var(--ch-explode-color);  /* green outline */
-    stroke-width: var(--ch-thick);    /* same as crosshair thickness */
-    vector-effect: non-scaling-stroke;
+    stroke: var(--ch-explode-color);
+    stroke-width: var(--ch-thick);
+    vector-effect: non-scaling-stroke; /* critical: prevents “fat” stroke while scaling */
+    shape-rendering: crispEdges;
+    stroke-linejoin: miter;
+    stroke-miterlimit: 1;
   }
 
-  /* Grow WAY past the page edges */
-  @keyframes ch-boom {
-    60%  { opacity: 0.95; }
-    100% {
-      transform: translate(-50%, -50%) scale(2000);
-      opacity: 0;
-    }
+  /* Pure linear growth; fade only at the very end (no tail look) */
+  @keyframes ch-boom-linear {
+    0%   { transform: translate(-50%, -50%) scale(1);     opacity: 1; }
+    90%  { transform: translate(-50%, -50%) scale(2200);  opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2600);  opacity: 0; }
   }
+}
+
+/* Touch devices: keep crosshair off entirely */
+@media (hover: none), (pointer: coarse) {
+  .crosshair { display: none !important; }
 }
