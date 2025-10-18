@@ -1,5 +1,8 @@
 /* ===== menubar.css — pixel-aligned borders via gradients, mobile tweaks ===== */
 
+/* Global reset so the bar sits flush on every page */
+html, body { margin: 0; padding: 0; }
+
 /* Vars */
 :root {
   --chrome: rgb(143,143,143);
@@ -18,7 +21,7 @@
 /* Wrapper */
 .top-margin {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0); /* respect iOS notch */
   z-index: 9999;
   width: 100%;
   margin: 0;
@@ -118,7 +121,7 @@
   transform: translateY(var(--text-nudge));
 }
 
-/* Brand button */
+/* Brand button (REF) */
 .brand-link {
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
@@ -181,4 +184,18 @@
   :root { --barh: 34px; }
   .menu-link  { font-size: clamp(5.6px, 3.4vw, 6.2px); padding: 0 4px; }
   .brand-link { font-size: clamp(8.4px, 3.6vw, 10.2px) !important; padding: 0 6px !important; }
+}
+
+/* --- OVERRIDES: phones — shrink everything EXCEPT REF (placed last so it wins) --- */
+@media (max-width: 480px) {
+  .menu-link:not(.brand-link) {
+    font-size: clamp(5.2px, 2.5vw, 6.6px);
+    letter-spacing: 0;
+    padding: 0 4px;
+  }
+}
+@media (max-width: 360px) {
+  .menu-link:not(.brand-link) {
+    font-size: clamp(4.8px, 3.2vw, 6.0px);
+  }
 }
