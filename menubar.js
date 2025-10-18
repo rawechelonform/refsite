@@ -87,7 +87,7 @@
     });
   }
 
-  // Force PRINCIPAL’S OFFICE to wrap on phones
+  // Force PRINCIPAL’S OFFICE to wrap on phones 
   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
     const a = Array.from(document.querySelectorAll('.menu a.menu-link'))

@@ -149,9 +149,9 @@
   outline: none;
 }
 
-/* =========================
+/* ==========================
    Responsive sizing
-   ========================= */
+   ========================== */
 /* Tablets / small laptops */
 @media (max-width: 720px) {
   :root { --barh: 22px; --linew: 1.5px; }
