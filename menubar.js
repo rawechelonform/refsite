@@ -1,7 +1,7 @@
 // menubar.js (v=mb10)
 // Include on every page like:
-//   <link rel="stylesheet" href="menubar.css?v=mb10">
-//   <script src="menubar.js?v=mb10" defer></script>
+//   <link rel="stylesheet" href="menubar.css?v=mb9">
+//   <script src="menubar.js?v=mb9" defer></script>
 
 (function () {
   async function injectMenu() {
@@ -10,7 +10,8 @@
 
     try {
       // Hard cache-bust the fragment itself
-      const res = await fetch(`menubar.html?v=mb10&t=${Date.now()}`, { cache: 'no-cache' });
+      const res = await fetch(`menubar.html?v=mb9&t=${Date.now()}`, { cache: 'no-cache' });
+
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
