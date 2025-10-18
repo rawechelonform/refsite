@@ -186,7 +186,7 @@ html, body { margin: 0; padding: 0; }
    shrink text (except REF), force 2-line wrap + center */
 @media (max-height: 420px) and (orientation: landscape) {
   :root { --barh: 24px; }  /* keep flatter */
-  .menu-link:not(.brand-link) { font-size: clamp(5px, 1.6vw, 6.2px); padding: 0 4px; }
+  .menu-link:not(.brand-link) { font-size: clamp(5px, 1.8vw, 6.2px); padding: 0 4px; }
   .brand-link { font-size: clamp(9.8px, 2.2vw, 11.2px) !important; padding: 0 6px !important; }
 
   .menu a[href$="aboutme.html"] {
@@ -202,7 +202,7 @@ html, body { margin: 0; padding: 0; }
 /* Very small phones — PORTRAIT */
 @media (max-width: 360px) and (orientation: portrait) {
   :root { --barh: 26px; }
-  .menu-link  { font-size: clamp(5.2px, 3.2vw, 6.0px); padding: 0 4px; }
+  .menu-link  { font-size: clamp(5.2px, 3.5vw, 6.0px); padding: 0 4px; }
   .brand-link { font-size: clamp(8.8px, 3.6vw, 10.4px) !important; padding: 0 6px !important; }
 }
 
