@@ -265,3 +265,50 @@ html, body {
   .computer-btn:hover .stack{ transform: none; }
   .computer-btn:active .stack{ transform: none; }
 }
+
+/* === MOBILE-ONLY REFINEMENTS ============================================ */
+@media (max-width: 600px){
+
+  /* 1) make the stage have a concrete width so we can compute center */
+  .stage{
+    width: min(420px, 92vw);
+  }
+
+  /* 2) parameterize the avatar's initial left so we can offset it in calc() */
+  :root{
+    --figure-left: 120px; /* matches .figure left offset */
+    --stage-w: min(420px, 92vw);
+
+    /* center the avatar at the end of the walk:
+       final_x = ((stage_w - avatar_w)/2)
+       walk_end must counter the negative 'left', so subtract --figure-left */
+    --walk-end: calc(((var(--stage-w) - var(--avatar-w)) / 2) - var(--figure-left));
+  }
+
+  /* hook up the variable for initial offset (no change on desktop) */
+  .figure{
+    left: calc(-1 * var(--figure-left));
+  }
+
+  /* 3) move the ACCESS GATE // line higher on mobile by removing vertical centering */
+  .wrap{
+    /* stop vertical centering on the gate screen */
+    place-items: start center;
+    align-content: start;
+    /* a little breathing room from the very top */
+    padding-top: clamp(8px, 4vh, 24px);
+  }
+
+  /* tighten terminal spacing so the line sits higher */
+  .terminal{
+    margin-top: 0;
+    row-gap: clamp(4px, 1.5vh, 8px);
+    padding-top: clamp(8px, 2.5vh, 16px);
+    padding-bottom: clamp(8px, 3vh, 20px);
+  }
+
+  /* ensure the ACCESS GATE // line itself doesn’t push down */
+  .line{
+    margin-top: 0;
+  }
+}
