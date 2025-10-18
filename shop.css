@@ -190,3 +190,13 @@ body.menu-transparent .brand-link:focus {
   background: transparent !important;
   color: #fff;
 }
+
+.coming-soon > span {
+  font-family: 'RetroByte', monospace;
+  font-size: var(--soon-size);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,var(--soon-alpha));
+  text-shadow: 0 2px 6px rgba(0,0,0,.45);
+  white-space: nowrap; /* ← keep "C O M I N G  S O O N" on one line */
+}
