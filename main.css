@@ -143,11 +143,11 @@ img.swap-on-hover {
 
   /* center images and constrain width */
   img.swap-on-hover {
-    width: min(92vw, 720px) !important;  /* fits with small border */
-    height: auto !important;
-    margin: 0 auto !important;           /* centers the image */
-    transform: none !important;           /* disable lift */
-  }
+  width: min(80vw, 560px) !important;  /* was min(92vw, 720px) */
+  height: auto !important;
+  margin: 0 auto !important;
+  transform: none !important;
+}
 
   /* labels ALWAYS visible on mobile; no hover needed */
   .tile::after,
