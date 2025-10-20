@@ -240,8 +240,6 @@
 
 
 
-
-
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
@@ -249,8 +247,9 @@
 
   :root{ --row: 14px; --gutter: 22px; }
 
-  /* 1) keep the menu bar flush; apply side gutters only to page body */
+  /* menu bar flush to screen edges; gutters apply only to content */
   .page{ padding-left: 0; padding-right: 0; }
+
   .about-grid{
     display: flex;
     flex-direction: column;
@@ -263,15 +262,20 @@
     box-sizing: border-box;
   }
 
-  /* stack order remains: bio → photo → UTD */
+  /* stack order: bio → photo → UTD */
   .right-col{ display: contents; }
   .bio{ order: 1; }
 
-  /* 2) center the photo hard */
+  /* optional: keep IG on one line + add a row below IG if present */
+  .bio:has(a.ext-link) br{ display: none; }
+  .bio a.ext-link{ white-space: nowrap; }
+  .bio:has(a.ext-link){ margin-bottom: var(--row); }
+
+  /* photo centered + extra space beneath */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;   /* centers the container */
+    justify-content: center;
     align-items: flex-start;
     width: 100%;
     min-width: 0;
@@ -279,25 +283,30 @@
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto var(--row);  /* centered */
+    margin: 6px auto calc(2 * var(--row)); /* centered + extra space under photo */
     width: 100%;
   }
-  .about-photo img{ display: block; width: 100%; height: auto; }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
 
-  /* 3) UTD comes after photo; 4) move avatar closer; 5) extra space between photo and avatar */
+  /* UTD box after photo; compact top bar */
   .utd{
     order: 3;
     position: relative;
-    margin-top: var(--row);          /* adds space between photo and avatar/box */
-    padding-top: 0;                  /* no artificial header inflation */
+    margin-top: var(--row);        /* extra space between photo and box/avatar */
+    padding-top: 0;                /* no artificial clearance */
+    border: none !important;       /* remove any debug border on full box */
   }
-
-  /* top strip of the UTD — keep it flatter; this is the ONLY visible red debug border */
   .utd-bar{
-    padding: 3px 8px;                /* ~half height */
+    padding: 3px 8px;              /* ~half height header */
     margin: -10px -10px 4px -10px;
     line-height: 1;
-    border: 2px solid #ff3b30 !important;  /* solid red border around top box */
+    /* if you want a visible header border, uncomment next line */
+    /* border: 2px solid #ff3b30; */
   }
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{
@@ -307,21 +316,11 @@
     font-size: 9.5px;
   }
 
-  /* remove dotted red border from whole UTD if previous debug CSS added it */
-  .utd{ border: none !important; }
-
-  /* 4) perch avatar closer to the UTD rim, not inside the box */
+  /* avatar perched on top edge, slightly higher */
   .avatar-overlay{
     position: absolute;
-    /* smaller negative = closer to the box edge */
-    top: -46px;
-    right: -6px;
-    width: clamp(60px, 18vw, 92px);
-    height: auto;
-    z-index: 4;
-    pointer-events: none;
-  }
-}
+    top: -54px;                    /* make more negat*
+
 
 
 
