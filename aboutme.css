@@ -237,59 +237,81 @@
 
 
 
+
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
 
-  /* 4) Menu bar flush: no side padding on the page shell */
-  .page{ padding-left: 0; padding-right: 0; }
+  :root{ --row: 14px; }
 
-  /* Content area gets its own side padding so the menu is unaffected */
+  /* 1) Stretch the menu bar full-bleed across the screen */
+  /* Works whether it's <header>, <nav>, or a .menu/.site-nav block */
+  .page > header,
+  .page > nav,
+  .page > .menu,
+  .page > .site-nav{
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  /* 2) Increase side margin (padding) for content BELOW the menu bar */
   .about-grid{
     display: flex;
     flex-direction: column;
-    row-gap: 14px;
+    row-gap: var(--row);
     margin-top: 20px;
-    padding-inline: 14px;     /* applies to content only */
+    padding-inline: 20px; /* bigger than before for nicer gutters */
     width: 100%;
   }
 
-  /* Order is bio → photo → UTD */
+  /* Keep order: bio → photo → UTD */
   .right-col{ display: contents; }
-  .bio{ order: 1; }
 
-  /* 1–2) Photo container truly centered; kill any offset */
+  /* 3) Extra space under bio */
+  .bio{
+    order: 1;
+    margin-bottom: var(--row);
+  }
+
+  /* Photo centered hard */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;  /* centers the figure within full width */
+    justify-content: center;
     align-items: flex-start;
     width: 100%;
     min-width: 0;
-    padding: 0;
-    margin: 0;
-    text-align: initial;
   }
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto 0;       /* hard-center guard */
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 6px;
+    /* 5) add two extra rows under the photo */
+    margin-bottom: calc(2 * var(--row));
     width: 100%;
   }
   .about-photo img{
     display: block;
     width: 100%;
     height: auto;
-    margin: 0;
   }
 
-  /* 2) “Move useless thought box down a little” */
-  .utd{ order: 3; margin-top: 10px; position: relative; }
-
-  /* 2–3) Flatter top bar = ~half height, avatar perched above (not inside) */
+  /* 4) Make the top bar of the UTD about 1/3 current height and do NOT pad for avatar */
+  .utd{
+    order: 3;
+    position: relative;
+    padding-top: 0;              /* remove any clearance that inflated the top */
+    margin-top: var(--row);
+  }
   .utd-bar{
-    padding: 2px 8px;         /* flatter header */
+    padding: 2px 8px;            /* much flatter header */
     margin: -10px -10px 4px -10px;
     line-height: 1;
   }
@@ -301,10 +323,10 @@
     font-size: 9.5px;
   }
 
-  /* Perch the avatar on TOP of the box, not inside it */
+  /* If you’re using the avatar, perch it ABOVE the box so it doesn't increase header height */
   .avatar-overlay{
     position: absolute;
-    top: -54px;               /* sits above the border so it’s “on top” */
+    top: -54px;                 /* sits on the rim, not inside the box */
     right: -6px;
     width: clamp(60px, 18vw, 92px);
     height: auto;
@@ -312,73 +334,3 @@
     pointer-events: none;
   }
 }
-
-/* =========================
-   MOBILE • LANDSCAPE (≤900px)
-   ========================= */
-@media (max-width:900px) and (orientation:landscape){
-
-  /* 6) Menu bar flush on edges */
-  .page{ padding-left: 0; padding-right: 0; }
-
-  /* Two columns like desktop, tighter gap */
-  .about-grid{
-    display: grid;
-    grid-template-columns: 1fr 0.9fr;  /* photo left, text right */
-    column-gap: 3px;                   /* 4) smaller gap */
-    row-gap: 10px;
-    margin-top: 48px;
-    max-width: var(--maxw);
-    width: 100%;
-    padding-inline: 10px;              /* content padding only */
-  }
-
-  /* 4) Center photo in its column */
-  .about-blurb{
-    grid-column: 1; grid-row: 1;
-    display: flex;
-    justify-content: center;           /* centered within left column */
-    min-width: 0;
-  }
-  .about-photo{
-    display: block;
-    max-width: clamp(300px, 34vw, 470px);
-    margin: 0 auto 8px;                /* centered */
-    width: 100%;
-  }
-  .about-photo img{ display: block; width: 100%; height: auto; }
-
-  .right-col{
-    grid-column: 2; grid-row: 1;
-    display: flex; flex-direction: column; gap: 12px;
-    padding-right: 8px;                /* 7) avoids looking “flush to far right” */
-  }
-
-  /* 5) Top part of thought box flatter (half height-ish) */
-  .utd-bar{
-    padding: 2px 8px;
-    margin: -10px -10px 4px -10px;
-    line-height: 1;
-  }
-  .utd-title{ font-size: 10px; }
-  .utd-unlock{
-    padding: 0 6px;
-    height: 16px;
-    line-height: 14px;
-    font-size: 9.5px;
-  }
-
-  /* 6) Avatar perched on top, not inside */
-  .avatar-overlay{
-    position: absolute;
-    top: -52px;                /* above the border */
-    right: -8px;
-    width: clamp(68px, 10vw, 100px);
-    height: auto;
-    z-index: 4;
-    pointer-events: none;
-  }
-}
-
-/* Safety so nothing shrinks away */
-.about-blurb, .about-photo, .right-col{ min-width: 0; }
