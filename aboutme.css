@@ -178,8 +178,11 @@
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
-
-  :root{ --row: 14px; --gutter: 22px; }
+  :root{
+    --utd-header-h: clamp(32px, 7.5vw, 46px);
+    --utd-pad-x:    clamp(6px, 2.6vw, 12px);
+    --perch-gap:    4px;
+  }
 
   /* menu bar flush to screen edges; gutters apply only to content */
   .page{ padding-left: 0; padding-right: 0; }
@@ -221,54 +224,72 @@
     margin: 0; /* ensure no extra img-level margin in portrait */
   }
 
-  /* ——— 1) Full border around the whole UTD box ——— */
   .utd{
-    order: 3;
-    position: relative;
-    margin-top: var(--row);
-    padding: 10px;                         /* body padding */
-    padding-top: 0;                         /* no artificial clearance */
-    border: 2px solid rgb(143,143,143) !important;  /* full frame restored */
-    background: #000;
-    color: rgb(143,143,143);
+    border: 2px solid rgb(143,143,143) !important;
+    background:#000;
+    color:rgb(143,143,143);
+    padding:10px;
+    padding-top:0;                              /* no artificial clearance */
+    position:relative;
   }
-  /* Header strip inside the box (compact) */
+
+  /* Header strip */
   .utd-bar{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 3px 8px;                       /* compact height */
-    margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height: 3;  /* top rectangle height*/
-    position: relative;
-    z-index: 5;                              /* ——— 2) ensure it sits above avatar for taps ——— */
+    display:flex;
+    align-items:center;                         /* vertical centering */
+    justify-content:space-between;
+    gap:8px;
+    min-height: var(--utd-header-h);            /* responsive height */
+    padding: 0 var(--utd-pad-x);
+    margin: -10px -10px 6px -10px;
+    border-bottom:2px solid rgb(143,143,143);
+    line-height: 1.2;                           /* remove the old 3.0 */
   }
-  .utd-title{ font-size: 10px; letter-spacing: .02em; display: flex; align-items: center;}
-  /* CREATOR UNLOCK button: ensure tap target is on top */
-   .utd-unlock{
+
+  .utd-title{
+    font-size: clamp(10px, 3.2vw, 12px);
+    letter-spacing:.02em;
+    display:flex; align-items:center;
+    white-space: nowrap;
+  }
+
+  /* Button stays one line and inside the box on small phones */
+  .utd-unlock{
+    white-space: nowrap;
+    font-size: clamp(9px, 3vw, 11px);
+    height: calc(var(--utd-header-h) - 8px);
+    line-height: calc(var(--utd-header-h) - 10px);
     padding: 0 10px;
-    height: 24px;                 /* match the taller header */
-    line-height: 22px;
-    font-size: 10px;
+    max-width: 50vw;                             /* safety for very small screens */
+    overflow: hidden;
+    text-overflow: ellipsis;
+
     cursor: pointer;
     position: relative;
-    z-index: 10;                  /* above anything decorative */
+    z-index: 10;
     pointer-events: auto;
-    touch-action: manipulation;   /* iOS tap responsiveness */
+    touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(255,255,255,0.15);
     user-select: none;
   }
 
-  /* Avatar perched on top edge of the UTD */
+  /* Avatar perched relative to header height (works on big & small phones) */
   .avatar-overlay{
-    position: absolute;
-    top: -47px !important;   /* make more negative to raise further */
-    right: -6px !important;
+    position:absolute;
+    top: calc(-1 * var(--utd-header-h) - var(--perch-gap));
+    right:-6px;
     width: clamp(60px, 18vw, 92px);
-    height: auto;
-    z-index: 2;               /* below header/button so taps work */
-    pointer-events: none;
+    height:auto;
+    z-index:2;                                   /* below header so taps work */
+    pointer-events:none;
+  }
+}
+
+
+/* Tiny phones (vertical only): bump header height a bit */
+@media (max-width:360px) and (orientation:portrait){
+  :root{
+    --utd-header-h: clamp(36px, 9vw, 48px);
   }
 }
 
