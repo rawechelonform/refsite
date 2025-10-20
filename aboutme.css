@@ -329,7 +329,7 @@
   .utd-bar{
     padding: 3px 8px;
     margin: -10px -10px 4px -10px;
-    line-height: 1;
+    line-height: 2;
   }
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{
