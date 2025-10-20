@@ -260,7 +260,7 @@
   /* Avatar perched on top edge of the UTD */
   .avatar-overlay{
     position: absolute;
-    top: -44px !important;   /* make more negative to raise further */
+    top: -47px !important;   /* make more negative to raise further */
     right: -6px !important;
     width: clamp(60px, 18vw, 92px);
     height: auto;
