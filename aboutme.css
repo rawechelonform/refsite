@@ -168,45 +168,112 @@
 .corner-img{ display:none; }
 
 
-/* ==== MOBILE (PORTRAIT) ONLY: reorder, fix avatar perch, smaller photo ==== */
-/* MOBILE PORTRAIT: text (bio+IG) above photo, smaller photo, avatar perch fix */
+
+
+
+
+
+
+
+/* ===== MOBILE — PORTRAIT fixes ===== */
 @media (max-width:900px) and (orientation:portrait){
+
+  /* add small side padding so content isn't flush with phone edge */
+  .page{ padding-inline: 14px; }
+
+  /* stack into a single flow and control order at the element level */
   .about-grid{
-    grid-template-columns: 1fr;      /* single column in portrait */
+    display: flex;
+    flex-direction: column;
     row-gap: 14px;
     column-gap: 0;
     margin-top: 20px;
   }
 
-  /* Put text block first, photo second */
-  .right-col{ grid-row: 1; }
-  .about-blurb{ grid-row: 2; }
+  /* let right-col's children be orderable alongside the photo */
+  .right-col{ display: contents; }
 
-  /* Smaller photo and centered */
+  /* order: 1) bio (includes IG), 2) photo, 3) UTD */
+  .bio{ order: 1; }
+  .about-blurb{ order: 2; }
+  .utd{ order: 3; }
+
+  /* smaller photo and centered */
   .about-photo{
     max-width: clamp(220px, 68vw, 340px);
     margin: 6px auto 0;
   }
   .about-photo img{ width: 100%; height: auto; }
 
-  /* Avatar perched on UTD without overlapping content */
-  .utd{ padding-top: clamp(40px, 14vw, 72px); position: relative; }
+  /* perch avatar above UTD without changing the UTD header height */
+  .utd{
+    position: relative;
+    /* reserve space for the perched avatar so content doesn't get overlapped */
+    --perch-clear: clamp(40px, 14vw, 72px);
+    padding-top: var(--perch-clear);
+  }
   .avatar-overlay{
-    top: calc(-1 * clamp(40px, 14vw, 72px) + 6px);
+    /* sit on the top edge, not over the text area */
+    top: calc(-1 * var(--perch-clear) + 6px);
     right: -4px;
     width: clamp(60px, 18vw, 92px);
     height: auto;
     z-index: 4;
     pointer-events: none;
   }
+
+  /* keep the original header metrics – do NOT increase its height */
+  .utd-bar{
+    padding: 6px 10px;      /* original */
+    margin: -10px -10px 8px -10px; /* original */
+    border-bottom: 2px solid rgb(143,143,143); /* original */
+  }
 }
 
-/* MOBILE LANDSCAPE: keep original two-column layout */
+/* ===== MOBILE — LANDSCAPE fixes (should look like desktop) ===== */
 @media (max-width:900px) and (orientation:landscape){
+
+  /* ensure we are using the original two-column grid */
   .about-grid{
+    display: grid;
     grid-template-columns: 1fr 0.9fr;  /* original split */
     column-gap: 5px;
     row-gap: 10px;
     margin-top: 48px;
+    max-width: var(--maxw);
+    width: 100%;
+  }
+
+  /* place photo left, text (bio + UTD) right */
+  .about-blurb{ grid-column: 1; grid-row: 1; justify-content: center; }
+  .right-col{ grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 14px; }
+
+  /* make sure photo renders normally */
+  .about-photo{
+    max-width: clamp(300px, 34vw, 470px);
+    margin: 0 auto 8px 0;
+  }
+  .about-photo img{ display: block; width: 100%; height: auto; }
+
+  /* perch avatar on UTD just like desktop – add clearance so it doesn't overlap */
+  .utd{
+    position: relative;
+    --perch-clear: clamp(36px, 9vw, 70px);
+    padding-top: var(--perch-clear);
+  }
+  .avatar-overlay{
+    top: calc(-1 * var(--perch-clear) + 6px);
+    right: -8px;            /* match desktop offset */
+    width: clamp(68px, 10vw, 100px);
+    height: auto;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  /* preserve original UTD header size */
+  .utd-bar{
+    padding: 6px 10px;
+    margin: -10px -10px 8px -10px;
+    border-bottom: 2px solid rgb(143,143,143);
   }
 }
