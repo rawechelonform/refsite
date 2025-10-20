@@ -2,16 +2,13 @@
 
 /* === Tokens / fonts === */
 :root{
-  /* match other pages so widths/layout feel identical */
-  --maxw: 1200px;
-
-  /* Input Mono (from your Adobe Fonts kit) */
+  --maxw: 1200px; /* match other pages */
   --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Make this page's content spacing match Machines/Sad Girls */
+/* Page container */
 .page {
-  padding: 24px 0 48px;           /* ↓ shrunk top padding (was 24px) */
+  padding: 24px 0 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,32 +24,28 @@
   text-transform: none;
   font-variant-ligatures: none;
 }
-.ext-link:hover {
-  color: rgb(110,110,110);
-  text-decoration: underline;
-}
+.ext-link:hover { color: rgb(110,110,110); text-decoration: underline; }
 
-/* ===== two-column about layout ===== */
+/* ===== two-column about layout (ORIGINAL split kept) ===== */
 .about-grid{
   width:100%;
   max-width:var(--maxw);
-  margin:48px auto 20px;   /* closer to menu */
+  margin:48px auto 20px;
   display:grid;
-  grid-template-columns: 1fr 0.9fr; /* left blurb | right UTD (ORIGINAL) */
-  gap: 20px;
+  grid-template-columns: 1fr 0.9fr; /* left photo | right text */
+  gap: 12px;                        /* tighten space between columns */
   align-items:start;
 }
-
 /* prevent grid children from shrinking to zero width */
 .about-grid > * { min-width: 0; }
 
 /* left column */
 .about-blurb{
   box-sizing:border-box;
-  display:flex;                  /* keep flex for the figure */
+  display:flex;               /* keep flex for the figure */
   align-items:flex-start;
-  justify-content:flex-start;    /* IMPORTANT: was 'center' → can cause squish/overlap */
-  overflow:visible;              /* ensure image can't be clipped */
+  justify-content:flex-start; /* do not center (can cause overlap) */
+  overflow:visible;           /* avoid accidental clipping */
 }
 
 /* Bio text */
@@ -66,7 +59,7 @@
   text-align:left;
 }
 
-/* If your IG text lives in the caption block, give it Input Mono too */
+/* If your IG text lives in a caption block elsewhere */
 .caption p{
   font-family: var(--ui-mono);
   text-transform: none;
@@ -80,10 +73,7 @@
   gap: 16px;
 }
 
-/* UTD wrapper */
-.utd-wrap{ width:100%; margin:0; display:block; }
-
-/* UTD box */
+/* ===== UTD box ===== */
 .utd{
   position: relative;                 /* allows overlayed avatar */
   background:#000;
@@ -150,7 +140,7 @@
 /* Responsive: stack columns on narrow screens */
 @media (max-width: 900px){
   .about-grid{
-    margin-top:40px;     /* keep proportionally closer on small screens */
+    margin-top:40px;
     grid-template-columns:1fr;
     gap:14px;
   }
@@ -159,16 +149,15 @@
 /* mini avatar perched on UTD top-right */
 .avatar-overlay{
   position: absolute;
-  top: -70px;                      /* raise more to perch */
-  right: -8px;                     /* hang past the corner slightly */
+  top: -70px;
+  right: -8px;
   width: clamp(68px, 10vw, 100px);
   height: auto;
-  z-index: 3;                      /* above the bar + button */
+  z-index: 3;
   pointer-events: none;
   image-rendering: pixelated;
   opacity: 0.95;
 }
-
 @media (max-width: 900px){
   .avatar-overlay{
     top: -18px;
@@ -183,45 +172,34 @@
 /* === Make IG line match .bio exactly === */
 .carousel .caption p{
   font-family: var(--ui-mono);
-  font-size: 14px;      /* same as .bio */
-  line-height: 1.6;     /* same as .bio */
+  font-size: 14px;
+  line-height: 1.6;
   color: rgb(143,143,143);
   text-transform: none;
   font-variant-ligatures: none;
   letter-spacing: 0;
   font-weight: 400;
 }
-
 .carousel .caption p .ext-link{
-  font: inherit;        /* inherit family/size/line-height/weight */
-  color: inherit;       /* same gray as text */
+  font: inherit;
+  color: inherit;
   text-decoration: none;
 }
 .carousel .caption p .ext-link:hover{ text-decoration: underline; }
 
-/* If sadgirls.css still overrides, uncomment this hard override: */
+/* If sadgirls.css still overrides, you can enforce: */
 /* .page .carousel .caption p{ font-size:14px !important; line-height:1.6 !important; } */
 
-/* Mobile perch for avatar */
-@media (max-width: 900px){
-  .avatar-overlay{
-    top: 0;                     /* anchor to UTD top edge */
-    right: -6px;                /* slight overhang */
-    transform: translateY(-100%);/* lift by ~full height so it perches */
-    width: clamp(60px, 18vw, 92px);
-  }
-}
-
 /* === about page portrait size and border === */
-.about-photo{
-  margin: 0 0 12px 0;
-}
+.about-photo{ margin: 0 0 12px 0; }
 .about-photo img{
   display: block;                    /* ensure the image participates in layout */
-  width: clamp(250px, 40vw, 500px);  /* ORIGINAL sizing you had */
+  width: clamp(250px, 40vw, 500px);  /* your original sizing */
   max-width: 100%;
   height: auto;
-  border: 2px solid rgb(0,0,0);
+  border: 2px solid #000;
   box-sizing: border-box;
   opacity: 1;                        /* guard against accidental 0 */
+  position: relative;
+  z-index: 2;                        /* sit above accidental overlays */
 }
