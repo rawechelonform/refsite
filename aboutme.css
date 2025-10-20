@@ -326,7 +326,7 @@
 
   .avatar-overlay{
     position: absolute;
-    top: -52px;                        /* perched above the UTD header */
+    top: -55px;          /* adjust more negative to raise further */
     right: -8px;
     width: clamp(68px, 10vw, 100px);
     height: auto;
@@ -350,39 +350,37 @@
 
 
 
-
-
-
-
-
-
-/* ===== ALWAYS-ON DEBUG for MOBILE (portrait + landscape) ===== */
+/* ===== DEBUG (toggle) — add class="debug" to <body> to enable ===== */
 @media (max-width:900px){
-
-  /* Whole screen edge */
-  html, body { height: 100%; }
-  body{
-    outline: 3px solid red !important;      /* viewport frame */
+  /* viewport frame */
+  body.debug{
+    outline: 3px solid red !important;
     outline-offset: -3px !important;
   }
 
-  /* Content wrapper */
-  .about-grid{
-    border: 2px solid #00ff6a !important;   /* bright green */
+  /* content wrapper */
+  body.debug .about-grid{
+    border: 2px solid #00ff6a !important;  /* green */
     position: relative;
     box-sizing: border-box;
   }
 
-  /* Columns / key blocks */
-  .about-blurb{ border: 2px dashed #ff9f0a !important; }  /* photo column */
-  .right-col { border: 2px dashed #00d1ff !important; }   /* text column */
-  .bio       { border: 1px dotted #ff2d55 !important; }
-  .about-photo{ border: 1px dotted #af52de !important; }
-  .utd       { border: 2px dotted #ff3b30 !important; }    /* whole UTD box */
-  .utd-bar   { border: 2px solid  #ff3b30 !important; }    /* UTD top strip */
+  /* columns / key blocks */
+  body.debug .about-blurb{ border: 2px dashed #ff9f0a !important; }  /* photo column */
+  body.debug .right-col { border: 2px dashed #00d1ff !important; }   /* text column */
+  body.debug .bio       { border: 1px dotted #ff2d55 !important; }
+  body.debug .about-photo{ border: 1px dotted #af52de !important; }
+  body.debug .utd       { border: 2px dotted #ff3b30 !important; }    /* whole UTD */
+  body.debug .utd-bar   { border: 2px solid  #ff3b30 !important; }    /* UTD top strip */
 
-  /* Make borders obvious even if something has background */
-  .about-grid, .about-blurb, .right-col, .bio, .about-photo, .utd, .utd-bar{
+  /* keep borders visible atop backgrounds */
+  body.debug .about-grid,
+  body.debug .about-blurb,
+  body.debug .right-col,
+  body.debug .bio,
+  body.debug .about-photo,
+  body.debug .utd,
+  body.debug .utd-bar{
     background-clip: padding-box !important;
   }
 }
