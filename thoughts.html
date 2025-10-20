@@ -1,0 +1,84 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>useless thought</title>
+
+<form id="postForm" style="max-width:640px;margin:24px auto;font-family:ui-monospace,monospace">
+  <input id="title" placeholder="title (optional)" maxlength="200" style="width:100%;padding:8px;margin:0 0 8px 0;border:1px solid #999;border-radius:6px">
+  <textarea id="body" placeholder="write your post…" required rows="8" style="width:100%;padding:8px;border:1px solid #999;border-radius:6px"></textarea>
+  <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+    <button type="submit" style="padding:8px 14px;border:1px solid #333;border-radius:6px;background:#fafafa;cursor:pointer">submit</button>
+    <span id="status" style="font-size:12px;color:#555"></span>
+  </div>
+</form>
+
+<div id="posts" style="max-width:640px;margin:0 auto 48px auto;font-family:ui-monospace,monospace"></div>
+
+<script>
+const API    = 'https://script.google.com/macros/s/AKfycbw5DCMggJC4Hn0a-cREQ1UOOQdLSUchzdLo2pCRSZwGYRbTbgXJlRz2G2a7xYsjOoLibw/exec'; // your /exec URL
+const SECRET = 'fHTTj7XPasXkhXqYT';                                                      // same secret as in Code.gs
+const LS_KEY = 'useless-thought-draft';
+
+const form = document.getElementById('postForm');
+const titleEl = document.getElementById('title');
+const bodyEl  = document.getElementById('body');
+const statusEl= document.getElementById('status');
+const postsEl = document.getElementById('posts');
+
+function setStatus(s){ statusEl.textContent = s; }
+function esc(s){ return String(s||'').replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+// restore local draft on load
+(() => {
+  try{ const d = JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+    if(d.title) titleEl.value=d.title; if(d.body) bodyEl.value=d.body;
+  }catch{}
+})();
+
+// save draft while typing
+form.addEventListener('input', () => {
+  localStorage.setItem(LS_KEY, JSON.stringify({ title:titleEl.value, body:bodyEl.value }));
+});
+
+// submit → saves to your Sheet via Apps Script
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = titleEl.value.trim();
+  const body  = bodyEl.value.trim();
+  if (!body){ setStatus('empty'); return; }
+  if (body.length > 20000){ setStatus('too long (>20KB)'); return; }
+
+  setStatus('saving…');
+  try{
+    const res = await fetch(`${API}?secret=${encodeURIComponent(SECRET)}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title, body })
+    });
+    const data = await res.json();
+    if(!data.ok){ setStatus('error: '+(data.error||'unknown')); return; }
+    localStorage.removeItem(LS_KEY);
+    setStatus('saved');
+    // optional clear after save
+    // titleEl.value=''; bodyEl.value='';
+    loadPosts();
+  }catch{ setStatus('network error'); }
+});
+
+// list recent posts
+async function loadPosts(limit=10){
+  postsEl.textContent = 'loading…';
+  try{
+    const res = await fetch(`${API}?secret=${encodeURIComponent(SECRET)}&limit=${limit}`);
+    const data = await res.json();
+    if(!data.ok){ postsEl.textContent='error loading'; return; }
+    const list = (data.posts||[]).reverse(); // newest first
+    postsEl.innerHTML = list.length ? list.map(p=>`
+      <article style="border-top:1px dashed #aaa;padding-top:12px;margin-top:18px">
+        <h3 style="margin:0 0 4px 0">${esc(p.title||'(untitled)')}</h3>
+        <small style="color:#666">${new Date(p.ts).toLocaleString()}</small>
+        <pre style="white-space:pre-wrap;margin:6px 0 0 0">${esc(p.body)}</pre>
+      </article>
+    `).join('') : 'no posts yet';
+  }catch{ postsEl.textContent='offline'; }
+}
+loadPosts();
+</script>
