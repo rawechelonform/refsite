@@ -232,63 +232,80 @@
 
 
 
+
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
 
-  /* 1) Menu bar stays flush – remove page side padding, pad content only */
-  .page{ padding-left: 0; padding-right: 0; }
+  /* consistent row unit for spacing */
+  :root{ --row: 14px; }
+
+  /* single-column content area (menu stays unaffected) */
   .about-grid{
     display: flex;
     flex-direction: column;
-    row-gap: 14px;
+    row-gap: var(--row);
     margin-top: 20px;
-    padding-inline: 14px;      /* applies only to content below the menu */
+    padding-inline: 14px; /* applies to content only, not your menu */
   }
 
-  /* order remains: bio → photo → UTD, and photo centered */
+  /* Reorder: bio → photo → UTD */
   .right-col{ display: contents; }
-  .bio{ order: 1; }
+
+  /* 1) extra "row" under bio */
+  .bio{
+    order: 1;
+    margin-bottom: var(--row);
+  }
+
+  /* 2) photo truly centered + 4) add TWO extra blank rows under photo */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;   /* 2) center the photo */
+    justify-content: center;
+    align-items: flex-start;
     width: 100%;
     min-width: 0;
+    padding: 0;                 /* ensure no hidden offset */
   }
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto 0;
+    margin-left: auto;          /* hard-center guard */
+    margin-right: auto;         /* hard-center guard */
+    margin-top: 6px;
+    margin-bottom: calc(2 * var(--row)); /* 4) two extra rows below */
     width: 100%;
   }
-  .about-photo img{ display: block; width: 100%; height: auto; }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 
-  /* 2) Move UTD down a little */
+  /* 3) UTD top section flatter + avatar perch without inflating header */
   .utd{
     order: 3;
     position: relative;
-    margin-top: 8px;
-    --perch-clear: 40px;       /* avatar clearance */
+    --perch-clear: 34px;         /* smaller clearance so header area stays compact */
     padding-top: var(--perch-clear);
+    margin-top: var(--row);
   }
-
-  /* 3) Make the UTD header flatter/smaller (approx two rows) */
   .utd-bar{
-    padding: 4px 8px;
-    margin: -10px -10px 6px -10px;
+    padding: 2px 8px;            /* flatter header */
+    margin: -10px -10px 4px -10px;
     line-height: 1;
   }
-  .utd-title{ font-size: 10.5px; }
+  .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{
     padding: 0 6px;
-    height: 18px;
-    line-height: 16px;
-    font-size: 10px;
+    height: 16px;
+    line-height: 14px;
+    font-size: 9.5px;
   }
-
-  /* keep avatar perched, not overlapping */
   .avatar-overlay{
     top: calc(-1 * var(--perch-clear) + 4px);
     right: -6px;
@@ -304,58 +321,57 @@
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
 
-  /* 6) Menu bar flush – remove page padding, pad content a bit only */
-  .page{ padding-left: 0; padding-right: 0; }
-
   /* two columns like desktop */
   .about-grid{
     display: grid;
-    grid-template-columns: 1fr 0.9fr;  /* 5) photo column left, text column right */
-    column-gap: 3px;                   /* 4) smaller gap */
+    grid-template-columns: 1fr 0.9fr;
+    column-gap: 3px;            /* smaller gap between photo and text */
     row-gap: 10px;
     margin-top: 48px;
     max-width: var(--maxw);
     width: 100%;
-    padding-inline: 10px;              /* content-only padding */
+    padding-inline: 10px;
   }
 
-  /* 4) center the photo within its column */
+  /* 4) photo centered in its column */
   .about-blurb{
     grid-column: 1; grid-row: 1;
     display: flex;
-    justify-content: center;
+    justify-content: center;    /* center within left column */
     min-width: 0;
   }
   .about-photo{
     display: block;
     max-width: clamp(300px, 34vw, 470px);
-    margin: 0 auto 8px;                /* centered */
+    margin: 0 auto 8px;         /* center inside the column */
     width: 100%;
   }
   .about-photo img{ display: block; width: 100%; height: auto; }
 
   .right-col{
     grid-column: 2; grid-row: 1;
-    display: flex; flex-direction: column; gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
-  /* 5) flatten the UTD header here too */
+  /* 5) UTD top section flatter */
   .utd{
     position: relative;
-    --perch-clear: 38px;
+    --perch-clear: 32px;         /* tighter than portrait to keep header flat */
     padding-top: var(--perch-clear);
   }
   .utd-bar{
-    padding: 4px 8px;
-    margin: -10px -10px 6px -10px;
+    padding: 2px 8px;
+    margin: -10px -10px 4px -10px;
     line-height: 1;
   }
-  .utd-title{ font-size: 10.5px; }
+  .utd-title{ font-size: 10px; }
   .utd-unlock{
     padding: 0 6px;
-    height: 18px;
-    line-height: 16px;
-    font-size: 10px;
+    height: 16px;
+    line-height: 14px;
+    font-size: 9.5px;
   }
   .avatar-overlay{
     top: calc(-1 * var(--perch-clear) + 4px);
@@ -367,5 +383,5 @@
   }
 }
 
-/* safety so nothing disappears due to shrink */
+/* safety so nothing shrinks away */
 .about-blurb, .about-photo, .right-col{ min-width: 0; }
