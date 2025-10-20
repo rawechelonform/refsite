@@ -212,7 +212,7 @@
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto calc(2 * var(--row)); /* centered with extra space under photo */
+    margin: 6px auto calc(4 * var(--row)); /* centered with extra space under photo */
     width: 100%;
   }
   .about-photo img{
