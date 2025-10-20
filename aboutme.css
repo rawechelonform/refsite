@@ -198,7 +198,9 @@
 
   /* stack order: bio → photo → UTD */
   .right-col{ display: contents; }
-  .bio{ order: 1; }
+  .bio{ order: 1; 
+    margin-bottom: var(--row);              /* bump to 1.5* or 2* if you want more */
+  }
 
   /* photo centered + extra space beneath */
   .about-blurb{
@@ -212,7 +214,7 @@
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto calc(4 * var(--row)); /* centered with extra space under photo */
+    margin: 6px auto calc(3 * var(--row)); /* centered with extra space under photo */
     width: 100%;
   }
   .about-photo img{
