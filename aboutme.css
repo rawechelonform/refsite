@@ -238,7 +238,7 @@
     padding: 3px 8px;                       /* compact height */
     margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
     border-bottom: 2px solid rgb(143,143,143);
-    line-height: 3.5;  /* top rectangle height*/
+    line-height: 3;  /* top rectangle height*/
     position: relative;
     z-index: 5;                              /* ——— 2) ensure it sits above avatar for taps ——— */
   }
@@ -258,7 +258,7 @@
   /* Avatar perched on top edge of the UTD */
   .avatar-overlay{
     position: absolute;
-    top: -100px !important;   /* make more negative to raise further */
+    top: -50px !important;   /* make more negative to raise further */
     right: -6px !important;
     width: clamp(60px, 18vw, 92px);
     height: auto;
