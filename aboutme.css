@@ -373,116 +373,33 @@
 
 
 
+/* ===== ALWAYS-ON DEBUG for MOBILE (portrait + landscape) ===== */
+@media (max-width:900px){
 
-
-/* ===== DEBUG MODE =====
-   Toggle with: <html data-debug="1">  (remove to turn off)
-   Uses outlines so layout doesn't shift
-*/
-html[data-debug="1"] * { outline-offset: -1px; }
-
-/* 0) FULL SCREEN EDGE (all orientations) */
-html[data-debug="1"] body::before{
-  content:"viewport";
-  position: fixed; inset: 0;
-  border: 3px solid rgba(0,128,255,.7);
-  pointer-events:none; z-index: 9999;
-  mix-blend-mode: multiply;
-  font: 600 10px/1 var(--ui-mono, ui-monospace);
-  color:#0080ff; padding:2px 4px; background: rgba(0,128,255,.08);
-}
-
-/* 1) MENU / HEADER */
-html[data-debug="1"] .page > header,
-html[data-debug="1"] .page > nav,
-html[data-debug="1"] .page > .menu,
-html[data-debug="1"] .page > .site-nav{
-  outline: 2px dashed rgba(255,128,0,.9);
-}
-html[data-debug="1"] .page > header::after,
-html[data-debug="1"] .page > nav::after,
-html[data-debug="1"] .page > .menu::after,
-html[data-debug="1"] .page > .site-nav::after{
-  content:"menu/header";
-  position:absolute; top:-10px; right:6px;
-  font:600 10px/1 var(--ui-mono, ui-monospace);
-  color:#ff8000; background:#141414; padding:2px 4px;
-}
-
-/* 2) CONTENT WRAPPER (about-grid) */
-html[data-debug="1"] .about-grid{
-  outline: 2px solid rgba(0,200,0,.9);
-  background-image: linear-gradient(transparent, transparent);
-  position: relative;
-}
-html[data-debug="1"] .about-grid::after{
-  content:"about-grid (content area)";
-  position:absolute; top:-10px; left:6px;
-  font:600 10px/1 var(--ui-mono, ui-monospace);
-  color:#00c800; background:#141414; padding:2px 4px;
-}
-
-/* 3) KEY BLOCKS (both orientations) */
-html[data-debug="1"] .bio{ outline:2px dotted rgba(255,0,153,.9); }
-html[data-debug="1"] .about-blurb{ outline:2px dotted rgba(153,102,255,.9); }
-html[data-debug="1"] .about-photo{ outline:2px dashed rgba(153,102,255,.7); }
-html[data-debug="1"] .utd{ outline:2px dotted rgba(255,0,0,.9); }
-html[data-debug="1"] .utd-bar{ outline:2px solid rgba(255,0,0,.7); }
-html[data-debug="1"] .right-col{ outline:2px dashed rgba(0,255,204,.85); }
-
-/* Labels for key blocks */
-html[data-debug="1"] .bio::before,
-html[data-debug="1"] .about-blurb::before,
-html[data-debug="1"] .utd::before{
-  position:absolute; transform: translateY(-12px);
-  font:600 10px/1 var(--ui-mono, ui-monospace);
-  background:#141414; padding:2px 4px;
-}
-html[data-debug="1"] .bio::before{ content:"bio"; color:#ff0099; }
-html[data-debug="1"] .about-blurb::before{ content:"photo column"; color:#9966ff; }
-html[data-debug="1"] .utd::before{ content:"UTD"; color:#ff0000; }
-
-/* 4) PORTRAIT (vertical) — show the “safe” inner area */
-@media (max-width:900px) and (orientation:portrait){
-  html[data-debug="1"] .about-grid{
-    box-shadow:
-      inset 0 0 0 2px rgba(0,200,0,.5),                 /* inner border */
-      inset 0 0 0 20px rgba(0,200,0,.06);               /* gutters visual */
+  /* Whole screen edge */
+  html, body { height: 100%; }
+  body{
+    outline: 3px solid red !important;      /* viewport frame */
+    outline-offset: -3px !important;
   }
-}
 
-/* 5) LANDSCAPE (horizontal) — emphasize the two columns */
-@media (max-width:900px) and (orientation:landscape){
-  /* The left column is .about-blurb, right column is .right-col */
-  html[data-debug="1"] .about-grid{
-    background-image:
-      repeating-linear-gradient(
-        90deg,
-        rgba(0,200,255,.08) 0, rgba(0,200,255,.08) 12px,
-        transparent 12px, transparent 24px
-      );
+  /* Content wrapper */
+  .about-grid{
+    border: 2px solid #00ff6a !important;   /* bright green */
+    position: relative;
+    box-sizing: border-box;
   }
-  html[data-debug="1"] .about-blurb{
-    background:
-      linear-gradient(rgba(0,200,255,.12), rgba(0,200,255,.12));
-  }
-  html[data-debug="1"] .right-col{
-    background:
-      linear-gradient(rgba(255,200,0,.10), rgba(255,200,0,.10));
-  }
-  html[data-debug="1"] .about-blurb::after,
-  html[data-debug="1"] .right-col::after{
-    position:absolute; top:-10px; left:6px;
-    font:600 10px/1 var(--ui-mono, ui-monospace);
-    background:#141414; padding:2px 4px;
-  }
-  html[data-debug="1"] .about-blurb::after{ content:"left column (.about-blurb)"; color:#00c8ff; }
-  html[data-debug="1"] .right-col::after{ content:"right column (.right-col)"; color:#ffc800; }
-}
 
-/* 6) AVATAR + alignment helpers */
-html[data-debug="1"] .avatar-overlay{ outline:2px solid rgba(255,255,0,.9); }
-html[data-debug="1"] .about-blurb,
-html[data-debug="1"] .about-photo{
-  background-clip: content-box;
+  /* Columns / key blocks */
+  .about-blurb{ border: 2px dashed #ff9f0a !important; }  /* photo column */
+  .right-col { border: 2px dashed #00d1ff !important; }   /* text column */
+  .bio       { border: 1px dotted #ff2d55 !important; }
+  .about-photo{ border: 1px dotted #af52de !important; }
+  .utd       { border: 2px dotted #ff3b30 !important; }    /* whole UTD box */
+  .utd-bar   { border: 2px solid  #ff3b30 !important; }    /* UTD top strip */
+
+  /* Make borders obvious even if something has background */
+  .about-grid, .about-blurb, .right-col, .bio, .about-photo, .utd, .utd-bar{
+    background-clip: padding-box !important;
+  }
 }
