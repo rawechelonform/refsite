@@ -6,7 +6,7 @@
   --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Page container (desktop/default) */
+/* Page container (centered content, normal margins) */
 .page{
   padding: 24px 0 48px;
   display: flex;
@@ -27,25 +27,25 @@
 }
 .ext-link:hover{ color: rgb(110,110,110); text-decoration: underline; }
 
-/* ===== Two-column layout (desktop) ===== */
+/* ===== Two-column layout (desktop / default) ===== */
 .about-grid{
   width: 100%;
   max-width: var(--maxw);
   margin: 48px auto 20px;
   display: grid;
-  grid-template-columns: 1fr 0.9fr;   /* ORIGINAL split — keeps text width */
-  column-gap: 5px;
+  grid-template-columns: 1fr 0.9fr;   /* ORIGINAL split — preserves text width */
+  column-gap: 5px;                    /* adjust to taste */
   row-gap: 10px;
   align-items: start;
 }
 .about-grid > * { min-width: 0; }
 
-/* LEFT column — portrait */
+/* LEFT column — portrait (center the photo in its column) */
 .about-blurb{
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
-  justify-content: center;             /* center figure horizontally */
+  justify-content: center;
   overflow: visible;
 }
 
@@ -66,7 +66,7 @@
   text-align: left;
 }
 
-/* Extra space between IG paragraph and the UTD box (desktop) */
+/* Extra space between IG paragraph and the UTD box */
 .right-col .bio + .utd{ margin-top: 10px; }
 
 /* ===== UTD box ===== */
@@ -131,7 +131,7 @@
 }
 .utd-icon:hover{ background:rgb(90,90,90); color:#000; }
 
-/* Avatar perched top-right (desktop default) */
+/* Avatar perched top-right (desktop defaults) */
 .avatar-overlay{
   position:absolute; top:-70px; right:-8px;
   width: clamp(68px, 10vw, 100px);
@@ -158,7 +158,7 @@
    MOBILE PORTRAIT (stack)
    ========================= */
 @media (max-width: 900px) and (orientation: portrait){
-  /* add side margins so content isn't flush to the screen */
+  /* add side margins so content isn't flush to screen */
   .page{ padding: 20px 16px 40px; }
 
   /* stack the sections */
@@ -168,12 +168,8 @@
     gap: 14px;
   }
 
-  /* flatten right column so we can reorder its children (Safari-friendly) */
-  .right-col{
-    display: contents;
-    /* defensive: ensure contents doesn’t drop children in Safari */
-    contain: layout style;
-  }
+  /* flatten right column so we can reorder its children */
+  .right-col{ display: contents; }
 
   /* order: 1) text  2) IG  3) photo  4) UTD */
   .right-col .bio:first-of-type { order: 1; }     /* main text */
@@ -185,15 +181,18 @@
   .about-blurb{ justify-content: center; }
   .about-photo{ margin: 8px auto 16px; max-width: clamp(300px, 80vw, 470px); }
 
-  /* give UTD some top padding so the avatar can perch without covering the button */
-  .utd{ padding-top: 18px; }
-  .avatar-overlay{ top: -92px; right: -6px; }  /* perch above UTD bar */
+  /* move avatar UP more so it perches without covering the button */
+  .avatar-overlay{ top: -100px; right: -6px; }
+
+  /* small nudge below IG block before UTD */
+  .right-col .bio + .utd{ margin-top: 12px; }
 }
 
 /* ===================================
    MOBILE LANDSCAPE (2 columns again)
    =================================== */
 @media (max-width: 900px) and (orientation: landscape){
+  /* restore a 2-column grid */
   .about-grid{
     display: grid;
     grid-template-columns: 1fr 0.9fr;
@@ -206,10 +205,11 @@
   .about-blurb,
   .right-col .utd{ order: initial; }
 
+  /* center the photo and size nicely in landscape */
   .about-blurb{ justify-content: center; }
   .about-photo{ margin: 8px auto 16px; max-width: clamp(320px, 40vw, 470px); }
 
-  /* move avatar a bit higher to avoid overlap in landscape */
+  /* move avatar a bit higher to avoid overlap */
   .avatar-overlay{ top: -110px; right: -6px; }
 }
 
