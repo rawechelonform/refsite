@@ -166,3 +166,47 @@
 
 /* Safety: kill any old fixed image rule */
 .corner-img{ display:none; }
+
+
+/* ==== MOBILE (PORTRAIT) ONLY: reorder, fix avatar perch, smaller photo ==== */
+/* MOBILE PORTRAIT: text (bio+IG) above photo, smaller photo, avatar perch fix */
+@media (max-width:900px) and (orientation:portrait){
+  .about-grid{
+    grid-template-columns: 1fr;      /* single column in portrait */
+    row-gap: 14px;
+    column-gap: 0;
+    margin-top: 20px;
+  }
+
+  /* Put text block first, photo second */
+  .right-col{ grid-row: 1; }
+  .about-blurb{ grid-row: 2; }
+
+  /* Smaller photo and centered */
+  .about-photo{
+    max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto 0;
+  }
+  .about-photo img{ width: 100%; height: auto; }
+
+  /* Avatar perched on UTD without overlapping content */
+  .utd{ padding-top: clamp(40px, 14vw, 72px); position: relative; }
+  .avatar-overlay{
+    top: calc(-1 * clamp(40px, 14vw, 72px) + 6px);
+    right: -4px;
+    width: clamp(60px, 18vw, 92px);
+    height: auto;
+    z-index: 4;
+    pointer-events: none;
+  }
+}
+
+/* MOBILE LANDSCAPE: keep original two-column layout */
+@media (max-width:900px) and (orientation:landscape){
+  .about-grid{
+    grid-template-columns: 1fr 0.9fr;  /* original split */
+    column-gap: 5px;
+    row-gap: 10px;
+    margin-top: 48px;
+  }
+}

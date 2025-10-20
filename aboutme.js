@@ -170,3 +170,72 @@
   if ($title) $title.textContent = loadTitle();
   render();
 })();
+
+
+/* ==== MOBILE (PORTRAIT) ONLY: reorder, fix avatar perch, smaller photo ==== */
+@media (max-width:900px) and (orientation:portrait){
+
+  /* Turn the overall grid into a simple vertical flow */
+  .about-grid{
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;   /* a bit tighter than the default 40px */
+    row-gap: 12px;
+    column-gap: 0;
+  }
+
+  /* Let right-col's children participate as top-level items for ordering */
+  .right-col{ display: contents; }
+
+  /* Desired order:
+     1) text description (bio), 2) IG, 3) photo, 4) UTD */
+  .bio{ order: 1; }
+
+  /* Preferred selector if you added class="ig" */
+  .right-col .ig{ order: 2; }
+
+  /* Fallback if you didn't add .ig:
+     target a block that contains the .ext-link */
+  @supports(selector(p:has(a.ext-link))){
+    .right-col p:has(a.ext-link){ order: 2; }
+  }
+
+  /* Photo comes third */
+  .about-blurb{ order: 3; }
+
+  /* Useless Thought of the Day box last */
+  .utd{
+    order: 4;
+
+    /* Make space so the perched avatar doesn't overlap the text */
+    padding-top: clamp(40px, 14vw, 72px);
+  }
+
+  /* Avatar: perch above the UTD top border without covering content */
+  .avatar-overlay{
+    /* Pull it upward so it sits on the box edge */
+    top: calc(-1 * clamp(40px, 14vw, 72px) + 6px);
+    right: -4px;
+
+    /* Reasonable mobile size */
+    width: clamp(60px, 18vw, 92px);
+    height: auto;
+
+    z-index: 4;              /* ensure it stays above the box frame */
+    pointer-events: none;    /* keep taps from hitting it */
+  }
+
+  /* Make the portrait a bit smaller on mobile and center it */
+  .about-photo{
+    max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto 0;
+  }
+  .about-photo img{
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Keep your existing landscape + desktop behavior.
+   Your previous @media (max-width:900px) grid stack remains for landscape;
+   this portrait block overrides it only in vertical view. */
