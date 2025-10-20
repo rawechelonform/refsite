@@ -236,6 +236,7 @@
   }
 }
 
-/* Keep your existing landscape + desktop behavior.
-   Your previous @media (max-width:900px) grid stack remains for landscape;
-   this portrait block overrides it only in vertical view. */
+
+
+
+   document.documentElement.toggleAttribute('data-debug');
