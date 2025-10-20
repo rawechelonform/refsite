@@ -45,7 +45,7 @@
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: center;             /* center figure horizontally */
   overflow: visible;
 }
 
@@ -131,12 +131,15 @@
 }
 .utd-icon:hover{ background:rgb(90,90,90); color:#000; }
 
-/* Avatar perched top-right (desktop defaults) */
+/* Avatar perched top-right */
 .avatar-overlay{
   position:absolute; top:-70px; right:-8px;
   width: clamp(68px, 10vw, 100px);
   height:auto;
   z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
+}
+@media (max-width:900px){
+  .avatar-overlay{ top:-18px; right:-6px; width: clamp(60px, 18vw, 92px); }
 }
 
 /* ===== Portrait sizing (responsive, not huge) ===== */
@@ -158,41 +161,32 @@
    MOBILE PORTRAIT (stack)
    ========================= */
 @media (max-width: 900px) and (orientation: portrait){
-  /* add side margins so content isn't flush to screen */
+  /* ONLY change: add side margins so content isn't flush to the screen */
   .page{ padding: 20px 16px 40px; }
 
-  /* stack the sections */
+  /* keep the previous, working stack + order */
   .about-grid{
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
-
-  /* flatten right column so we can reorder its children */
   .right-col{ display: contents; }
 
   /* order: 1) text  2) IG  3) photo  4) UTD */
-  .right-col .bio:first-of-type { order: 1; }     /* main text */
-  .right-col .bio:nth-of-type(2) { order: 2; }    /* IG */
-  .about-blurb                    { order: 3; }    /* photo */
-  .right-col .utd                 { order: 4; }    /* UTD */
+  .right-col .bio:first-of-type { order: 1; }
+  .right-col .bio:nth-of-type(2) { order: 2; }
+  .about-blurb                    { order: 3; }
+  .right-col .utd                 { order: 4; }
 
-  /* center + size photo on mobile */
+  /* keep photo centered/sized */
   .about-blurb{ justify-content: center; }
   .about-photo{ margin: 8px auto 16px; max-width: clamp(300px, 80vw, 470px); }
-
-  /* move avatar UP more so it perches without covering the button */
-  .avatar-overlay{ top: -100px; right: -6px; }
-
-  /* small nudge below IG block before UTD */
-  .right-col .bio + .utd{ margin-top: 12px; }
 }
 
 /* ===================================
    MOBILE LANDSCAPE (2 columns again)
    =================================== */
 @media (max-width: 900px) and (orientation: landscape){
-  /* restore a 2-column grid */
   .about-grid{
     display: grid;
     grid-template-columns: 1fr 0.9fr;
@@ -205,12 +199,8 @@
   .about-blurb,
   .right-col .utd{ order: initial; }
 
-  /* center the photo and size nicely in landscape */
   .about-blurb{ justify-content: center; }
   .about-photo{ margin: 8px auto 16px; max-width: clamp(320px, 40vw, 470px); }
-
-  /* move avatar a bit higher to avoid overlap */
-  .avatar-overlay{ top: -110px; right: -6px; }
 }
 
 /* Safety: kill any old fixed image rule */
