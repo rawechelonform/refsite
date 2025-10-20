@@ -33,8 +33,8 @@
   margin:48px auto 20px;
   display:grid;
   grid-template-columns: 1fr 0.9fr; /* left photo | right text */
-  gap: 12px;                        /* tighten space between columns */
-  column-gap: 12px;                 /* explicit horizontal gap */
+  gap: 10px;                        /* tighter horizontal & vertical gap */
+  column-gap: 10px;                 /* explicit horizontal gap */
   align-items:start;
 }
 /* prevent grid children from shrinking to zero width */
@@ -71,7 +71,7 @@
 .right-col{
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px; /* a bit tighter to match the reduced column gap */
 }
 
 /* ===== UTD box ===== */
@@ -190,11 +190,12 @@
 .carousel .caption p .ext-link:hover{ text-decoration: underline; }
 
 /* === about page portrait size and border === */
-.about-photo{ margin: 0 0 12px 0; }
+/* Smaller and closer than before */
+.about-photo{ margin: 0 0 8px 0; }
 .about-photo img{
   display: block;                    /* ensure the image participates in layout */
-  width: clamp(250px, 40vw, 500px);  /* your original sizing */
-  max-width: 100%;
+  width: 100%;                       /* fill left column width */
+  max-width: 380px;                  /* SMALLER cap so it’s not huge */
   height: auto;
   border: 2px solid #000;
   box-sizing: border-box;
@@ -204,6 +205,4 @@
 }
 
 /* --- hard overrides to ensure the portrait shows on live --- */
-.about-grid > * { min-width: 0; }
 .about-blurb { display: block !important; overflow: visible !important; }
-.about-photo img { width: 100% !important; max-width: 520px !important; }

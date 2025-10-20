@@ -1,4 +1,4 @@
-// aboutme.js (v3) — local-only UTD with owner unlock + edit/delete + editable title
+// aboutme.js (v4) — local-only UTD with owner unlock + edit/delete + editable title
 (() => {
   const KEY        = 'utd_entries_v7';
   const TITLE_KEY  = 'utd_title_v2';
@@ -12,7 +12,7 @@
   const $title  = document.getElementById('utdTitle');
   const $avatar = document.querySelector('.avatar-overlay');
 
-  // Safety: make sure avatar never blocks clicks
+  // Safety: ensure avatar never blocks clicks
   if ($avatar) $avatar.style.pointerEvents = 'none';
 
   let ownerMode = false;
@@ -137,14 +137,22 @@
         ownerMode = false;
         $unlock.textContent = 'CREATOR UNLOCK';
         disableTitleEditing();
+        // keep the form visible if it already is; or hide if you prefer:
+        // $form.hidden = true;
         render();
         return;
       }
+
       const pass = prompt('Enter passphrase:');
       if (pass && pass === OWNER_PASSPHRASE) {
         ownerMode = true;
         $unlock.textContent = 'HIDE';
         enableTitleEditing();
+        // Ensure the input area is visible and focused when unlocked
+        if ($form) {
+          $form.hidden = false;
+          setTimeout(() => $text && $text.focus(), 0);
+        }
         render();
       } else {
         alert('Incorrect passphrase');
@@ -180,8 +188,6 @@
   }
 
   // ----- init -----
-  // load saved title
   if ($title) $title.textContent = loadTitle();
-  // start with form hidden (controlled by HTML [hidden]); render feed
   render();
 })();
