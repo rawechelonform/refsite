@@ -232,8 +232,6 @@
 
 
 
-
-
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
@@ -326,4 +324,12 @@
     margin: -10px -10px 8px -10px;
     line-height: 1.2;
   }
-  .avatar-o
+  .avatar-overlay{
+    top: calc(-1 * var(--perch-clear) + 6px);
+    right: -8px;                        /* match desktop offset */
+    width: clamp(68px, 10vw, 100px);
+    height: auto;
+    z-index: 4;
+    pointer-events: none;
+  }
+}
