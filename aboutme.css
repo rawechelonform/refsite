@@ -179,7 +179,7 @@
 @media (max-width:900px) and (orientation:portrait){
 
   /* add small side padding so content isn't flush with phone edge */
-  .page{ padding-inline: 14px; }
+  .page{ padding-inline: 20px; }
 
   /* stack into a single flow and control order at the element level */
   .about-grid{
@@ -230,50 +230,100 @@
   }
 }
 
-/* ===== MOBILE — LANDSCAPE fixes (should look like desktop) ===== */
-@media (max-width:900px) and (orientation:landscape){
 
-  /* ensure we are using the original two-column grid */
+
+
+
+/* =========================
+   MOBILE • PORTRAIT (≤900px)
+   ========================= */
+@media (max-width:900px) and (orientation:portrait){
+
+  /* 1) Side padding for content only, not the menu bar */
   .about-grid{
-    display: grid;
-    grid-template-columns: 1fr 0.9fr;  /* original split */
-    column-gap: 5px;
-    row-gap: 10px;
-    margin-top: 48px;
-    max-width: var(--maxw);
+    display: flex;
+    flex-direction: column;
+    row-gap: 14px;
+    margin-top: 20px;
+    padding-inline: 14px;          /* adds left/right breathing room below the menu */
+  }
+
+  /* 2) Order: bio → photo → UTD, and center the photo */
+  .right-col{ display: contents; }  /* allows reordering of children */
+  .bio{ order: 1; }
+  .about-blurb{
+    order: 2;
+    justify-content: center;        /* center the figure in its row */
     width: 100%;
   }
-
-  /* place photo left, text (bio + UTD) right */
-  .about-blurb{ grid-column: 1; grid-row: 1; justify-content: center; }
-  .right-col{ grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 14px; }
-
-  /* make sure photo renders normally */
   .about-photo{
-    max-width: clamp(300px, 34vw, 470px);
-    margin: 0 auto 8px 0;
+    max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto 0;             /* center the box itself */
   }
-  .about-photo img{ display: block; width: 100%; height: auto; }
+  .about-photo img{ width: 100%; height: auto; }
 
-  /* perch avatar on UTD just like desktop – add clearance so it doesn't overlap */
+  /* 3) UTD header height should be small (two-row-ish max) and avatar perched */
   .utd{
+    order: 3;
     position: relative;
-    --perch-clear: clamp(36px, 9vw, 70px);
+    --perch-clear: 48px;            /* smaller than before so the box header isn't tall */
     padding-top: var(--perch-clear);
   }
+  .utd-bar{
+    padding: 6px 10px;              /* original tight header */
+    margin: -10px -10px 8px -10px;  /* original */
+    line-height: 1.2;               /* keep compact */
+  }
+  .utd-title{ font-size: 11px; }
+
   .avatar-overlay{
     top: calc(-1 * var(--perch-clear) + 6px);
-    right: -8px;            /* match desktop offset */
-    width: clamp(68px, 10vw, 100px);
+    right: -6px;
+    width: clamp(60px, 18vw, 92px);
     height: auto;
     z-index: 4;
     pointer-events: none;
   }
+}
 
-  /* preserve original UTD header size */
+/* =========================
+   MOBILE • LANDSCAPE (≤900px)
+   ========================= */
+@media (max-width:900px) and (orientation:landscape){
+
+  /* 4) Two-column layout like desktop, smaller gap, photo flush right */
+  .about-grid{
+    display: grid;
+    grid-template-columns: 1fr 0.9fr;  /* photo left, text right */
+    column-gap: 3px;                    /* tighter than 5px */
+    row-gap: 10px;
+    margin-top: 48px;
+    max-width: var(--maxw);
+    width: 100%;
+    padding-inline: 10px;               /* slight edge padding without touching menu */
+  }
+
+  .about-blurb{
+    grid-column: 1; grid-row: 1;
+    justify-content: flex-end;          /* flush photo to the right edge of its column */
+  }
+  .about-photo{
+    max-width: clamp(300px, 34vw, 470px);
+    margin: 0 0 8px 0;                  /* remove auto-centering */
+  }
+  .about-photo img{ display: block; width: 100%; height: auto; }
+
+  .right-col{ grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 12px; }
+
+  /* 5) UTD header compact like desktop, with perched avatar */
+  .utd{
+    position: relative;
+    --perch-clear: 44px;                /* just enough for the avatar to sit on the rim */
+    padding-top: var(--perch-clear);
+  }
   .utd-bar{
     padding: 6px 10px;
     margin: -10px -10px 8px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
+    line-height: 1.2;
   }
-}
+  .avatar-o
