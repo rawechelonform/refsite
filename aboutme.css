@@ -244,17 +244,20 @@
     position: relative;
     z-index: 5;                              /* ——— 2) ensure it sits above avatar for taps ——— */
   }
-  .utd-title{ font-size: 10px; letter-spacing: .02em; }
+  .utd-title{ font-size: 10px; letter-spacing: .02em; display: flex; align-items: center;}
   /* CREATOR UNLOCK button: ensure tap target is on top */
-  .utd-unlock{
-    padding: 0 6px;
-    height: 16px;
-    line-height: 14px;
-    font-size: 9.5px;
+   .utd-unlock{
+    padding: 0 10px;
+    height: 24px;                 /* match the taller header */
+    line-height: 22px;
+    font-size: 10px;
     cursor: pointer;
     position: relative;
-    z-index: 6;                              /* higher than avatar */
-    pointer-events: auto;                    /* explicit for iOS */
+    z-index: 10;                  /* above anything decorative */
+    pointer-events: auto;
+    touch-action: manipulation;   /* iOS tap responsiveness */
+    -webkit-tap-highlight-color: rgba(255,255,255,0.15);
+    user-select: none;
   }
 
   /* Avatar perched on top edge of the UTD */
@@ -264,7 +267,7 @@
     right: -6px !important;
     width: clamp(60px, 18vw, 92px);
     height: auto;
-    z-index: 3;               /* below header/button so taps work */
+    z-index: 2;               /* below header/button so taps work */
     pointer-events: none;
   }
 }
