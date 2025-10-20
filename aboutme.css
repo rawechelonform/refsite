@@ -238,7 +238,7 @@
     padding: 3px 8px;                       /* compact height */
     margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
     border-bottom: 2px solid rgb(143,143,143);
-    line-height: 2;
+    line-height: 4;
     position: relative;
     z-index: 5;                              /* ——— 2) ensure it sits above avatar for taps ——— */
   }
@@ -257,7 +257,7 @@
   /* avatar perched on top edge */
  .avatar-overlay{
     position: absolute;
-    top: -65px;                              /* adjust more negative to raise further */
+    top: -100px;                              /* adjust more negative to raise further */
     right: -6px;
     width: clamp(60px, 18vw, 92px);
     height: auto;
