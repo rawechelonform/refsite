@@ -1,4 +1,4 @@
-// aboutme.js (v4) — local-only UTD with owner unlock + edit/delete + editable title
+// aboutme.js (v5) — local-only UTD with unlock/lock toggle + edit/delete + title edit
 (() => {
   const KEY        = 'utd_entries_v7';
   const TITLE_KEY  = 'utd_title_v2';
@@ -12,12 +12,11 @@
   const $title  = document.getElementById('utdTitle');
   const $avatar = document.querySelector('.avatar-overlay');
 
-  // Safety: ensure avatar never blocks clicks
   if ($avatar) $avatar.style.pointerEvents = 'none';
 
   let ownerMode = false;
 
-  // ----- utilities -----
+  // utils
   const pad = n => String(n).padStart(2,'0');
   function stamp(d=new Date()){
     const DD = pad(d.getDate());
@@ -35,7 +34,7 @@
   function loadTitle(){ return localStorage.getItem(TITLE_KEY) || 'USELESS THOUGHT OF THE DAY'; }
   function saveTitle(v){ localStorage.setItem(TITLE_KEY, v); }
 
-  // ----- render feed -----
+  // render feed
   function render(){
     const items = load();
     $feed.innerHTML = '';
@@ -43,22 +42,14 @@
       const line = document.createElement('div');
       line.className = 'utd-line';
 
-      const tsEl = document.createElement('span');
-      tsEl.className = 'ts';
-      tsEl.textContent = ts;
+      const tsEl = document.createElement('span'); tsEl.className = 'ts'; tsEl.textContent = ts;
+      const sepEl = document.createElement('span'); sepEl.className = 'sep'; sepEl.textContent = '|';
 
-      const sepEl = document.createElement('span');
-      sepEl.className = 'sep';
-      sepEl.textContent = '|';
-
-      const msgEl = document.createElement('span');
-      msgEl.className = 'msg';
+      const msgEl = document.createElement('span'); msgEl.className = 'msg';
       const oneLine = String(t || '').replace(/\s*\n\s*/g, ' ').trim();
       msgEl.textContent = `${oneLine}${edited ? ' (edited)' : ''}`;
 
-      line.appendChild(tsEl);
-      line.appendChild(sepEl);
-      line.appendChild(msgEl);
+      line.appendChild(tsEl); line.appendChild(sepEl); line.appendChild(msgEl);
 
       if (ownerMode){
         const icons = document.createElement('span');
@@ -70,8 +61,7 @@
         line.appendChild(icons);
       }
 
-      // newest on top
-      $feed.prepend(line);
+      $feed.prepend(line); // newest first
     });
 
     $utd.classList.toggle('is-owner', ownerMode);
@@ -88,8 +78,7 @@
           if (act === 'del'){
             if (confirm('Delete this entry?')){
               items2.splice(idx, 1);
-              save(items2);
-              render();
+              save(items2); render();
             }
           } else if (act === 'edit'){
             const current = items2[idx].t;
@@ -97,8 +86,7 @@
             if (next !== null){
               items2[idx].t = next.trim();
               items2[idx].edited = true;
-              save(items2);
-              render();
+              save(items2); render();
             }
           }
         });
@@ -106,13 +94,12 @@
     }
   }
 
-  // ----- form submit -----
+  // submit
   if ($form) {
     $form.addEventListener('submit', (e) => {
       e.preventDefault();
       const val = ($text.value || '').trim();
       if (!val) return;
-
       const items = load();
       items.push({ id: uid(), t: val, ts: stamp() });
       save(items);
@@ -120,7 +107,7 @@
       render();
     });
 
-    // Ctrl/Cmd+Enter to post
+    // Ctrl/Cmd + Enter to post
     $text.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
@@ -129,30 +116,29 @@
     });
   }
 
-  // ----- unlock / owner mode -----
+  // unlock / lock toggle
   if ($unlock) {
     $unlock.addEventListener('click', () => {
       if (ownerMode) {
-        // toggle off without prompt
+        // LOCK: hide form and disable title editing
         ownerMode = false;
         $unlock.textContent = 'CREATOR UNLOCK';
+        if ($form) $form.hidden = true;
         disableTitleEditing();
-        // keep the form visible if it already is; or hide if you prefer:
-        // $form.hidden = true;
         render();
         return;
       }
 
+      // UNLOCK: prompt passphrase
       const pass = prompt('Enter passphrase:');
       if (pass && pass === OWNER_PASSPHRASE) {
         ownerMode = true;
-        $unlock.textContent = 'HIDE';
-        enableTitleEditing();
-        // Ensure the input area is visible and focused when unlocked
+        $unlock.textContent = 'CREATOR LOCK';
         if ($form) {
           $form.hidden = false;
           setTimeout(() => $text && $text.focus(), 0);
         }
+        enableTitleEditing();
         render();
       } else {
         alert('Incorrect passphrase');
@@ -160,7 +146,7 @@
     });
   }
 
-  // ----- editable title when owner -----
+  // title editing only in owner mode
   function enableTitleEditing() {
     if (!$title) return;
     $title.setAttribute('contenteditable', 'true');
@@ -177,17 +163,10 @@
     $title.style.outline = '';
     $title.style.outlineOffset = '';
   }
-  function onTitleInput() {
-    saveTitle($title.textContent.trim());
-  }
-  function onTitleKeydown(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // keep it single-line
-      $title.blur();
-    }
-  }
+  function onTitleInput() { saveTitle($title.textContent.trim()); }
+  function onTitleKeydown(e) { if (e.key === 'Enter') { e.preventDefault(); $title.blur(); } }
 
-  // ----- init -----
+  // init
   if ($title) $title.textContent = loadTitle();
   render();
 })();

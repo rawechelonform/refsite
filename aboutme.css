@@ -1,8 +1,8 @@
-/* aboutme.css — scoped styles for About page only */
+/* aboutme.css — About page only */
 
 /* === Tokens / fonts === */
 :root{
-  --maxw: 1200px; /* match other pages */
+  --maxw: 1200px;
   --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
@@ -26,27 +26,27 @@
 }
 .ext-link:hover { color: rgb(110,110,110); text-decoration: underline; }
 
-/* ===== two-column about layout (ORIGINAL split kept) ===== */
+/* ===== two-column about layout =====
+   Left column sized to image; very tight gap to pull columns together */
 .about-grid{
   width:100%;
   max-width:var(--maxw);
   margin:48px auto 20px;
   display:grid;
-  grid-template-columns: 1fr 0.9fr; /* left photo | right text */
-  gap: 10px;                        /* tighter horizontal & vertical gap */
-  column-gap: 10px;                 /* explicit horizontal gap */
+  grid-template-columns: minmax(360px, 42vw) 1fr; /* big portrait, fluid up to ~42vw */
+  gap: 8px;                          /* vertical */
+  column-gap: 4px !important;        /* tighter horizontal gap (force) */
   align-items:start;
 }
-/* prevent grid children from shrinking to zero width */
-.about-grid > * { min-width: 0; }
+.about-grid > * { min-width: 0; }    /* prevent weird shrinking */
 
 /* left column */
 .about-blurb{
   box-sizing:border-box;
   display:flex;
   align-items:flex-start;
-  justify-content:flex-start; /* do not center (can cause overlap) */
-  overflow:visible;           /* avoid accidental clipping */
+  justify-content:flex-start;
+  overflow:visible;
 }
 
 /* Bio text */
@@ -60,23 +60,16 @@
   text-align:left;
 }
 
-/* If your IG text lives in a caption block elsewhere */
-.caption p{
-  font-family: var(--ui-mono);
-  text-transform: none;
-  font-variant-ligatures: none;
-}
-
 /* right column stacks bio, IG, then UTD */
 .right-col{
   display: flex;
   flex-direction: column;
-  gap: 14px; /* a bit tighter to match the reduced column gap */
+  gap: 12px; /* tighter to match reduced column gap */
 }
 
 /* ===== UTD box ===== */
 .utd{
-  position: relative;                 /* allows overlayed avatar */
+  position: relative;
   background:#000;
   color:rgb(143,143,143);
   border:2px solid rgb(143,143,143);
@@ -171,38 +164,16 @@
 /* remove any old fixed-image rule if it exists */
 .corner-img{ display:none; }
 
-/* === Make IG line match .bio exactly === */
-.carousel .caption p{
-  font-family: var(--ui-mono);
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgb(143,143,143);
-  text-transform: none;
-  font-variant-ligatures: none;
-  letter-spacing: 0;
-  font-weight: 400;
-}
-.carousel .caption p .ext-link{
-  font: inherit;
-  color: inherit;
-  text-decoration: none;
-}
-.carousel .caption p .ext-link:hover{ text-decoration: underline; }
-
-/* === about page portrait size and border === */
-/* Smaller and closer than before */
+/* === about page portrait size and border (BIG) === */
 .about-photo{ margin: 0 0 8px 0; }
 .about-photo img{
-  display: block;                    /* ensure the image participates in layout */
-  width: 100%;                       /* fill left column width */
-  max-width: 380px;                  /* SMALLER cap so it’s not huge */
-  height: auto;
+  display: block !important;
+  width: 100% !important;      /* fill left column width */
+  max-width: 600px !important; /* BIGGER portrait */
+  height: auto !important;
   border: 2px solid #000;
   box-sizing: border-box;
-  opacity: 1;                        /* guard against accidental 0 */
+  opacity: 1 !important;
   position: relative;
-  z-index: 2;                        /* sit above accidental overlays */
+  z-index: 2 !important;
 }
-
-/* --- hard overrides to ensure the portrait shows on live --- */
-.about-blurb { display: block !important; overflow: visible !important; }

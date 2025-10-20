@@ -13,8 +13,8 @@
   <!-- Page CSS first -->
   <link rel="stylesheet" href="sadgirls.css" />
 
-  <!-- IMPORTANT: cache-bust so live site pulls the latest CSS -->
-  <link rel="stylesheet" href="aboutme.css?v=6" />
+  <!-- Cache-bust so live site pulls the latest -->
+  <link rel="stylesheet" href="aboutme.css?v=8" />
 
   <!-- Shared menubar CSS (cache-busted) -->
   <link rel="stylesheet" href="menubar.css?v=mb10">
@@ -37,11 +37,12 @@
       <!-- left column: portrait only -->
       <section class="about-blurb">
         <figure class="about-photo">
-          <!-- Use absolute path so it works no matter where this page lives -->
+          <!-- Absolute path + inline hard overrides to ensure visibility on live -->
           <img
             src="/aboutme/artistphoto_cropped.png"
             alt="artist portrait"
-            decoding="async">
+            decoding="async"
+            style="display:block;width:100%;max-width:600px;height:auto;position:relative;z-index:2;opacity:1;visibility:visible">
         </figure>
       </section>
 
@@ -69,7 +70,7 @@
             <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
           </div>
 
-          <!-- Form starts hidden; JS will show on unlock -->
+          <!-- Form starts hidden; JS shows it on unlock and hides it on lock -->
           <form id="utdForm" class="utd-form" hidden>
             <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
                       placeholder="type a thought…"></textarea>
@@ -85,7 +86,6 @@
   </div>
 
   <script src="menubar.js?v=mb10" defer></script>
-  <!-- IMPORTANT: cache-bust JS so the unlock fix takes effect -->
-  <script src="aboutme.js?v=4" defer></script>
+  <script src="aboutme.js?v=5" defer></script>
 </body>
 </html>
