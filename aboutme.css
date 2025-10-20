@@ -242,50 +242,51 @@
 
 
 
-
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
 
-  :root{ --row: 14px; }
+  /* equal, larger side gutters that DO NOT affect the menu bar */
+  :root{ --row: 14px; --gutter: 22px; }
 
-  /* 4) Menu bar flush edge-to-edge on this page */
+  /* ensure the page shell doesn’t add side padding so the menu stays flush */
   .page{ padding-left: 0; padding-right: 0; }
-  .page > header,
-  .page > nav,
-  .page > .menu,
-  .page > .site-nav{
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    width: 100vw;
-    max-width: 100vw;
-  }
 
-  /* content gutters below the menu bar only */
+  /* content container with symmetric left/right margins (via padding) */
   .about-grid{
     display: flex;
     flex-direction: column;
     row-gap: var(--row);
     margin-top: 20px;
-    padding-inline: 20px; /* bigger side margins below menu */
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;   /* fixes “no right margin” edge cases */
   }
 
-  /* order stays bio → photo → UTD */
+  /* order stays: bio → photo → UTD */
   .right-col{ display: contents; }
-
-  /* 1) remove extra row under bio by default */
   .bio{ order: 1; margin-bottom: 0; }
 
-  /* 2) IG on one line even if HTML has a <br>, and 3) add a row under IG */
-  .bio:has(a.ext-link) br{ display: none; }
-  .bio a.ext-link{ white-space: nowrap; }
-  .bio:has(a.ext-link){ margin-bottom: var(--row); }
-
-  /* 5) photo truly centered; 7) add one extra row after photo */
+  /* 3) center photo hard, 4) add one extra “row” below it */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;  /* centers container */
-    align-items:
+    justify-content: center;   /* centers the photo container */
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+  }
+  .about-photo{
+    display: block;
+    max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto var(--row); /* centered + extra row beneath */
+    width: 100%;
+  }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+  }
