@@ -27,18 +27,18 @@
 }
 .ext-link:hover{ color: rgb(110,110,110); text-decoration: underline; }
 
-/* ===== Two-column layout (original proportions) ===== */
+/* ===== Two-column layout (desktop / default) ===== */
 .about-grid{
   width: 100%;
   max-width: var(--maxw);
   margin: 48px auto 20px;
   display: grid;
   grid-template-columns: 1fr 0.9fr;   /* ORIGINAL split — preserves text width */
-  column-gap: 5px;                     /* gap between photo & text (edit to taste) */
-  row-gap: 10px;                       /* vertical spacing */
+  column-gap: 5px;                     /* adjust to taste */
+  row-gap: 10px;
   align-items: start;
 }
-.about-grid > * { min-width: 0; }      /* prevent weird shrinking */
+.about-grid > * { min-width: 0; }
 
 /* LEFT column — portrait (center the photo in its column) */
 .about-blurb{
@@ -67,7 +67,7 @@
 }
 
 /* Extra space between IG paragraph and the UTD box */
-.right-col .bio + .utd{ margin-top: 30px; }
+.right-col .bio + .utd{ margin-top: 10px; }
 
 /* ===== UTD box ===== */
 .utd{
@@ -143,7 +143,10 @@
 }
 
 /* ===== Portrait sizing (responsive, not huge) ===== */
-.about-photo{ margin:0 0 8px 0; max-width: clamp(360px, 34vw, 470px); }
+.about-photo{
+  margin: 6px auto 14px;                         /* more breathing room */
+  max-width: clamp(360px, 34vw, 470px);          /* desktop sizing */
+}
 .about-photo img{
   display:block;
   width:100%;
@@ -154,14 +157,49 @@
   position:relative; z-index:2 !important;
 }
 
-/* Stack on narrow screens */
-@media (max-width:900px){
+/* =========================
+   MOBILE PORTRAIT (stack)
+   ========================= */
+@media (max-width: 900px) and (orientation: portrait){
+  /* turn grid into vertical stack */
   .about-grid{
-    margin-top:40px;
-    grid-template-columns:1fr;
-    column-gap: 0;
-    row-gap:14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px; /* vertical spacing between stacked items */
   }
+
+  /* flatten right column so we can reorder its children */
+  .right-col{ display: contents; }
+
+  /* order: 1) text  2) IG  3) photo  4) UTD */
+  .right-col .bio:first-of-type { order: 1; }     /* main text */
+  .right-col .bio:nth-of-type(2) { order: 2; }    /* IG */
+  .about-blurb                    { order: 3; }    /* photo */
+  .right-col .utd                 { order: 4; }    /* UTD */
+
+  /* mobile photo sizing */
+  .about-photo{ max-width: clamp(300px, 80vw, 470px); }
+}
+
+/* ===================================
+   MOBILE LANDSCAPE (2 columns again)
+   =================================== */
+@media (max-width: 900px) and (orientation: landscape){
+  .about-grid{
+    display: grid;
+    grid-template-columns: 1fr 0.9fr;   /* same as desktop */
+    column-gap: 6px;
+    row-gap: 10px;
+  }
+  /* restore normal right-col and natural DOM order */
+  .right-col{ display: flex; flex-direction: column; }
+  .right-col .bio:first-of-type,
+  .right-col .bio:nth-of-type(2),
+  .about-blurb,
+  .right-col .utd{ order: initial; }
+
+  /* landscape photo sizing: a little smaller so it fits comfortably */
+  .about-photo{ max-width: clamp(320px, 40vw, 470px); }
 }
 
 /* Safety: kill any old fixed image rule */
