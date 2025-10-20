@@ -12,11 +12,9 @@
 
   <!-- Page CSS first -->
   <link rel="stylesheet" href="sadgirls.css" />
+  <link rel="stylesheet" href="aboutme.css?v=15" />
 
-  <!-- Cache-bust so live site pulls the latest -->
-  <link rel="stylesheet" href="aboutme.css?v=8" />
-
-  <!-- Shared menubar CSS (cache-busted) -->
+  <!-- Shared menubar CSS -->
   <link rel="stylesheet" href="menubar.css?v=mb10">
 
   <style>html,body{margin:0;padding:0}</style>
@@ -32,21 +30,18 @@
   <div class="page">
     <div data-menubar class="menubar-slot"></div>
 
-    <!-- two-column layout: photo (left) | right column (bio + IG + UTD) -->
     <div class="about-grid">
-      <!-- left column: portrait only -->
+      <!-- LEFT: portrait -->
       <section class="about-blurb">
         <figure class="about-photo">
-          <!-- Absolute path + inline hard overrides to ensure visibility on live -->
           <img
             src="/aboutme/artistphoto_cropped.png"
             alt="artist portrait"
-            decoding="async"
-            style="display:block;width:100%;max-width:600px;height:auto;position:relative;z-index:2;opacity:1;visibility:visible">
+            decoding="async">
         </figure>
       </section>
 
-      <!-- right column: bio, IG line, then UTD -->
+      <!-- RIGHT: bio + IG + UTD -->
       <div class="right-col">
         <p class="bio">
           I'm a terminal user, a post-industrial artist, and an archivist of forgotten circuits. Daughter to a watchsmith, in favor of analog and low tech. This site is a memory dump of my paintings.
@@ -70,7 +65,6 @@
             <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
           </div>
 
-          <!-- Form starts hidden; JS shows it on unlock and hides it on lock -->
           <form id="utdForm" class="utd-form" hidden>
             <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
                       placeholder="type a thought…"></textarea>
