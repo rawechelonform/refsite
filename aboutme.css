@@ -232,48 +232,56 @@
 
 
 
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
 
-  /* 1) Side padding for content only, not the menu bar */
+  /* 1) Side padding applies to content only, not the menu bar */
   .about-grid{
     display: flex;
     flex-direction: column;
     row-gap: 14px;
     margin-top: 20px;
-    padding-inline: 14px;          /* adds left/right breathing room below the menu */
+    padding-inline: 14px;         /* menu bar stays flush because it’s outside .about-grid */
   }
 
-  /* 2) Order: bio → photo → UTD, and center the photo */
-  .right-col{ display: contents; }  /* allows reordering of children */
+  /* Order: 1) bio, 2) photo, 3) UTD */
+  .right-col{ display: contents; }
   .bio{ order: 1; }
   .about-blurb{
     order: 2;
-    justify-content: center;        /* center the figure in its row */
+    display: flex;
+    justify-content: center;      /* 2) center the photo */
     width: 100%;
+    min-width: 0;
   }
   .about-photo{
+    display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto 0;             /* center the box itself */
+    margin: 6px auto 0;
+    width: 100%;
   }
-  .about-photo img{ width: 100%; height: auto; }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 
-  /* 3) UTD header height should be small (two-row-ish max) and avatar perched */
+  /* 3) UTD header compact, avatar perched without inflating header */
   .utd{
     order: 3;
     position: relative;
-    --perch-clear: 48px;            /* smaller than before so the box header isn't tall */
+    --perch-clear: 44px;          /* approx “two rows” of clearance for the avatar */
     padding-top: var(--perch-clear);
   }
   .utd-bar{
-    padding: 6px 10px;              /* original tight header */
-    margin: -10px -10px 8px -10px;  /* original */
-    line-height: 1.2;               /* keep compact */
+    padding: 6px 10px;            /* original compact header */
+    margin: -10px -10px 8px -10px;
+    line-height: 1.2;
   }
-  .utd-title{ font-size: 11px; }
-
   .avatar-overlay{
     top: calc(-1 * var(--perch-clear) + 6px);
     right: -6px;
@@ -289,34 +297,47 @@
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
 
-  /* 4) Two-column layout like desktop, smaller gap, photo flush right */
+  /* 4) Two columns like desktop, with a smaller gap; photo flush right */
   .about-grid{
     display: grid;
-    grid-template-columns: 1fr 0.9fr;  /* photo left, text right */
-    column-gap: 3px;                    /* tighter than 5px */
+    grid-template-columns: 1fr 0.9fr;
+    column-gap: 3px;              /* tighter gap */
     row-gap: 10px;
     margin-top: 48px;
     max-width: var(--maxw);
     width: 100%;
-    padding-inline: 10px;               /* slight edge padding without touching menu */
+    padding-inline: 10px;
   }
 
   .about-blurb{
     grid-column: 1; grid-row: 1;
-    justify-content: flex-end;          /* flush photo to the right edge of its column */
+    display: flex;
+    justify-content: flex-end;    /* flush right within its column */
+    min-width: 0;
   }
   .about-photo{
+    display: block;
     max-width: clamp(300px, 34vw, 470px);
-    margin: 0 0 8px 0;                  /* remove auto-centering */
+    margin: 0 0 8px 0;            /* no auto-centering here */
+    width: 100%;
   }
-  .about-photo img{ display: block; width: 100%; height: auto; }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 
-  .right-col{ grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 12px; }
+  .right-col{
+    grid-column: 2; grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-  /* 5) UTD header compact like desktop, with perched avatar */
+  /* 5) UTD header compact, avatar perched */
   .utd{
     position: relative;
-    --perch-clear: 44px;                /* just enough for the avatar to sit on the rim */
+    --perch-clear: 44px;
     padding-top: var(--perch-clear);
   }
   .utd-bar{
@@ -326,10 +347,13 @@
   }
   .avatar-overlay{
     top: calc(-1 * var(--perch-clear) + 6px);
-    right: -8px;                        /* match desktop offset */
+    right: -8px;
     width: clamp(68px, 10vw, 100px);
     height: auto;
     z-index: 4;
     pointer-events: none;
   }
 }
+
+/* Safety to prevent weird shrinking in all layouts */
+.about-blurb, .about-photo, .right-col{ min-width: 0; }
