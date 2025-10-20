@@ -240,6 +240,9 @@
 
 
 
+
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
@@ -247,8 +250,8 @@
 
   :root{ --row: 14px; }
 
-  /* 1) Stretch the menu bar full-bleed across the screen */
-  /* Works whether it's <header>, <nav>, or a .menu/.site-nav block */
+  /* 4) Menu bar flush edge-to-edge on this page */
+  .page{ padding-left: 0; padding-right: 0; }
   .page > header,
   .page > nav,
   .page > .menu,
@@ -259,78 +262,30 @@
     max-width: 100vw;
   }
 
-  /* 2) Increase side margin (padding) for content BELOW the menu bar */
+  /* content gutters below the menu bar only */
   .about-grid{
     display: flex;
     flex-direction: column;
     row-gap: var(--row);
     margin-top: 20px;
-    padding-inline: 20px; /* bigger than before for nicer gutters */
+    padding-inline: 20px; /* bigger side margins below menu */
     width: 100%;
   }
 
-  /* Keep order: bio → photo → UTD */
+  /* order stays bio → photo → UTD */
   .right-col{ display: contents; }
 
-  /* 3) Extra space under bio */
-  .bio{
-    order: 1;
-    margin-bottom: var(--row);
-  }
+  /* 1) remove extra row under bio by default */
+  .bio{ order: 1; margin-bottom: 0; }
 
-  /* Photo centered hard */
+  /* 2) IG on one line even if HTML has a <br>, and 3) add a row under IG */
+  .bio:has(a.ext-link) br{ display: none; }
+  .bio a.ext-link{ white-space: nowrap; }
+  .bio:has(a.ext-link){ margin-bottom: var(--row); }
+
+  /* 5) photo truly centered; 7) add one extra row after photo */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    min-width: 0;
-  }
-  .about-photo{
-    display: block;
-    max-width: clamp(220px, 68vw, 340px);
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 6px;
-    /* 5) add two extra rows under the photo */
-    margin-bottom: calc(2 * var(--row));
-    width: 100%;
-  }
-  .about-photo img{
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  /* 4) Make the top bar of the UTD about 1/3 current height and do NOT pad for avatar */
-  .utd{
-    order: 3;
-    position: relative;
-    padding-top: 0;              /* remove any clearance that inflated the top */
-    margin-top: var(--row);
-  }
-  .utd-bar{
-    padding: 2px 8px;            /* much flatter header */
-    margin: -10px -10px 4px -10px;
-    line-height: 1;
-  }
-  .utd-title{ font-size: 10px; letter-spacing: .02em; }
-  .utd-unlock{
-    padding: 0 6px;
-    height: 16px;
-    line-height: 14px;
-    font-size: 9.5px;
-  }
-
-  /* If you’re using the avatar, perch it ABOVE the box so it doesn't increase header height */
-  .avatar-overlay{
-    position: absolute;
-    top: -54px;                 /* sits on the rim, not inside the box */
-    right: -6px;
-    width: clamp(60px, 18vw, 92px);
-    height: auto;
-    z-index: 4;
-    pointer-events: none;
-  }
-}
+    justify-content: center;  /* centers container */
+    align-items:
