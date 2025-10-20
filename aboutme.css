@@ -2,13 +2,16 @@
 
 /* === Tokens / fonts === */
 :root{
-  --maxw: 1200px; /* match other pages so widths/layout feel identical */
-  --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* Input Mono (Adobe Fonts) */
+  /* match other pages so widths/layout feel identical */
+  --maxw: 1200px;
+
+  /* Input Mono (from your Adobe Fonts kit) */
+  --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 /* Make this page's content spacing match Machines/Sad Girls */
 .page {
-  padding: 24px 0 48px;
+  padding: 24px 0 48px;           /* ↓ shrunk top padding (was 24px) */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,22 +36,23 @@
 .about-grid{
   width:100%;
   max-width:var(--maxw);
-  margin:48px auto 20px; /* closer to menu */
+  margin:48px auto 20px;   /* closer to menu */
   display:grid;
-  grid-template-columns: minmax(260px, 40%) 1fr; /* left photo | right text */
+  grid-template-columns: 1fr 0.9fr; /* left blurb | right UTD (ORIGINAL) */
   gap: 20px;
   align-items:start;
 }
-/* prevent grid children from shrinking to zero */
+
+/* prevent grid children from shrinking to zero width */
 .about-grid > * { min-width: 0; }
 
 /* left column */
 .about-blurb{
   box-sizing:border-box;
-  display:flex;
+  display:flex;                  /* keep flex for the figure */
   align-items:flex-start;
-  justify-content:flex-start; /* avoid odd centering/overlap */
-  overflow:visible;
+  justify-content:flex-start;    /* IMPORTANT: was 'center' → can cause squish/overlap */
+  overflow:visible;              /* ensure image can't be clipped */
 }
 
 /* Bio text */
@@ -146,7 +150,7 @@
 /* Responsive: stack columns on narrow screens */
 @media (max-width: 900px){
   .about-grid{
-    margin-top:40px;
+    margin-top:40px;     /* keep proportionally closer on small screens */
     grid-template-columns:1fr;
     gap:14px;
   }
@@ -155,11 +159,11 @@
 /* mini avatar perched on UTD top-right */
 .avatar-overlay{
   position: absolute;
-  top: -70px;          /* perch above box */
-  right: -8px;         /* slight overhang */
+  top: -70px;                      /* raise more to perch */
+  right: -8px;                     /* hang past the corner slightly */
   width: clamp(68px, 10vw, 100px);
   height: auto;
-  z-index: 3;          /* above bar + button */
+  z-index: 3;                      /* above the bar + button */
   pointer-events: none;
   image-rendering: pixelated;
   opacity: 0.95;
@@ -179,17 +183,18 @@
 /* === Make IG line match .bio exactly === */
 .carousel .caption p{
   font-family: var(--ui-mono);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 14px;      /* same as .bio */
+  line-height: 1.6;     /* same as .bio */
   color: rgb(143,143,143);
   text-transform: none;
   font-variant-ligatures: none;
   letter-spacing: 0;
   font-weight: 400;
 }
+
 .carousel .caption p .ext-link{
-  font: inherit;
-  color: inherit;
+  font: inherit;        /* inherit family/size/line-height/weight */
+  color: inherit;       /* same gray as text */
   text-decoration: none;
 }
 .carousel .caption p .ext-link:hover{ text-decoration: underline; }
@@ -197,28 +202,26 @@
 /* If sadgirls.css still overrides, uncomment this hard override: */
 /* .page .carousel .caption p{ font-size:14px !important; line-height:1.6 !important; } */
 
-/* Mobile perch for avatar (final override) */
+/* Mobile perch for avatar */
 @media (max-width: 900px){
   .avatar-overlay{
-    top: 0;
-    right: -6px;
-    transform: translateY(-100%);
+    top: 0;                     /* anchor to UTD top edge */
+    right: -6px;                /* slight overhang */
+    transform: translateY(-100%);/* lift by ~full height so it perches */
     width: clamp(60px, 18vw, 92px);
   }
 }
 
 /* === about page portrait size and border === */
-.about-photo{ margin: 0 0 12px 0; }
-.about-photo img{
-  display: block;
-  width: 100%;            /* fill the left column width */
-  max-width: 520px;       /* sensible cap on large screens */
-  height: auto;
-  border: 2px solid #000;
-  box-sizing: border-box;
-  opacity: 1;             /* guard against accidental zero */
+.about-photo{
+  margin: 0 0 12px 0;
 }
-
-/* keep for clarity (overrides earlier center attempt) */
-.about-blurb{ display:flex; justify-content:flex-start; }
-.about-photo{ margin: 0 0 12px 0; }
+.about-photo img{
+  display: block;                    /* ensure the image participates in layout */
+  width: clamp(250px, 40vw, 500px);  /* ORIGINAL sizing you had */
+  max-width: 100%;
+  height: auto;
+  border: 2px solid rgb(0,0,0);
+  box-sizing: border-box;
+  opacity: 1;                        /* guard against accidental 0 */
+}
