@@ -283,7 +283,7 @@
     width: 100%;
   }
   .about-photo img{ display: block; width: 100%; height: auto; 
-  margin-bottom: calc(2 * var(--row));
+  margin-bottom: calc(4 * var(--row));
   }
 
   /* 3) UTD comes after photo; 4) move avatar closer; 5) extra space between photo and avatar */
