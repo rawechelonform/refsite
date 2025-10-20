@@ -17,12 +17,10 @@
   <!-- Shared menubar CSS (cache-busted) -->
   <link rel="stylesheet" href="menubar.css?v=mb9">
 
-  <!-- Safety: ensure no default margin pushes the bar on this page -->
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
 <body>
-  <!-- avoid FOUT while Coral Pixels loads -->
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
@@ -30,59 +28,30 @@
   </script>
 
   <div class="page">
-    <!-- shared header with reserved space (menu bar) -->
     <div data-menubar class="menubar-slot"></div>
 
-    <!-- two-column layout: blurb (left) | UTD (right) -->
+    <!-- two-column layout: photo (left) | right column (bio + IG + UTD) -->
     <div class="about-grid">
-      <!-- left column: continuous blurb -->
+      <!-- left column: portrait only -->
       <section class="about-blurb">
-        <p class="bio">
-          I'm a terminal user, a post-industrial artist, an achivist of dead pixels. Daughter to a watchsmith, in favor of analog. This site is a memory dump of my paintings.
-        </p>
-
-        <p>
-          IG:
-          <a class="ext-link"
-             href="https://www.instagram.com/rawechelonform/"
-             target="_blank"
-             rel="noopener noreferrer">
-            @rawechelonform
-          </a>
-        </p>
+        <figure class="about-photo">
+          <img
+            src="aboutme/artistphoto_cropped.png"
+            alt="artist portrait"
+            loading="lazy"
+            decoding="async"
+          >
+        </figure>
       </section>
 
-      <!-- right column: UTD block -->
-      <div class="utd-wrap">
-        <section class="utd">
-          <!-- mini avatar sits on the box -->
-          <img src="aboutme/aboutmeavatar.png" alt="site avatar" class="avatar-overlay">
+      <!-- right column: bio, IG line, then UTD -->
+      <div class="right-col">
+        <p class="bio">
+          I'm a terminal user, a post-industrial artist, and an archivist of forgotten circuits. Daughter to a watchsmith, in favor of analog and low tech. This site is a memory dump of my paintings.
+        </p>
 
-          <div class="utd-bar">
-            <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
-            <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
-          </div>
 
-          <!-- entry form -->
-          <form id="utdForm" class="utd-form" hidden>
-            <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
-                      placeholder="type a thought…"></textarea>
-            <div class="utd-actions">
-              <button type="submit">post</button>
-            </div>
-          </form>
-
-          <!-- feed -->
-          <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
-        </section>
-      </div>
-    </div>
-
-    <!-- caption / links block -->
-    <section class="carousel" aria-roledescription="region">
-      <div class="caption" id="caption">
-        <p>hello and goodbye</p>
-        <p>
+        <p class="bio">
           IG:
           <a class="ext-link"
              href="https://www.instagram.com/rawechelonform"
@@ -91,11 +60,30 @@
             @rawechelonform
           </a>
         </p>
+        </p>
+
+        <section class="utd">
+          <img src="aboutme/aboutmeavatar.png" alt="site avatar" class="avatar-overlay">
+
+          <div class="utd-bar">
+            <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
+            <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
+          </div>
+
+          <form id="utdForm" class="utd-form" hidden>
+            <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
+                      placeholder="type a thought…"></textarea>
+            <div class="utd-actions">
+              <button type="submit">post</button>
+            </div>
+          </form>
+
+          <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
+        </section>
       </div>
-    </section>
+    </div>
   </div>
 
-  <!-- scripts (shared menubar first, then page) -->
   <script src="menubar.js?v=mb9" defer></script>
   <script src="aboutme.js" defer></script>
 </body>

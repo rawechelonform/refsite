@@ -11,7 +11,7 @@
 
 /* Make this page's content spacing match Machines/Sad Girls */
 .page {
-  padding: 24px 0 48px;           /* top/bottom padding like the other pages */
+  padding: 24px 0 48px;           /* ↓ shrunk top padding (was 24px) */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -36,7 +36,7 @@
 .about-grid{
   width:100%;
   max-width:var(--maxw);
-  margin:96px auto 20px;   /* sits below the menubar + .page padding */
+  margin:48px auto 20px;   /* ↓ closer to menu (was 96px) */
   display:grid;
   grid-template-columns: 1fr 0.9fr; /* left blurb | right UTD */
   gap: 20px;
@@ -134,7 +134,7 @@
 /* Responsive: stack columns on narrow screens */
 @media (max-width: 900px){
   .about-grid{
-    margin-top:72px;     /* slightly closer on smaller screens */
+    margin-top:40px;     /* keep proportionally closer on small screens */
     grid-template-columns:1fr;
     gap:14px;
   }
@@ -194,4 +194,28 @@
     transform: translateY(-100%);/* lift by ~full height so it perches */
     width: clamp(60px, 18vw, 92px);
   }
+}
+
+/* about page portrait size and border */
+.about-photo{
+  margin: 0 0 12px 0;
+}
+.about-photo img{
+  display: block;
+  width: clamp(250px, 40vw, 500px);  /* adjust as needed */
+  max-width: 100%;
+  height: auto;
+  border: 2px solid rgb(0,0,0);
+  box-sizing: border-box;
+}
+
+/* center horizontally (or switch to justify-content:flex-end to hug right) */
+.about-blurb{ display:flex; justify-content:center; }
+.about-photo{ margin: 0 0 12px 0; }      /* normal bottom gap */
+
+/* right column stacks bio, IG, then UTD */
+.right-col{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
