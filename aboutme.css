@@ -34,6 +34,7 @@
   display:grid;
   grid-template-columns: 1fr 0.9fr; /* left photo | right text */
   gap: 12px;                        /* tighten space between columns */
+  column-gap: 12px;                 /* explicit horizontal gap */
   align-items:start;
 }
 /* prevent grid children from shrinking to zero width */
@@ -42,7 +43,7 @@
 /* left column */
 .about-blurb{
   box-sizing:border-box;
-  display:flex;               /* keep flex for the figure */
+  display:flex;
   align-items:flex-start;
   justify-content:flex-start; /* do not center (can cause overlap) */
   overflow:visible;           /* avoid accidental clipping */
@@ -101,6 +102,7 @@
   background:#000; color:rgb(60,60,60);
   border:2px solid rgb(60,60,60);
   padding:1px 8px; font-size:10px; text-transform:uppercase; border-radius:0; cursor:pointer;
+  position: relative; z-index: 4; /* above overlays */
 }
 .utd-unlock:hover{ background:rgb(40,40,40); color:#000; border-color:rgb(70,70,70); }
 
@@ -154,7 +156,7 @@
   width: clamp(68px, 10vw, 100px);
   height: auto;
   z-index: 3;
-  pointer-events: none;
+  pointer-events: none;  /* don't block clicks */
   image-rendering: pixelated;
   opacity: 0.95;
 }
@@ -187,9 +189,6 @@
 }
 .carousel .caption p .ext-link:hover{ text-decoration: underline; }
 
-/* If sadgirls.css still overrides, you can enforce: */
-/* .page .carousel .caption p{ font-size:14px !important; line-height:1.6 !important; } */
-
 /* === about page portrait size and border === */
 .about-photo{ margin: 0 0 12px 0; }
 .about-photo img{
@@ -203,3 +202,8 @@
   position: relative;
   z-index: 2;                        /* sit above accidental overlays */
 }
+
+/* --- hard overrides to ensure the portrait shows on live --- */
+.about-grid > * { min-width: 0; }
+.about-blurb { display: block !important; overflow: visible !important; }
+.about-photo img { width: 100% !important; max-width: 520px !important; }
