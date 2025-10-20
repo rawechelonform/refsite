@@ -142,94 +142,26 @@
   .avatar-overlay{ top:-18px; right:-6px; width: clamp(60px, 18vw, 92px); }
 }
 
-/* ===== Portrait sizing (responsive, not huge) ===== */
-.about-photo{ margin:0 0 8px 0; max-width: clamp(360px, 34vw, 470px); }
-.about-photo img{
-  display:block;
-  width:100%;
-  height:auto;
-  border:2px solid #000;
-  box-sizing:border-box;
-  opacity:1 !important; visibility:visible !important;
-  position:relative; z-index:2 !important;
-}
 
-/* Stack on narrow screens */
-@media (max-width:900px){
-  .about-grid{
-    margin-top:40px;
-    grid-template-columns:1fr;
-    column-gap: 0;
-    row-gap:14px;
-  }
+/* ===== Base photo sizing (desktop + defaults) ===== */
+.about-photo{
+  margin: 0 0 8px 0;
+  max-width: clamp(360px, 34vw, 470px);
+}
+.about-photo img{
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #000;
+  box-sizing: border-box;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative;
+  z-index: 2 !important;
 }
 
 /* Safety: kill any old fixed image rule */
-.corner-img{ display:none; }
-
-
-
-
-
-
-
-
-
-/* ===== MOBILE — PORTRAIT fixes ===== */
-@media (max-width:900px) and (orientation:portrait){
-
-  /* add small side padding so content isn't flush with phone edge */
-  .page{ padding-inline: 20px; }
-
-  /* stack into a single flow and control order at the element level */
-  .about-grid{
-    display: flex;
-    flex-direction: column;
-    row-gap: 14px;
-    column-gap: 0;
-    margin-top: 20px;
-  }
-
-  /* let right-col's children be orderable alongside the photo */
-  .right-col{ display: contents; }
-
-  /* order: 1) bio (includes IG), 2) photo, 3) UTD */
-  .bio{ order: 1; }
-  .about-blurb{ order: 2; }
-  .utd{ order: 3; }
-
-  /* smaller photo and centered */
-  .about-photo{
-    max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto 0;
-  }
-  .about-photo img{ width: 100%; height: auto; }
-
-  /* perch avatar above UTD without changing the UTD header height */
-  .utd{
-    position: relative;
-    /* reserve space for the perched avatar so content doesn't get overlapped */
-    --perch-clear: clamp(40px, 14vw, 72px);
-    padding-top: var(--perch-clear);
-  }
-  .avatar-overlay{
-    /* sit on the top edge, not over the text area */
-    top: calc(-1 * var(--perch-clear) + 6px);
-    right: -4px;
-    width: clamp(60px, 18vw, 92px);
-    height: auto;
-    z-index: 4;
-    pointer-events: none;
-  }
-
-  /* keep the original header metrics – do NOT increase its height */
-  .utd-bar{
-    padding: 6px 10px;      /* original */
-    margin: -10px -10px 8px -10px; /* original */
-    border-bottom: 2px solid rgb(143,143,143); /* original */
-  }
-}
-
+.corner-img{ display: none; }
 
 
 
@@ -249,8 +181,9 @@
 
   :root{ --row: 14px; --gutter: 22px; }
 
-  /* 1) keep the menu bar flush; apply side gutters only to page body */
+  /* menu bar flush to screen edges; gutters apply only to content */
   .page{ padding-left: 0; padding-right: 0; }
+
   .about-grid{
     display: flex;
     flex-direction: column;
@@ -263,15 +196,15 @@
     box-sizing: border-box;
   }
 
-  /* stack order remains: bio → photo → UTD */
+  /* stack order: bio → photo → UTD */
   .right-col{ display: contents; }
   .bio{ order: 1; }
 
-  /* 2) center the photo hard */
+  /* photo centered + extra space beneath */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;   /* centers the container */
+    justify-content: center;
     align-items: flex-start;
     width: 100%;
     min-width: 0;
@@ -279,27 +212,27 @@
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto var(--row);  /* centered */
+    margin: 6px auto calc(2 * var(--row)); /* centered with extra space under photo */
     width: 100%;
   }
-  .about-photo img{ display: block; width: 100%; height: auto; 
-  margin-bottom: calc(4 * var(--row));
+  .about-photo img{
+    margin: 0; /* ensure no extra img-level margin in portrait */
   }
 
-  /* 3) UTD comes after photo; 4) move avatar closer; 5) extra space between photo and avatar */
+  /* UTD box after photo; compact top bar */
   .utd{
     order: 3;
     position: relative;
-    margin-top: var(--row);          /* adds space between photo and avatar/box */
-    padding-top: 0;                  /* no artificial header inflation */
+    margin-top: var(--row);    /* space between photo and box/avatar */
+    padding-top: 0;            /* no artificial clearance */
+    border: none !important;   /* drop any old debug border on whole box */
   }
-
-  /* top strip of the UTD — keep it flatter; this is the ONLY visible red debug border */
   .utd-bar{
-    padding: 3px 8px;                /* ~half height */
+    padding: 3px 8px;          /* ~half height header */
     margin: -10px -10px 4px -10px;
     line-height: 1;
-    border: 2px solid #ff3b30 !important;  /* solid red border around top box */
+    /* if you want a visible header border, uncomment next line */
+    /* border: 2px solid #ff3b30; */
   }
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{
@@ -309,14 +242,10 @@
     font-size: 9.5px;
   }
 
-  /* remove dotted red border from whole UTD if previous debug CSS added it */
-  .utd{ border: none !important; }
-
-  /* 4) perch avatar closer to the UTD rim, not inside the box */
+  /* avatar perched on top edge */
   .avatar-overlay{
     position: absolute;
-    /* smaller negative = closer to the box edge */
-    top: -54px; /* AVAGAR POSITION IN VERTICAL MOBILE */
+    top: -54px;        /* adjust more negative to raise further */
     right: -6px;
     width: clamp(60px, 18vw, 92px);
     height: auto;
@@ -399,7 +328,7 @@
 
   .avatar-overlay{
     position: absolute;
-    top: -52px;                         /* perched on the rim, not inside */
+    top: -52px; /* AVATAR POSITION IN VERTICAL MOBILE */
     right: -8px;
     width: clamp(68px, 10vw, 100px);
     height: auto;
