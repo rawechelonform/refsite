@@ -34,7 +34,7 @@
   margin: 48px auto 20px;
   display: grid;
   grid-template-columns: 1fr 0.9fr;   /* ORIGINAL split — preserves text width */
-  column-gap: 14px;                    /* wider gap between photo & text */
+  column-gap: 5px;                    /* wider gap between photo & text */
   row-gap: 10px;                       /* vertical spacing */
   align-items: start;
 }
