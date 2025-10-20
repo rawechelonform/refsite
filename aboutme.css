@@ -235,67 +235,61 @@
 
 
 
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
 
-  /* consistent row unit for spacing */
-  :root{ --row: 14px; }
+  /* 4) Menu bar flush: no side padding on the page shell */
+  .page{ padding-left: 0; padding-right: 0; }
 
-  /* single-column content area (menu stays unaffected) */
+  /* Content area gets its own side padding so the menu is unaffected */
   .about-grid{
     display: flex;
     flex-direction: column;
-    row-gap: var(--row);
+    row-gap: 14px;
     margin-top: 20px;
-    padding-inline: 14px; /* applies to content only, not your menu */
+    padding-inline: 14px;     /* applies to content only */
+    width: 100%;
   }
 
-  /* Reorder: bio → photo → UTD */
+  /* Order is bio → photo → UTD */
   .right-col{ display: contents; }
+  .bio{ order: 1; }
 
-  /* 1) extra "row" under bio */
-  .bio{
-    order: 1;
-    margin-bottom: var(--row);
-  }
-
-  /* 2) photo truly centered + 4) add TWO extra blank rows under photo */
+  /* 1–2) Photo container truly centered; kill any offset */
   .about-blurb{
     order: 2;
     display: flex;
-    justify-content: center;
+    justify-content: center;  /* centers the figure within full width */
     align-items: flex-start;
     width: 100%;
     min-width: 0;
-    padding: 0;                 /* ensure no hidden offset */
+    padding: 0;
+    margin: 0;
+    text-align: initial;
   }
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
-    margin-left: auto;          /* hard-center guard */
-    margin-right: auto;         /* hard-center guard */
-    margin-top: 6px;
-    margin-bottom: calc(2 * var(--row)); /* 4) two extra rows below */
+    margin: 6px auto 0;       /* hard-center guard */
     width: 100%;
   }
   .about-photo img{
     display: block;
     width: 100%;
     height: auto;
+    margin: 0;
   }
 
-  /* 3) UTD top section flatter + avatar perch without inflating header */
-  .utd{
-    order: 3;
-    position: relative;
-    --perch-clear: 34px;         /* smaller clearance so header area stays compact */
-    padding-top: var(--perch-clear);
-    margin-top: var(--row);
-  }
+  /* 2) “Move useless thought box down a little” */
+  .utd{ order: 3; margin-top: 10px; position: relative; }
+
+  /* 2–3) Flatter top bar = ~half height, avatar perched above (not inside) */
   .utd-bar{
-    padding: 2px 8px;            /* flatter header */
+    padding: 2px 8px;         /* flatter header */
     margin: -10px -10px 4px -10px;
     line-height: 1;
   }
@@ -306,8 +300,11 @@
     line-height: 14px;
     font-size: 9.5px;
   }
+
+  /* Perch the avatar on TOP of the box, not inside it */
   .avatar-overlay{
-    top: calc(-1 * var(--perch-clear) + 4px);
+    position: absolute;
+    top: -54px;               /* sits above the border so it’s “on top” */
     right: -6px;
     width: clamp(60px, 18vw, 92px);
     height: auto;
@@ -321,46 +318,43 @@
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
 
-  /* two columns like desktop */
+  /* 6) Menu bar flush on edges */
+  .page{ padding-left: 0; padding-right: 0; }
+
+  /* Two columns like desktop, tighter gap */
   .about-grid{
     display: grid;
-    grid-template-columns: 1fr 0.9fr;
-    column-gap: 3px;            /* smaller gap between photo and text */
+    grid-template-columns: 1fr 0.9fr;  /* photo left, text right */
+    column-gap: 3px;                   /* 4) smaller gap */
     row-gap: 10px;
     margin-top: 48px;
     max-width: var(--maxw);
     width: 100%;
-    padding-inline: 10px;
+    padding-inline: 10px;              /* content padding only */
   }
 
-  /* 4) photo centered in its column */
+  /* 4) Center photo in its column */
   .about-blurb{
     grid-column: 1; grid-row: 1;
     display: flex;
-    justify-content: center;    /* center within left column */
+    justify-content: center;           /* centered within left column */
     min-width: 0;
   }
   .about-photo{
     display: block;
     max-width: clamp(300px, 34vw, 470px);
-    margin: 0 auto 8px;         /* center inside the column */
+    margin: 0 auto 8px;                /* centered */
     width: 100%;
   }
   .about-photo img{ display: block; width: 100%; height: auto; }
 
   .right-col{
     grid-column: 2; grid-row: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: flex; flex-direction: column; gap: 12px;
+    padding-right: 8px;                /* 7) avoids looking “flush to far right” */
   }
 
-  /* 5) UTD top section flatter */
-  .utd{
-    position: relative;
-    --perch-clear: 32px;         /* tighter than portrait to keep header flat */
-    padding-top: var(--perch-clear);
-  }
+  /* 5) Top part of thought box flatter (half height-ish) */
   .utd-bar{
     padding: 2px 8px;
     margin: -10px -10px 4px -10px;
@@ -373,8 +367,11 @@
     line-height: 14px;
     font-size: 9.5px;
   }
+
+  /* 6) Avatar perched on top, not inside */
   .avatar-overlay{
-    top: calc(-1 * var(--perch-clear) + 4px);
+    position: absolute;
+    top: -52px;                /* above the border */
     right: -8px;
     width: clamp(68px, 10vw, 100px);
     height: auto;
@@ -383,5 +380,5 @@
   }
 }
 
-/* safety so nothing shrinks away */
+/* Safety so nothing shrinks away */
 .about-blurb, .about-photo, .right-col{ min-width: 0; }
