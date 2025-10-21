@@ -235,7 +235,7 @@
   /* Header strip inside the box (compact) */
   .utd-bar{
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     padding: 3px 8px;                       /* compact height */
     margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
@@ -268,6 +268,7 @@
     pointer-events: none;
   }
 }
+
 
 
 /* =========================
