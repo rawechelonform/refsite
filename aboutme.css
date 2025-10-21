@@ -133,11 +133,12 @@
 
 /* Avatar perched top-right */
 .avatar-overlay{
-  position:absolute; top:-70px; right:-8px;
+  position:absolute; top:-64px; right:-8px;
   width: clamp(68px, 10vw, 100px);
   height:auto;
   z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
 }
+
 @media (max-width:900px){
   .avatar-overlay{ top:-18px; right:-6px; width: clamp(60px, 18vw, 92px); }
 }
@@ -235,7 +236,7 @@
   /* Header strip inside the box (compact) */
   .utd-bar{
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     padding: 3px 8px;                       /* compact height */
     margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
