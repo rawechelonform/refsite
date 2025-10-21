@@ -4,14 +4,15 @@
 //   <script src="menubar.js?v=mb9" defer></script>
 
 (function () {
+  const VER = 'mb11';
+
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
     if (!slot) return;
 
     try {
-      // Hard cache-bust the fragment itself
-      const res = await fetch(`menubar.html?v=mb9&t=${Date.now()}`, { cache: 'no-cache' });
-
+      // Only cache-bust the fragment itself
+      const res = await fetch(`/menubar.html?v=${VER}&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
@@ -20,36 +21,38 @@
       const menuRoot = tmp.querySelector('.top-margin') || tmp.firstElementChild;
       if (menuRoot) slot.replaceWith(menuRoot);
 
-      normalizeMenuHrefs();
-      pinSadGirlsHref();          // ensure no accidental leading slash persists
-      forceAbsoluteNavigation();  // robust on mobile (one captured click)
+      normalizeMenuHrefsRootAbsolute();
       highlightCurrentNav();
       twoLinePrincipalOnPhones();
     } catch (_) { /* ignore */ }
   }
 
-  // Resolve all internal links relative to the *current folder* (…/refsite/)
-  function normalizeMenuHrefs() {
-    const ROOT = location.pathname.replace(/[^/]*$/, ''); // drop file part
 
+  // Ensure all internal hrefs are root-absolute and contain no query params
+  function normalizeMenuHrefsRootAbsolute() {
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
       const raw = (a.getAttribute('href') || '').trim();
       if (!raw) return;
 
-      // external as-is; internal: resolve against current folder
-      const abs = /^https?:\/\//i.test(raw)
-        ? raw
-        : new URL(raw, location.origin + ROOT).href;
+      // External: leave as-is
+      if (/^https?:\/\//i.test(raw)) return;
 
-      // add a tiny cache-bust so stubborn mobile caches re-resolve the target
-      const u = new URL(abs);
-      if (!/^https?:\/\//i.test(raw)) u.searchParams.set('mb', 'mb10');
+      // Trim any accidental dots or query/hash from old versions
+      const clean = raw
+        .replace(/\?.*$/, '')     // drop ?mb=...
+        .replace(/#.*$/, '')      // drop hashes
+        .replace(/\.+$/, '');     // drop trailing dots like "aboutme.."
 
-      a.dataset.abs = u.href;
-      a.setAttribute('target', '_self');
-      a.setAttribute('rel', 'noopener');
+      // Build root-absolute
+      const rootAbs = clean.startsWith('/') ? clean : `/${clean}`;
+
+      a.setAttribute('href', rootAbs);
+      a.removeAttribute('target'); // let normal navigation happen
+      a.removeAttribute('rel');
+      // Important: DO NOT append any cache-busting to page URLs
     });
   }
+
 
   // Extra safety: ensure SAD GIRLS points to folder-relative sadgirls.html (no leading slash)
   function pinSadGirlsHref() {
@@ -82,28 +85,27 @@
   }
 
   function highlightCurrentNav() {
-    let path = location.pathname;
-    if (path.endsWith('/')) path = 'index.html';
-    else path = path.split('/').pop() || 'index.html';
-    if (path === 'index.html') path = 'main.html';
+    // file part of the current path (treat / or /index.html as /main.html if that's your home)
+    let file = location.pathname.split('/').pop() || 'index.html';
+    if (file === 'index.html') file = 'main.html';
 
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      const hrefFile = (a.getAttribute('href') || '').split('/').pop();
-      const isCurrent = hrefFile === path;
+      const hrefPath = (a.getAttribute('href') || '').split('?')[0].split('#')[0];
+      const hrefFile = hrefPath.split('/').pop() || '';
+      const isCurrent = hrefFile === file;
       a.classList.toggle('is-current', isCurrent);
       if (isCurrent) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
   }
 
-  function twoLinePrincipalOnPhones() {
+   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
     const a = Array.from(document.querySelectorAll('.menu a.menu-link'))
-      .find(x => (x.getAttribute('href') || '').endsWith('aboutme.html'));
+      .find(x => (x.getAttribute('href') || '').endsWith('/aboutme.html') || (x.getAttribute('href') || '').endsWith('aboutme.html'));
     if (!a) return;
     const txt = (a.textContent || '').trim();
     if (!a.innerHTML.includes('<br>')) {
-      // add a tiny 1px spacer row via ::after (CSS below)
       a.innerHTML = txt.replace(/(PRINCIPAL[’']?S)\s+(OFFICE)/i, '$1<br>$2');
     }
   }
