@@ -326,76 +326,55 @@
 
 
 
+// allow external sync to trigger your UI re-render
+window.addEventListener('utd:refresh', () => {
+  try { typeof render === 'function' ? render() : null } catch(_) {}
+});
 
-
-// syncing for thought box
-<script>
+// --- server sync for UTD feed ---
 (() => {
-  const API = 'YOUR_EXEC_URL/exec';              // <-- paste your /exec URL
-  const SECRET = 'fHTTj7XPasXkhXqY';             // must be in the URL
-  const KEY = 'utd_entries_v7';                  // keep your current local key
+  const API    = 'https://script.google.com/macros/s/AKfycbzda_pGloDsfUlXbZkuFRAHQyPJSMiiMi1kM-PY0ZFVUmC_GuMz8luA9YHZa3B0DQm4uw/exec';
+  const SECRET = 'fHTTj7XPasXkhXqY';
+  const KEY    = 'utd_entries_v7';
 
-  // convert sheet rows to your local shape
+  function saveLocal(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
   function normalize(serverPosts){
     return serverPosts.map(p => ({
-      id: p.id || (p.ts + Math.random()),
+      id: p.id,
       t: p.body || '',
-      ts: (p.ts ? new Date(p.ts) : new Date()).toLocaleString('en-GB',{hour12:false}).replace(',', '').replace(/\//g,' ')
+      ts: new Date(p.ts).toLocaleString('en-GB', { hour12:false }).replace(',', '').replace(/\//g,' ')
     }));
   }
 
-  function loadLocal(){
-    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
-    catch { return []; }
-  }
-  function saveLocal(arr){
-    localStorage.setItem(KEY, JSON.stringify(arr));
-  }
-
-  // 1) pull from server on load, replace local if server has anything
   async function syncFromServer(){
-    try {
+    try{
       const r = await fetch(`${API}?secret=${encodeURIComponent(SECRET)}&limit=100`);
       const j = await r.json();
-      if (j && j.ok && Array.isArray(j.posts) && j.posts.length){
-        const merged = normalize(j.posts);
-        saveLocal(merged);
-        // trigger your existing render
-        const evt = new Event('utd:refresh');
-        window.dispatchEvent(evt);
+      if (j && j.ok && Array.isArray(j.posts)){
+        saveLocal(normalize(j.posts));
+        window.dispatchEvent(new Event('utd:refresh'));
       }
-    } catch(e){
-      // no-op: stay offline
-    }
+    }catch(_){}
   }
 
-  // 2) hook your existing form submit to also POST to server
   window.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('utdForm');
     const text = document.getElementById('utdText');
     if (!form || !text) return;
 
-    form.addEventListener('submit', async (e) => {
-      // your code already pushed to local and re-rendered
-      // we add a fire-and-forget POST to keep the sheet in sync
+    form.addEventListener('submit', async () => {
       const body = (text.value || '').trim();
       if (!body) return;
-
-      try {
+      try{
         await fetch(`${API}?secret=${encodeURIComponent(SECRET)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: '', body })
         });
-        // optional: pull back the latest so phone/desktop stay identical
         syncFromServer();
-      } catch(e){
-        // stay quiet offline
-      }
-    }, { capture: true }); // capture so we see it before your handler clears the textarea
-  });
+      }catch(_){}
+    }, { capture: true });
 
-  // initial sync
-  syncFromServer();
+    syncFromServer();
+  });
 })();
-</script>
