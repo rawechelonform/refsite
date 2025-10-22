@@ -376,7 +376,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -55px;     /* vertical offset */
+    --avatar-y: -55px;      /* vertical offset: increase (less negative) to move DOWN */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -466,7 +466,7 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -90px;     /* smaller drop since viewport is shorter */
+    --avatar-y: -20px;      /* vertical offset: increase (less negative) to move DOWN */
   }
 
   .utd-bar{
@@ -490,7 +490,7 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -48px;
+    --avatar-y: -48px;  /* vertical offset: increase (less negative) to move DOWN */
   }
 
   .utd-bar{
