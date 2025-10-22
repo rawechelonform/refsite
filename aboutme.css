@@ -407,42 +407,55 @@
 }
 
 
-
+/* Default: hide the injected break on bigger screens */
+.utd-title .title-br{ display:none; }
 
 /* =========================
    SMALL PHONE • PORTRAIT (≤400px)
    ========================= */
 @media (max-width:400px) and (orientation:portrait){
-  /* lower the avatar further on tiny phones */
-  :root{ --avatar-drop: 32px; }
+  /* knobs */
+  :root{
+    --avatar-size: clamp(60px, 18vw, 92px);
+    --avatar-drop: 32px;         /* increase to move avatar LOWER */
+  }
 
-  /* header: centered vertically, compact height, a bit more top padding */
+  /* Header: centered vertically, compact height, more top padding than bottom */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
     padding: 8px 10px 4px 10px;   /* top | right | bottom | left */
     min-height: 38px;
     line-height: 1;
   }
+
+  /* Title: allow wrapping and show the forced break; keep lines tight */
   .utd-title{
     font-size:10px;
-    line-height:1;                /* flex handles the centering */
+    line-height:1.12;             /* tight gap between the two lines */
     margin:0;
-    white-space:normal;           /* allow wrapping if needed */
+    white-space:normal;
   }
+  .utd-title .title-br{ display:inline; }
 
-  /* keep button on one line; tighten gap between words */
+  /* Button: one line, slightly tighter word gap so it doesn’t wrap */
   .utd-unlock{
     white-space: nowrap;
     padding: 0 10px;
     height: 18px;
     line-height: 18px;
     font-size: 9.5px;
-    word-spacing: -1px;           /* smaller space between “Creator” and “Unlock” */
+    word-spacing: -1px;
   }
 
-  /* avatar sits outside box; lowered more on tiny portrait via --avatar-drop */
+  /* Avatar: outside the box; lower it via --avatar-drop */
   .avatar-overlay{
+    position:absolute;
+    width: var(--avatar-size);
+    height:auto;
+    right: -6px;
     top: calc(-1 * var(--avatar-size) + var(--avatar-drop));
+    z-index: 6;
+    pointer-events:none;
   }
 }
 
@@ -450,37 +463,45 @@
    SMALL PHONE • LANDSCAPE (≤600px)
    ========================= */
 @media (max-width:600px) and (orientation:landscape){
-  /* header: centered vertically and a bit taller so text doesn’t feel cramped */
+  /* knob for horizontal nudge (negative = further right, positive = left) */
+  :root{ --avatar-x: -8px; }
+
+  /* Header: centered vertically, a bit taller so it’s not cramped */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 10px 10px 6px 10px;  /* ↑ more top padding, modest bottom */
+    padding: 10px 10px 6px 10px;
     min-height: 40px;
     line-height: 1;
   }
 
-  /* Title: encourage a 2-line wrap (“USELESS THOUGHT” / “OF THE DAY”)
-     by constraining width and tightening the line gap. Tweak max-width 60–70% to
-     hit the break after “THOUGHT” on your device. */
+  /* Title: encourage 2-line wrap (“USELESS THOUGHT” / “OF THE DAY”) */
   .utd-title{
     display:block;
-    max-width: 65%;               /* adjust (60–70%) to force wrap after THOUGHT */
-    white-space: normal;          /* allow wrapping */
+    max-width: 65%;               /* tweak 60–70% to hit the break after THOUGHT */
+    white-space: normal;
     word-break: keep-all;         /* prefer breaking at spaces */
     line-height: 1.12;            /* tight interline gap */
     font-size: 10px;
     letter-spacing: .02em;
     margin:0;
-    text-wrap: balance;           /* nicer balance on modern browsers */
+    text-wrap: balance;
   }
+  .utd-title .title-br{ display:inline; }
 
-  /* Button: keep it on one line, give a touch more interior space,
-     and shrink the word gap so it doesn’t split to 2 lines */
+  /* Button: one line, comfy interior space */
   .utd-unlock{
     white-space: nowrap;
-    padding: 0 12px;              /* a hair wider interior so text doesn’t touch border */
+    padding: 0 12px;
     height: 18px;
     line-height: 18px;
     font-size: 9.5px;
-    word-spacing: -1px;           /* tighter space between words */
+    word-spacing: -1px;
+  }
+
+  /* Avatar: keep your vertical placement; allow easy horizontal nudge */
+  .avatar-overlay{
+    right: var(--avatar-x);
+    /* keep your existing top/size from the main landscape rules, e.g.: */
+    /* top: -55px; width: clamp(68px, 10vw, 100px); */
   }
 }

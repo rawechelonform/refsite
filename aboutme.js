@@ -256,42 +256,63 @@
 })();
 
 
-// --- Small-phone title formatting: "USELESS THOUGHT" / "OF THE DAY" on 2 lines ---
-function applySmallTitleBreak(){
+
+
+
+
+
+
+
+// === Small-phone title break helper ===
+// Forces "USELESS THOUGHT" (line 1) and "OF THE DAY" (line 2)
+// only on very small screens. Does NOT store <br> in localStorage.
+(function(){
   if (!$title) return;
 
-  // the *saved* title string
-  const raw = (localStorage.getItem('utd_title_v2') || 'USELESS THOUGHT OF THE DAY').trim();
+  const TITLE_KEY = 'utd_title_v2';
 
-  // small-phone media queries (match either: ≤400px portrait OR ≤600px landscape)
-  const isSmall = window.matchMedia('(max-width: 400px) and (orientation: portrait), (max-width: 600px) and (orientation: landscape)').matches;
-
-  // only enforce the split when the title is the standard phrase
-  const desired = /^USELESS\s+THOUGHT\s+OF\s+THE\s+DAY$/i;
-
-  if (isSmall && desired.test(raw)){
-    // inject a controlled break element we can toggle via CSS
-    $title.innerHTML = 'USELESS THOUGHT<br class="title-br">OF THE DAY';
-  } else {
-    // show the raw title (single line or natural wrapping)
-    $title.textContent = raw;
+  function getSavedTitle(){
+    const v = localStorage.getItem(TITLE_KEY);
+    return (v == null || v.trim() === '') ? 'USELESS THOUGHT OF THE DAY' : v.trim();
   }
-}
 
-// call once on load and again on resize
-applySmallTitleBreak();
-window.addEventListener('resize', applySmallTitleBreak);
+  // Match tiny portrait OR small landscape
+  const mq = window.matchMedia('(max-width: 400px) and (orientation: portrait), (max-width: 600px) and (orientation: landscape)');
 
-// when owner edits title, re-apply the rule after saving
-const _origOnTitleInput = typeof onTitleInput === 'function' ? onTitleInput : null;
-function onTitleInput(){
-  const v = $title.textContent.trim();
-  localStorage.setItem('utd_title_v2', v);
-  applySmallTitleBreak();
-}
-// make sure our input handler is attached (in case we override earlier)
-if ($title){
-  $title.removeEventListener('input', onTitleInput);
-  $title.addEventListener('input', onTitleInput);
-}
+  function isStandardPhrase(s){
+    return /^USELESS\s+THOUGHT\s+OF\s+THE\s+DAY$/i.test(s);
+  }
+
+  function renderTitleForViewport(){
+    const raw = getSavedTitle();
+    if (mq.matches && isStandardPhrase(raw)) {
+      // Inject a controlled break element we can style via CSS
+      $title.innerHTML = 'USELESS THOUGHT<br class="title-br">OF THE DAY';
+    } else {
+      $title.textContent = raw;
+    }
+  }
+
+  // Re-render on load + resize
+  renderTitleForViewport();
+  window.addEventListener('resize', renderTitleForViewport);
+
+  // If the title is editable, keep things nice for the editor:
+  // when user focuses the title, show raw text (no <br>); on input, save; on blur, re-render.
+  $title.addEventListener('focus', () => {
+    const raw = getSavedTitle();
+    $title.textContent = raw;
+  });
+
+  $title.addEventListener('input', () => {
+    // Save live edits
+    localStorage.setItem(TITLE_KEY, $title.textContent.trim());
+  });
+
+  $title.addEventListener('blur', () => {
+    renderTitleForViewport();
+  });
+})();
+
+
 

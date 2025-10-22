@@ -272,6 +272,7 @@
 
 
 
+
 // === Vertical shooting stars: cross entire page (always), random x,
 // old-speed duration, random thickness, random timing, up to 3 concurrent ===
 (() => {
@@ -286,7 +287,7 @@
   const MAX_INTERVAL_MS = 12000;
 
   // duration window ("old speed", ms)
-  const MIN_DURATION_MS = 1100; //increase for slower
+  const MIN_DURATION_MS = 1100; // increase for slower
   const MAX_DURATION_MS = 2500;
 
   // tail & thickness (px)
