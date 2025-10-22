@@ -1,10 +1,10 @@
 // /menubar.js (v=mb15)
 // Usage on every page:
 //   <link rel="stylesheet" href="/menubar.css?v=mb15">
-//   <script src="/menubar.js?v=mb15" defer></script>
+//   <script src="/menubar.js?v=mb16" defer></script>
 
 (function () {
-  const VER = 'mb15';
+  const VER = 'mb16';
 
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
