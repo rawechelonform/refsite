@@ -261,6 +261,8 @@
 }
 .corner-img{ display: none; }
 
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
@@ -269,91 +271,70 @@
   :root{
     --row: 14px;
     --gutter: 22px;
-    --perch-gap: 12px;               /* ↓ adjust this to change the top gap */
+    --perch-gap: 0px;                        /* no reserved space inside the box */
+    --avatar-size: clamp(60px, 18vw, 92px);  /* one knob for the avatar size */
+    --avatar-overlap: 2px;                   /* how much it overlaps the top border */
   }
 
-  /* page gutters tighter on mobile */
   .page{ padding-left: 0; padding-right: 0; }
 
-  /* stack everything vertically with side gutters */
   .about-grid{
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     row-gap: var(--row);
     margin-top: 20px;
-    padding-left: var(--gutter);
-    padding-right: var(--gutter);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+    padding-left: var(--gutter); padding-right: var(--gutter);
+    width: 100%; max-width: 100%; box-sizing: border-box;
   }
 
-  /* order: bio → photo → UTD */
   .right-col{ display: contents; }
   .bio{ order: 1; margin-bottom: var(--row); }
 
   .about-blurb{
-    order: 2;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    min-width: 0;
+    order: 2; display: flex; justify-content: center; align-items: flex-start;
+    width: 100%; min-width: 0;
   }
   .about-photo{
-    display: block;
-    max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto calc(3 * var(--row));
-    width: 100%;
+    display: block; max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto calc(3 * var(--row)); width: 100%;
   }
   .about-photo img{ margin: 0; }
 
-  /* UTD box */
+  /* UTD box (no extra top padding) */
   .utd{
     order: 3;
     position: relative;
     margin-top: var(--row);
     padding: 10px;
-    padding-top: var(--perch-gap);          /* smaller reserved space */
+    padding-top: var(--perch-gap);           /* stays 0 — avatar sits outside */
     border: 2px solid rgb(var(--utd-gray)) !important;
     background: #000;
     color: rgb(var(--utd-gray));
   }
 
-  /* Header strip inside the box (compact) */
   .utd-bar{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display:flex; align-items:center; justify-content:space-between;
     padding: 3px 8px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 2;
-    position: relative;
-    z-index: 5; /* keep unlock button tappable */
+    position: relative; z-index: 5;          /* keep unlock button tappable */
   }
-
-  .utd-title{ font-size: 10px; letter-spacing: .02em; }
+  .utd-title{ font-size:10px; letter-spacing:.02em; }
   .utd-unlock{
-    padding: 0 6px;
-    height: 16px;
-    line-height: 14px;
-    font-size: 9.5px;
-    pointer-events: auto;
+    padding:0 6px; height:16px; line-height:14px; font-size:9.5px; pointer-events:auto;
   }
 
-  /* Avatar perched on top edge of the UTD */
+  /* Avatar perched OUTSIDE the box */
   .avatar-overlay{
     position: absolute;
-    top: calc(-1 * var(--perch-gap) + 6px);  /* track the gap */
-    right: -6px;
-    width: clamp(60px, 18vw, 92px);
+    width: var(--avatar-size);
     height: auto;
-    z-index: 3;  /* below header/button so taps work */
+    right: -6px;
+    top: calc(-1 * var(--avatar-size) - var(--avatar-overlap)); /* outside */
+    z-index: 6;                 /* above the box edge and header */
     pointer-events: none;
   }
 }
-
 
 /* =========================
    MOBILE • LANDSCAPE (≤900px)
