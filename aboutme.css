@@ -318,16 +318,17 @@
     background: #000;
     color: rgb(var(--utd-gray));
   }
+  /* Header strip inside the box (compact) */
   .utd-bar{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 3px 8px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(var(--utd-gray));
-    line-height: 3;
+    padding: 3px 8px;                       /* compact height */
+    margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
+    border-bottom: 2px solid rgb(143,143,143);
+    line-height: 3;  /* top rectangle height*/
     position: relative;
-    z-index: 5;   /* keep unlock button tappable */
+    z-index: 5;                              /* ——— 2) ensure it sits above avatar for taps ——— */
   }
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{
@@ -338,14 +339,14 @@
     pointer-events: auto;
   }
 
-  /* avatar perched on the box edge, not intercepting taps */
+   /* Avatar perched on top edge of the UTD */
   .avatar-overlay{
     position: absolute;
-    top: calc(-1 * clamp(40px, 14vw, 72px) + 6px);
-    right: -6px;
+    top: -47px !important;   /* make more negative to raise further */
+    right: -6px !important;
     width: clamp(60px, 18vw, 92px);
     height: auto;
-    z-index: 3;
+    z-index: 3;               /* below header/button so taps work */
     pointer-events: none;
   }
 }
