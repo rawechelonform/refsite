@@ -338,7 +338,7 @@
   /* Header */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;               /* top | right | bottom | left */
+    padding: 0px 6p 0px 6px;               /* top | right | bottom | left */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
@@ -417,7 +417,7 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;               /* top | right | bottom | left */
+    padding: 0px 6p 0px 6px;               /* top | right | bottom | left */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
@@ -474,7 +474,7 @@
     --avatar-y: 28px;     /* positive = lower */
 
     --bar-min: 32px;
-    --bar-pad-top: 8px;
+    --bar-pad-top: 0px;
     --bar-pad-bottom: 2px;
   }
 
@@ -520,7 +520,7 @@
     --avatar-y: -25px;   /* negative = higher, positive = lower */
 
     --bar-min: 30px;
-    --bar-pad-top: 6px;
+    --bar-pad-top: 0px;
     --bar-pad-bottom: 0;
   }
 
