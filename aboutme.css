@@ -292,6 +292,7 @@
   .utd-unlock:focus{ background:#000 !important; color: rgb(90,90,90) !important; }
 }
 
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
@@ -332,19 +333,20 @@
     width: 100%;
     min-width: 0;
   }
-  
-.about-photo{
-  display: block;
-  /* ↓ makes the photo smaller */
-  max-width: clamp(180px, 80vw, 260px);  
 
-  /* ↓ adds more space underneath */
-  margin: 6px auto calc(7 * var(--row)); /* was 3 * var(--row) */
-
-  width: 100%;
-}
-
-  .about-photo img{ margin: 0; }
+  /* PHOTO — bigger + more space above/below */
+  .about-photo{
+    display: block;
+    max-width: clamp(220px, 70vw, 360px);   /* bigger than before */
+    margin: 32px auto 48px;                 /* top | L/R | bottom – extra space */
+    width: 100%;
+  }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
 
   /* UTD box */
   .utd{
@@ -385,6 +387,7 @@
     opacity:.95;
   }
 }
+
 
 /* =========================
    MOBILE • LANDSCAPE (≤900px)
