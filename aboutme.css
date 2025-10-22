@@ -300,7 +300,7 @@
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;      /* negative = nudge right, positive = left */
-    --avatar-y: -65px;     /* more negative = higher, positive = lower */
+    --avatar-y: -80px;     /* more negative = higher, positive = lower */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -356,21 +356,23 @@
     line-height: 1;
     min-height: 25px;
   }
- .utd-title{
+  .utd-title{
     font-size:10px;
     line-height:1;
     margin:0;
     padding:6px 0;
 
-    /* force single line */
+    /* single line + safe overflow handling */
     white-space: nowrap;
+    text-wrap: nowrap;       /* modern alias */
     max-width: 100%;
-    text-wrap: nowrap;            /* modern alias */
-    overflow: hidden;             /* prevent overlap if space is tight */
-    text-overflow: ellipsis;      /* … if it truly can’t fit */
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-    .utd-title .title-br{ display:none; }
+  /* keep any forced <br> hidden at this size */
+  .utd-title .title-br{ display:none; }
+}
 
   /* Muted Creator Unlock (mobile only) */
   .utd-unlock{
@@ -405,7 +407,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -150px;     /* vertical offset */
+    --avatar-y: -160px;     /* vertical offset */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -453,7 +455,23 @@
     line-height: 1;
     min-height: 25px;
   }
-  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; margin:0; padding:6px 0; }
+  .utd-title{
+    font-size:10px;
+    line-height:1;
+    margin:0;
+    padding:6px 0;
+
+    /* single line + safe overflow handling */
+    white-space: nowrap;
+    text-wrap: nowrap;       /* modern alias */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* keep any forced <br> hidden at this size */
+  .utd-title .title-br{ display:none; }
+}
 
   /* Muted Creator Unlock (mobile only) */
   .utd-unlock{
