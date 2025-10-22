@@ -487,7 +487,7 @@
     /* avatar knobs (portrait small) */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;    /* negative = nudge right, positive = left */
-    --avatar-y: 48px;    /* positive = move DOWN, negative = up */
+    --avatar-y: 0px;    /* positive = move DOWN, negative = up */
 
     /* header knobs */
     --bar-min: 30px;     /* total min height for the header bar */
@@ -502,7 +502,7 @@
     padding: var(--bar-pad-top) 8px var(--bar-pad-bottom) 8px; /* T R B L */
     min-height: var(--bar-min);
     line-height: 1;
-    margin: 0 -10px 0 -10px; /* cancel the 10px outer .utd padding on sides */
+    margin: 0 -10px 2 -10px; /* cancel the 10px outer .utd padding on sides */
     border-bottom: 2px solid rgb(143,143,143);
   }
 
@@ -529,7 +529,7 @@
     /* avatar knobs (landscape small) */
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: 24px;     /* increase to move further DOWN */
+    --avatar-y: 28px;     /* increase to move further DOWN */
 
     /* header knobs */
     --bar-min: 32px;
