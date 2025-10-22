@@ -234,11 +234,18 @@
 
 /* ===== Avatar ===== */
 /* ↓↓↓ ONLY CHANGE HERE for desktop avatar size ↓↓↓ */
-.avatar-overlay{
-  position:absolute; top:-64px; right:-8px;
-  width: clamp(10px, 1vw, 15px);   /* was 10vw — smaller on big screens */
-  height:auto;
-  z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
+@media (min-width: 901px){
+  .avatar-overlay{
+    position:absolute;
+    top:-64px;
+    right:-8px;
+    width: 90px;            /* desktop fixed width */
+    height:auto;
+    z-index:3;
+    pointer-events:none;
+    image-rendering:pixelated;
+    opacity:.95;
+  }
 }
 @media (max-width:900px){
   .avatar-overlay{ top:-18px; right:-6px; width: clamp(60px, 18vw, 92px); }

@@ -290,3 +290,16 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .shooting-star { animation: none !important; }
 }
+
+
+
+
+
+
+/* — Ensure the menubar reserves the same space as other pages (mobile portrait) — */
+@media (max-width: 480px) and (orientation: portrait) {
+  .menubar-slot {
+    display: block;
+    height: calc(var(--barh) + env(safe-area-inset-top, 0)) !important;
+  }
+}
