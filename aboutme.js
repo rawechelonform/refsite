@@ -315,37 +315,3 @@
 })();
 
 
-
-
-// unlock / lock toggle
-if ($unlock) {
-  $unlock.addEventListener('click', () => {
-    if (ownerMode) {
-      // LOCK
-      ownerMode = false;
-      $unlock.textContent = 'CREATOR UNLOCK';
-      if ($form) $form.hidden = true;
-      disableTitleEditing();
-      $unlock.blur();                         // NEW: remove focus so mobile hover doesn’t stick
-      $unlock.classList.remove('is-active');  // NEW: in case you ever add an active class
-      render();
-      return;
-    }
-
-    // UNLOCK
-    const pass = prompt('Enter passphrase:');
-    if (pass && pass === OWNER_PASSPHRASE) {
-      ownerMode = true;
-      $unlock.textContent = 'CREATOR LOCK';
-      if ($form) {
-        $form.hidden = false;
-        setTimeout(() => $text && $text.focus(), 0);
-      }
-      enableTitleEditing();
-      render();
-    } else {
-      alert('Incorrect passphrase');
-      $unlock.blur();                         // also blur here after a cancelled/failed unlock
-    }
-  });
-}
