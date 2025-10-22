@@ -276,9 +276,8 @@
 
 
 
-
-
-// === Vertical shooting stars with random x, distance, speed, timing ===
+// === Vertical shooting stars with random x, distance>=2/3VH, old speed (duration),
+// randomized thickness, random timing, and up to 3 concurrent ===
 (() => {
   const overlay = document.getElementById('sky-overlay');
   if (!overlay) return;
@@ -286,29 +285,51 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let paused = document.hidden;
 
-  // Spawn timing window (randomized each time)
+  // Spawn timing window
   const MIN_INTERVAL_MS = 2200;
   const MAX_INTERVAL_MS = 12000;
 
-  // Tail length window (px)
-  const MIN_TAIL = 110;
-  const MAX_TAIL = 230;
+  // "Old speed" → randomized duration range (ms)
+  const MIN_DURATION_MS = 900;
+  const MAX_DURATION_MS = 2200;
 
-  // Travel distance as a fraction of viewport height (0.35vh … 1.15vh)
-  // Values < 1 stop mid-page; > 1 go off the bottom
-  const MIN_DIST_FRAC = 0.35;
-  const MAX_DIST_FRAC = 1.15;
+  // Tail length and thickness windows
+  const MIN_TAIL = 120;   // px
+  const MAX_TAIL = 210;   // px
+  const MIN_THICK = 2;    // px
+  const MAX_THICK = 4;    // px
 
-  // Speed range in pixels per second — duration will be distance / speed
-  const MIN_SPEED_PX_S = 700;
-  const MAX_SPEED_PX_S = 1500;
+  // Distance as a fraction of viewport height
+  // min 2/3 page, sometimes full page and a bit beyond
+  const MIN_DIST_FRAC = 0.67;
+  const MAX_DIST_FRAC = 1.12;
+
+  // Concurrency
+  const MAX_CONCURRENT = 3;
+  let activeStars = 0;
 
   function scheduleNext() {
     const wait = rand(MIN_INTERVAL_MS, MAX_INTERVAL_MS);
     setTimeout(() => {
-      if (!paused && !reduceMotion.matches) spawnStar();
+      if (!paused && !reduceMotion.matches) spawnCluster();
       scheduleNext();
     }, wait);
+  }
+
+  // Sometimes spawn more than 1 at the same time, but never exceed MAX_CONCURRENT
+  function spawnCluster() {
+    const available = Math.max(0, MAX_CONCURRENT - activeStars);
+    if (available === 0) return;
+
+    // Weighted pick: mostly 1, sometimes 2, rarely 3
+    const r = Math.random();
+    let desired = r < 0.65 ? 1 : r < 0.92 ? 2 : 3;
+    const count = Math.min(desired, available);
+
+    for (let i = 0; i < count; i++) {
+      // small per-star stagger (0–220ms) so they don't perfectly overlap
+      setTimeout(spawnStar, i === 0 ? 0 : rand(40, 220));
+    }
   }
 
   function spawnStar() {
@@ -318,49 +339,57 @@
     const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
     const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-    // Random column to fall down
+    // Random x across the viewport with tiny margins
     const startX = rand(0.02 * vw, 0.98 * vw);
     star.style.left = `${startX}px`;
 
+    // Random thickness for head and tail
+    const thick = randInt(MIN_THICK, MAX_THICK);
+    star.style.width = `${thick}px`;
+    star.style.height = `${thick}px`;
+    star.style.setProperty('--thick', `${thick}px`);
+
     // Random tail length
-    const tail = rand(MIN_TAIL, MAX_TAIL);
+    const tail = randInt(MIN_TAIL, MAX_TAIL);
     star.style.setProperty('--tail', `${tail}px`);
 
-    // Start just above the screen so the tail isn’t visible at spawn
+    // Start just above the screen so the tail isn't visible at spawn
     const startTop = -tail - 20;
     star.style.top = `${startTop}px`;
 
-    // Random travel distance
+    // Random travel distance: at least 2/3 page, maybe beyond the bottom
     const distFrac = rand(MIN_DIST_FRAC, MAX_DIST_FRAC);
-    const distance = distFrac * vh + (distFrac >= 1 ? 60 : 0); // tiny extra if going off bottom
+    const distance = distFrac * vh + (distFrac >= 1 ? 60 : 0); // little extra if crossing bottom
     star.style.setProperty('--sg-distance', `${distance}px`);
 
-    // Random speed → duration
-    const speedPxS = rand(MIN_SPEED_PX_S, MAX_SPEED_PX_S);
-    const durationMs = Math.max(200, Math.round((distance / speedPxS) * 1000));
+    // Old-speed style: randomized duration window
+    const durationMs = randInt(MIN_DURATION_MS, MAX_DURATION_MS);
+    const delayMs = randInt(0, 200);
 
-    // Tiny per-star delay jitter
-    const delayMs = rand(0, 220);
-
-    // Animate
     star.style.animation = `sg_fall ${durationMs}ms linear ${delayMs}ms forwards`;
 
-    // Clean up
-    star.addEventListener('animationend', () => star.remove());
+    // Track concurrency
+    activeStars++;
+    star.addEventListener('animationend', () => {
+      star.remove();
+      activeStars = Math.max(0, activeStars - 1);
+    });
+
     overlay.appendChild(star);
   }
 
   function rand(min, max) {
-    if (Number.isInteger(min) && Number.isInteger(max)) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
     return Math.random() * (max - min) + min;
+  }
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
   if (!reduceMotion.matches) {
-    setTimeout(() => spawnStar(), rand(300, 1800)); // first one at a random moment
+    // first one at a random moment
+    setTimeout(() => spawnCluster(), randInt(300, 1500));
     scheduleNext();
   }
 })();
