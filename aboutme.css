@@ -233,9 +233,10 @@
 .utd-line.is-editing .utd-icons{ display:none !important; }
 
 /* ===== Avatar ===== */
+/* ↓↓↓ ONLY CHANGE HERE for desktop avatar size ↓↓↓ */
 .avatar-overlay{
   position:absolute; top:-64px; right:-8px;
-  width: clamp(68px, 10vw, 100px);
+  width: clamp(10px, 1vw, 15px);   /* was 10vw — smaller on big screens */
   height:auto;
   z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
 }
@@ -261,25 +262,11 @@
 }
 .corner-img{ display: none; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ========= Mobile common tweaks (safe globally) ========= */
 /* Feed padding matches your 6px title feel */
 .utd-feed{
   /* cancel the .utd { padding:10px } on the sides */
   margin: 0 -10px 6px -10px;   /* top | right | bottom | left */
-
   /* same inner L/R padding as .utd-bar */
   padding: 0 6px 6px 6px;      /* top | right | bottom | left */
 }
