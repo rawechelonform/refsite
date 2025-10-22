@@ -266,112 +266,195 @@
 
 
 
-
-
-/* =========================
-   GLOBAL (apply once)
-   ========================= */
-:root{
-  --unlock-muted: 90,90,90;   /* dark grey for hidden unlock */
-}
-
-.utd{ position: relative; }
-
-/* Avatar rule (applies across all mobile breakpoints) */
-.avatar-overlay{
-  position: absolute;
-  right: var(--avatar-x, -6px);
-  top: var(--avatar-y, -30px) !important;
-  width: var(--avatar-size, 80px);
-  height: auto;
-  z-index: 6;
-  pointer-events: none;
-}
-
-/* Muted Creator Unlock (thin border, small padding, dark grey text) */
-.utd-unlock{
-  background:#000;
-  color: rgb(var(--unlock-muted));
-  border: 1px solid rgb(var(--unlock-muted));
-  padding: 0 6px;
-  height: 18px;
-  line-height: 18px;
-  font-size: 10px;
-  text-transform: uppercase;
-  -webkit-appearance:none; appearance:none;
-}
-
-/* Hover only on devices that support it */
-@media (hover: hover){
-  .utd-unlock:hover{ background: rgb(40,40,40); color:#000; }
-}
-
-/* Ignore hover on touch devices */
-@media (hover: none){
-  .utd-unlock:hover{ background:#000; color: rgb(var(--unlock-muted)); }
-}
-
-/* After locking (no sticky grey background) */
-.utd:not(.is-owner) .utd-unlock{
-  background:#000 !important;
-  color: rgb(var(--unlock-muted)) !important;
-  border-color: rgb(var(--unlock-muted)) !important;
-}
-
-/* Feed padding for 6px spacing */
+/* ========= Mobile common tweaks (safe globally) ========= */
+/* Feed padding matches your 6px title feel */
 .utd-feed{ padding: 0 6px 6px; }
 .utd-line{ padding: 0; }
 
-/* Default: hide injected <br> on bigger screens */
+/* Hide forced line-break by default; we turn it on only for small breakpoints */
 .utd-title .title-br{ display:none; }
 
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
+
   :root{
+    --row: 14px;
+    --gutter: 22px;
+
+    /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;
-    --avatar-y: -55px;
+    --avatar-x: -6px;      /* negative = nudge right, positive = left */
+    --avatar-y: -55px;     /* more negative = higher, positive = lower */
   }
 
+  .page{ padding-left: 0; padding-right: 0; }
+
+  .about-grid{
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--row);
+    margin-top: 20px;
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .right-col{ display: contents; }
+  .bio{ order: 1; margin-bottom: var(--row); }
+
+  .about-blurb{
+    order: 2;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+  }
+  .about-photo{
+    display: block;
+    max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto calc(3 * var(--row));
+    width: 100%;
+  }
+  .about-photo img{ margin: 0; }
+
+  /* ===== UTD box ===== */
+  .utd{
+    order: 3;
+    position: relative;
+    margin-top: var(--row);
+    padding: 10px;
+    border: 2px solid rgb(var(--utd-gray)) !important;
+    background: #000;
+    color: rgb(var(--utd-gray));
+  }
+
+  /* Header */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;
-    margin: -10px -10px 0 -10px;
+    padding: 0 6px;                     /* fixed (no vertical padding) */
+    margin: -10px -10px 4px -10px;      /* keep your original bottom gap */
     border-bottom: 2px solid rgb(143,143,143);
-    min-height: 0;
     line-height: 1;
+    min-height: 25px;
   }
-  .utd-bar > *{ margin:0; }
-  .utd-title{ font-size:10px; line-height:1; margin:0; padding:6px 0; }
+  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; margin:0; padding:6px 0; }
+
+  /* Muted Creator Unlock (mobile only) */
+  .utd-unlock{
+    background:#000;
+    color: rgb(90,90,90);
+    border: 1px solid rgb(90,90,90);  /* thinner border */
+    padding: 0 6px;                   /* smaller L/R padding */
+    height: 18px;
+    line-height: 18px;
+    font-size: 10px;
+    text-transform: uppercase;
+    -webkit-appearance:none; appearance:none;
+  }
+
+  .avatar-overlay{
+    position: absolute;
+    width: var(--avatar-size);
+    height: auto;
+    right: var(--avatar-x);
+    top: var(--avatar-y);
+    z-index: 6;
+    pointer-events: none;
+  }
 }
+
 
 /* =========================
    MOBILE • LANDSCAPE (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
+
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
-    --avatar-x: -8px;
-    --avatar-y: -70px;
+    --avatar-x: -8px;      /* horizontal nudge */
+    --avatar-y: -70px;     /* vertical offset */
+  }
+
+  .page{ padding-left: 0; padding-right: 0; }
+
+  .about-grid{
+    display: grid;
+    grid-template-columns: 1fr 0.9fr;
+    column-gap: 3px;
+    row-gap: 10px;
+    margin-top: 28px;
+    max-width: var(--maxw);
+    width: 100%;
+    padding-inline: 10px;
+    box-sizing: border-box;
+  }
+
+  .about-blurb{
+    grid-column: 1; grid-row: 1;
+    display: flex; justify-content: center; align-items: flex-start; min-width: 0;
+  }
+  .about-photo{
+    display: block; max-width: clamp(300px, 34vw, 470px);
+    margin: 0 auto 8px; width: 100%;
+  }
+  .about-photo img{ display: block; width: 100%; height: auto; }
+
+  .right-col{
+    grid-column: 2; grid-row: 1;
+    display: flex; flex-direction: column; gap: 12px; padding-right: 8px; min-width: 0;
+  }
+
+  .utd{
+    position: relative;
+    padding: 10px;
+    border: 2px solid rgb(var(--utd-gray)) !important;
+    background: #000;
+    color: rgb(var(--utd-gray));
   }
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;
-    margin: -10px -10px 0 -10px;
+    padding: 0 6px;                     /* fixed (no vertical padding) */
+    margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
-    min-height: 0;
     line-height: 1;
+    min-height: 25px;
   }
-  .utd-bar > *{ margin:0; }
-  .utd-title{ font-size:10px; line-height:1; margin:0; padding:6px 0; }
+  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; margin:0; padding:6px 0; }
+
+  /* Muted Creator Unlock (mobile only) */
+  .utd-unlock{
+    background:#000;
+    color: rgb(90,90,90);
+    border: 1px solid rgb(90,90,90);
+    padding: 0 6px;
+    height: 18px;
+    line-height: 18px;
+    font-size: 10px;
+    text-transform: uppercase;
+    -webkit-appearance:none; appearance:none;
+  }
+
+  .avatar-overlay{
+    position: absolute;
+    width: var(--avatar-size);
+    height: auto;
+    right: var(--avatar-x);
+    top: var(--avatar-y);
+    z-index: 6;
+    pointer-events: none;
+  }
 }
+
 
 /* =========================
    SMALL PHONE • PORTRAIT (≤480px)
-   Force two-line title + tighten unlock button
+   (force “USELESS THOUGHT” / “OF THE DAY” on two lines)
    ========================= */
 @media (max-width:480px) and (orientation:portrait){
   :root{
@@ -382,17 +465,17 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;
-    margin: -10px -10px 0 -10px;
+    padding: 0 6px;                     /* keep your compact header */
+    margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
-    min-height: 0;
     line-height: 1;
+    min-height: 25px;
   }
-  .utd-bar > *{ margin:0; }
 
+  /* Encourage 2-line wrap; mirrors your small-landscape behavior */
   .utd-title{
     display:block;
-    max-width: 65%;              /* force 2-line break */
+    max-width: 65%;              /* tweak 60–70% to hit the break after THOUGHT */
     white-space: normal;
     word-break: keep-all;
     line-height: 1.12;
@@ -405,16 +488,24 @@
   .utd-title .title-br{ display:inline; }
 
   .utd-unlock{
-    height: 18px;
-    line-height: 18px;
-    padding: 0 6px;
-    white-space: nowrap;
-    font-size: 9.5px;
+    background:#000;
+    color: rgb(90,90,90);
+    border: 1px solid rgb(90,90,90);
+    padding: 0 6px;   /* tighter sides on small phones too */
+    height: 18px; line-height: 18px; font-size: 9.5px;
+  }
+
+  .avatar-overlay{
+    width: var(--avatar-size);
+    right: var(--avatar-x);
+    top: var(--avatar-y);
   }
 }
 
+
 /* =========================
    SMALL PHONE • LANDSCAPE (short height)
+   (height-based so it actually triggers on iPhones)
    ========================= */
 @media (orientation:landscape) and (max-height: 430px){
   :root{
@@ -426,12 +517,11 @@
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
     padding: 0 6px;
-    margin: -10px -10px 0 -10px;
+    margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
-    min-height: 0;
     line-height: 1;
+    min-height: 25px;
   }
-  .utd-bar > *{ margin:0; }
 
   .utd-title{
     display:block;
@@ -448,8 +538,16 @@
   .utd-title .title-br{ display:inline; }
 
   .utd-unlock{
-    height: 18px; line-height: 18px;
-    padding: 0 6px; white-space: nowrap;
-    font-size: 9.5px; word-spacing: -1px;
+    background:#000;
+    color: rgb(90,90,90);
+    border: 1px solid rgb(90,90,90);
+    padding: 0 6px;
+    height: 18px; line-height: 18px; font-size: 9.5px; word-spacing: -1px;
+  }
+
+  .avatar-overlay{
+    width: var(--avatar-size);
+    right: var(--avatar-x);
+    top: var(--avatar-y);
   }
 }
