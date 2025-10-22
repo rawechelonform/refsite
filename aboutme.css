@@ -326,10 +326,11 @@
     padding: 3px 8px;                       /* compact height */
     margin: -10px -10px 4px -10px;          /* extend across inner padding cleanly */
     border-bottom: 2px solid rgb(143,143,143);
-    line-height: 3;  /* top rectangle height*/
+    line-height: 2;  /* top rectangle height*/
     position: relative;
     z-index: 5;                              /* ——— 2) ensure it sits above avatar for taps ——— */
   }
+
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{
     padding: 0 6px;
