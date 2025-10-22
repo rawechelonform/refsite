@@ -465,7 +465,7 @@
 @media (max-width:600px) and (orientation:landscape){
   /* knob for horizontal nudge (negative = further right, positive = left) */
   :root{ --avatar-x: -4px; 
-      --avatar-y: 8px;    /* + = down, - = up */}
+      --avatar-y: 12px;    /* + = down, - = up */}
 
   /* Header: centered vertically, a bit taller so it’s not cramped */
   .utd-bar{
