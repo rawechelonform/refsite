@@ -274,3 +274,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .shooting-star { animation: none !important; }
 }
+
+
+/* Sad Girls (mobile portrait): make the menubar full-bleed */
+@media (max-width: 720px) and (orientation: portrait) {
+  .page > .top-margin {
+    width: 100vw;                                  /* span the viewport */
+    margin-left: calc(50% - 50vw);                 /* cancel .page padding */
+    margin-right: calc(50% - 50vw);
+  }
+}
