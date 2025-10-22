@@ -261,54 +261,95 @@
 }
 .corner-img{ display: none; }
 
+
+
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
+
   :root{ --row: 14px; --gutter: 22px; }
+
+  /* page gutters tighter on mobile */
   .page{ padding-left: 0; padding-right: 0; }
+
+  /* stack everything vertically with side gutters */
   .about-grid{
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     row-gap: var(--row);
     margin-top: 20px;
-    padding-left: var(--gutter); padding-right: var(--gutter);
-    width: 100%; max-width: 100%; box-sizing: border-box;
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
+
+  /* order: bio → photo → UTD */
   .right-col{ display: contents; }
   .bio{ order: 1; margin-bottom: var(--row); }
+
   .about-blurb{
-    order: 2; display: flex; justify-content: center; align-items: flex-start;
-    width: 100%; min-width: 0;
+    order: 2;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
   }
   .about-photo{
-    display: block; max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto calc(3 * var(--row)); width: 100%;
+    display: block;
+    max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto calc(3 * var(--row));
+    width: 100%;
   }
   .about-photo img{ margin: 0; }
 
+  /* UTD box */
   .utd{
-    order: 3; position: relative; margin-top: var(--row);
+    order: 3;
+    position: relative;
+    margin-top: var(--row);
     padding: 10px;
-    padding-top: clamp(40px, 14vw, 72px);   /* room for perched avatar */
+    /* make room so the perched avatar never overlaps content */
+    padding-top: clamp(40px, 14vw, 72px);
     border: 2px solid rgb(var(--utd-gray)) !important;
-    background: #000; color: rgb(var(--utd-gray));
+    background: #000;
+    color: rgb(var(--utd-gray));
   }
   .utd-bar{
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 3px 8px; margin: -10px -10px 4px -10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 8px;
+    margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(var(--utd-gray));
-    line-height: 3; position: relative; z-index: 5;
+    line-height: 3;
+    position: relative;
+    z-index: 5;   /* keep unlock button tappable */
   }
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
-  .utd-unlock{ padding: 0 6px; height: 16px; line-height: 14px; font-size: 9.5px; pointer-events: auto; }
+  .utd-unlock{
+    padding: 0 6px;
+    height: 16px;
+    line-height: 14px;
+    font-size: 9.5px;
+    pointer-events: auto;
+  }
 
+  /* avatar perched on the box edge, not intercepting taps */
   .avatar-overlay{
     position: absolute;
     top: calc(-1 * clamp(40px, 14vw, 72px) + 6px);
     right: -6px;
-    width: clamp(60px, 18vw, 92px); height: auto; z-index: 3; pointer-events: none;
+    width: clamp(60px, 18vw, 92px);
+    height: auto;
+    z-index: 3;
+    pointer-events: none;
   }
 }
+
 
 /* =========================
    MOBILE • LANDSCAPE (≤900px)
