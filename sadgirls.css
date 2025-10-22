@@ -182,7 +182,8 @@ body {
     --caption-gap: 8px;
   }
 
-  .page { padding: 16px 10px 32px; }
+  /* match other pages’ top spacing (↑ was 16px) */
+  .page { padding: 24px 10px 32px; }
 
   /* stack image → caption (flush right), caption sits above thumbnails */
   .stage-inner {
@@ -231,23 +232,6 @@ body {
 .caption { visibility: hidden; }
 .stage .stage-inner .caption { visibility: visible; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* === Shooting stars (vertical, random thickness) === */
 .sky-overlay {
   position: fixed;
@@ -290,28 +274,3 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .shooting-star { animation: none !important; }
 }
-
-
-
-
-
-
-
-
-/* Sad Girls — mobile portrait: fixed menubar + matched top spacing */
-@media (max-width: 720px) and (orientation: portrait) {
-  .top-margin {
-    position: fixed !important;
-    top: env(safe-area-inset-top, 0) !important;
-    left: 0; right: 0;
-  }
-  .menubar-slot {
-    display: block !important;
-    height: calc(var(--barh) + env(safe-area-inset-top, 0)) !important;
-  }
-  /* Make Sad Girls use the same top padding as your other pages */
-  .page {
-    padding: 24px 10px 32px !important;
-  }
-}
-
