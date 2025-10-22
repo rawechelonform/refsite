@@ -417,7 +417,7 @@
   /* knobs */
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-drop: 32px;         /* increase to move avatar LOWER */
+    --avatar-drop: 5px;         /* increase to move avatar LOWER */
   }
 
   /* Header: centered vertically, compact height, more top padding than bottom */
