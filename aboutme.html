@@ -3,6 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self' data:;
+        connect-src 'self' https://script.google.com https://*.googleusercontent.com;
+      ">
+
+
+
+
   <title>REF</title>
 
   <!-- Fonts -->
@@ -19,6 +32,8 @@
 
   <!-- Shared menubar CSS -->
   <link rel="stylesheet" href="menubar.css?v=mb23">
+
+  
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
