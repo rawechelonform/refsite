@@ -263,6 +263,11 @@
 
 
 
+
+
+
+
+
 /* ======= MOBILE COMMON (safe globally) ======= */
 /* Feed padding matches title bar’s 6px L/R padding */
 .utd-feed{
@@ -304,8 +309,8 @@
 
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;      /* negative = nudge right, positive = left */
-    --avatar-y: -49px;     /* more negative = higher, positive = lower */
+    --avatar-x: -6px;
+    --avatar-y: -49px;
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -337,8 +342,8 @@
   /* PHOTO — bigger + more space above/below */
   .about-photo{
     display: block;
-    max-width: clamp(220px, 70vw, 360px);   /* bigger than before */
-    margin: 32px auto 48px;                 /* top | L/R | bottom – extra space */
+    max-width: clamp(240px, 80vw, 400px);   /* bigger photo */
+    margin: 48px auto 64px;                 /* more top & bottom spacing */
     width: 100%;
   }
   .about-photo img{
@@ -361,17 +366,26 @@
 
   /* Header */
   .utd-bar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;                     /* no vertical padding */
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 0 7px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
     min-height: 25px;
   }
+
+  /* Title — FORCE single row */
   .utd-title{
-    font-size:10px; line-height:1; margin:0; padding:6px 0;
-    white-space: nowrap; text-wrap: nowrap; max-width: 100%;
-    overflow: hidden; text-overflow: ellipsis;   /* keep on one line */
+    font-size:10px;
+    line-height:1;
+    margin:0;
+    padding:6px 0;
+    white-space: nowrap;       /* keep one line */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
   }
 
   /* Avatar (mobile portrait) */
@@ -396,8 +410,8 @@
 
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
-    --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -156px;    /* vertical offset */
+    --avatar-x: -8px;
+    --avatar-y: -156px;
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -416,24 +430,32 @@
 
   .about-blurb{
     grid-column: 1; grid-row: 1;
-    display: flex; justify-content: center; align-items: flex-start; min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: 0;
   }
- .about-photo{
-  display: block;
-  max-width: clamp(220px, 50vw, 320px); /* smaller than 300/34vw/470 */
-  margin: 0 auto 16px;                  /* a bit more breathing room below */
-  width: 100%;
-}
-.about-photo img{
-  display: block;
-  width: 100%;
-  height: auto;
-}
 
+  /* PHOTO — bigger */
+  .about-photo{
+    display: block;
+    max-width: clamp(260px, 60vw, 420px); /* bigger than before */
+    margin: 16px auto 24px;               /* extra space below */
+    width: 100%;
+  }
+  .about-photo img{
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 
   .right-col{
     grid-column: 2; grid-row: 1;
-    display: flex; flex-direction: column; gap: 12px; padding-right: 8px; min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 8px;
+    min-width: 0;
   }
 
   .utd{
@@ -444,18 +466,28 @@
     color: rgb(var(--utd-gray));
   }
 
+  /* Header */
   .utd-bar{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
     padding: 0 7px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
     min-height: 25px;
   }
+
+  /* Title — FORCE single row */
   .utd-title{
-    font-size:10px; line-height:1; margin:0; padding:6px 0;
-    white-space: nowrap; text-wrap: nowrap; max-width: 100%;
-    overflow: hidden; text-overflow: ellipsis;
+    font-size:10px;
+    line-height:1;
+    margin:0;
+    padding:6px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
   }
 
   .avatar-overlay{
@@ -471,9 +503,9 @@
   }
 }
 
+
 /* =========================
    SMALL PHONE • PORTRAIT (≤480px)
-   (force “USELESS THOUGHT” / “OF THE DAY” on two lines)
    ========================= */
 @media (max-width:480px) and (orientation:portrait){
   :root{
@@ -482,39 +514,26 @@
     --avatar-y: -53px;
   }
 
-  .utd-bar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height: 1;
-    min-height: 25px;
+  .about-photo{
+    max-width: clamp(200px, 85vw, 360px);
+    margin: 40px auto 56px;
+    width: 100%;
   }
 
   .utd-title{
-    display:block;
-    max-width: 65%;                   /* encourage wrap after “THOUGHT” */
     white-space: normal;
     word-break: keep-all;
     line-height: 1.12;
     font-size: 10px;
-    letter-spacing: .02em;
     margin:0;
     padding:6px 0;
     text-wrap: balance;
   }
-  .utd-title .title-br{ display:inline; }
-
-  .avatar-overlay{
-    width: var(--avatar-size);
-    right: var(--avatar-x);
-    top: var(--avatar-y);
-  }
 }
+
 
 /* =========================
    SMALL PHONE • LANDSCAPE (short height)
-   (height-based so it actually triggers on iPhones)
    ========================= */
 @media (orientation:landscape) and (max-height: 430px){
   :root{
@@ -523,28 +542,18 @@
     --avatar-y: -50px;
   }
 
-  .utd-bar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height: 1;
-    min-height: 25px;
+  .about-photo{
+    max-width: clamp(180px, 55vw, 340px);
+    margin: 12px auto 20px;
+    width: 100%;
   }
 
   .utd-title{
-    display:block;
-    max-width: 65%;
-    white-space: normal;
-    word-break: keep-all;
-    line-height: 1.12;
-    font-size: 10px;
-    letter-spacing: .02em;
-    margin:0;
-    padding:6px 0;
-    text-wrap: balance;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
   }
-  .utd-title .title-br{ display:inline; }
 
   .avatar-overlay{
     width: var(--avatar-size);
@@ -553,11 +562,10 @@
   }
 }
 
-/* ===== Photo sizing ===== */
-/* Small phone — landscape (short height) */
+/* ===== Photo sizing (fallback + desktop reset) ===== */
 .about-photo{
   margin: 0 0 8px 0;
-  max-width: clamp(160px, 65vw, 240px); /* smaller than 360px/34vw/470px */
+  max-width: clamp(160px, 65vw, 240px);
   width: 100%;
 }
 
@@ -574,3 +582,12 @@
 }
 
 .corner-img{ display: none; }
+
+/* ==== DESKTOP RESET ==== */
+@media (min-width: 901px){
+  .about-photo{
+    max-width: clamp(360px, 34vw, 470px);
+    margin: 0 0 8px 0;
+    width: 100%;
+  }
+}

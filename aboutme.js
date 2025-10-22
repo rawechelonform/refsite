@@ -1,4 +1,5 @@
-// aboutme.js (v11) — UTD with inline edit, right-aligned actions, Enter to post/save
+// aboutme.js (v12) — UTD with inline edit, right-aligned actions, Enter to post/save + server sync
+
 (() => {
   const KEY        = 'utd_entries_v7';
   const TITLE_KEY  = 'utd_title_v2';
@@ -37,7 +38,7 @@
   // render feed
   function render(){
     const items = load();
-    $feed.innerHTML = '';
+    if ($feed) $feed.innerHTML = '';
     items.forEach(({id, t, ts}) => {
       const line = document.createElement('div');
       line.className = 'utd-line';
@@ -67,7 +68,7 @@
       $feed.prepend(line); // newest first
     });
 
-    $utd.classList.toggle('is-owner', ownerMode);
+    if ($utd) $utd.classList.toggle('is-owner', ownerMode);
 
     if (ownerMode){
       $feed.querySelectorAll('.utd-icon').forEach(btn => {
@@ -124,10 +125,10 @@
             const trashIcon = icons?.querySelector('[data-act="del"]');
             if (editIcon) editIcon.style.display = 'none';
             if (trashIcon) {
-              trashIcon.classList.add('utd-edit-del'); // for CSS in actions row
+              trashIcon.classList.add('utd-edit-del');
               actions.appendChild(saveBtn);
               actions.appendChild(cancelBtn);
-              actions.appendChild(trashIcon); // order: Save, Cancel, Trash (right-aligned via CSS)
+              actions.appendChild(trashIcon);
             } else {
               actions.appendChild(saveBtn);
               actions.appendChild(cancelBtn);
@@ -150,7 +151,7 @@
                 save(items2);
               }
               cleanup();
-              render(); // rebuild row/icons
+              render();
             }
             function doCancel(){
               cleanup();
@@ -250,90 +251,55 @@
   function onTitleInput() { saveTitle($title.textContent.trim()); }
   function onTitleKeydown(e) { if (e.key === 'Enter') { e.preventDefault(); $title.blur(); } }
 
+  // let external sync tell this module to redraw
+  window.addEventListener('utd:refresh', () => render());
+
   // init
   if ($title) $title.textContent = loadTitle();
   render();
 })();
 
-
-
-
-
-
-
-
-
 // === Small-phone title break helper ===
-// Forces "USELESS THOUGHT" (line 1) and "OF THE DAY" (line 2)
-// only on very small screens. Does NOT store <br> in localStorage.
-(function(){
-  if (!$title) return;
+// works independently of variables inside the main IIFE
+(function () {
+  const titleEl = document.getElementById('utdTitle');
+  if (!titleEl) return;
 
-  const TITLE_KEY = 'utd_title_v2';
+  const TITLE_KEY_LOCAL = 'utd_title_v2';
 
-  function getSavedTitle(){
-    const v = localStorage.getItem(TITLE_KEY);
+  function getSavedTitle() {
+    const v = localStorage.getItem(TITLE_KEY_LOCAL);
     return (v == null || v.trim() === '') ? 'USELESS THOUGHT OF THE DAY' : v.trim();
   }
 
-  // Match tiny portrait OR small landscape
-  const mq = window.matchMedia('(max-width: 400px) and (orientation: portrait), (max-width: 600px) and (orientation: landscape)');
+  const mq = window.matchMedia(
+    '(max-width: 400px) and (orientation: portrait), (max-width: 600px) and (orientation: landscape)'
+  );
 
-  function isStandardPhrase(s){
+  function isStandardPhrase(s) {
     return /^USELESS\s+THOUGHT\s+OF\s+THE\s+DAY$/i.test(s);
   }
 
-  function renderTitleForViewport(){
+  function renderTitleForViewport() {
     const raw = getSavedTitle();
     if (mq.matches && isStandardPhrase(raw)) {
-      // Inject a controlled break element we can style via CSS
-      $title.innerHTML = 'USELESS THOUGHT<br class="title-br">OF THE DAY';
+      titleEl.innerHTML = 'USELESS THOUGHT<br class="title-br">OF THE DAY';
     } else {
-      $title.textContent = raw;
+      titleEl.textContent = raw;
     }
   }
 
-  // Re-render on load + resize
   renderTitleForViewport();
   window.addEventListener('resize', renderTitleForViewport);
 
-  // If the title is editable, keep things nice for the editor:
-  // when user focuses the title, show raw text (no <br>); on input, save; on blur, re-render.
-  $title.addEventListener('focus', () => {
-    const raw = getSavedTitle();
-    $title.textContent = raw;
-  });
-
-  $title.addEventListener('input', () => {
-    // Save live edits
-    localStorage.setItem(TITLE_KEY, $title.textContent.trim());
-  });
-
-  $title.addEventListener('blur', () => {
-    renderTitleForViewport();
-  });
+  titleEl.addEventListener('focus', () => { titleEl.textContent = getSavedTitle(); });
+  titleEl.addEventListener('input', () => { localStorage.setItem(TITLE_KEY_LOCAL, titleEl.textContent.trim()); });
+  titleEl.addEventListener('blur', renderTitleForViewport);
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-// allow external sync to trigger your UI re-render
-window.addEventListener('utd:refresh', () => {
-  try { typeof render === 'function' ? render() : null } catch(_) {}
-});
 
 // --- server sync for UTD feed ---
 (() => {
-  const API    = 'https://script.google.com/macros/s/AKfycbzda_pGloDsfUlXbZkuFRAHQyPJSMiiMi1kM-PY0ZFVUmC_GuMz8luA9YHZa3B0DQm4uw/exec';
+  const API = 'https://script.google.com/macros/s/AKfycbyCgdeEVvUIKxsspHaKiZyMf6WBijf3MKtTsu8V0Bk7KYyPkfOamPYEVeZKh55VhADmoQ/exec';
   const SECRET = 'fHTTj7XPasXkhXqY';
   const KEY    = 'utd_entries_v7';
 
@@ -375,6 +341,7 @@ window.addEventListener('utd:refresh', () => {
       }catch(_){}
     }, { capture: true });
 
+    // initial pull
     syncFromServer();
   });
 })();
