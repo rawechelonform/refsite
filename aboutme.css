@@ -270,25 +270,16 @@
 
 
 
-
-
-
-
-
-
 /* =========================
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
-
   :root{
     --row: 14px;
     --gutter: 22px;
-
-    /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;      /* negative = nudge right, positive = left */
-    --avatar-y: -55px;     /* more negative = higher, positive = lower */
+    --avatar-x: -6px;
+    --avatar-y: -55px;     /* more negative = higher */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -316,6 +307,7 @@
     width: 100%;
     min-width: 0;
   }
+
   .about-photo{
     display: block;
     max-width: clamp(220px, 68vw, 340px);
@@ -338,27 +330,26 @@
   /* Header */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0px 6p 0px 6px;               /* top | right | bottom | left */
-    margin: -10px -10px 4px -10px;
+    padding: 0 6px;                     /* remove vertical padding completely */
+    margin: -10px -10px 0 -10px;        /* cancel outer .utd padding */
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
-    min-height: 25px;
+    min-height: 0;                      /* no enforced height */
   }
-  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; margin:0; }
+
+  .utd-bar > *{ margin:0; }             /* kill stray margins */
+  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; }
   .utd-unlock{
     padding: 0 8px;
     height: 18px;
     line-height: 18px;
     font-size: 10px;
     white-space: nowrap;
-    pointer-events:auto;
   }
 
-  /* Avatar (uses the unified system) */
   .avatar-overlay{
     position: absolute;
     width: var(--avatar-size);
-    height: auto;
     right: var(--avatar-x);
     top: var(--avatar-y);
     z-index: 6;
@@ -371,11 +362,10 @@
    MOBILE • LANDSCAPE (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
-
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
-    --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -70px;     /* vertical offset */
+    --avatar-x: -8px;
+    --avatar-y: -70px;
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -394,17 +384,21 @@
 
   .about-blurb{
     grid-column: 1; grid-row: 1;
-    display: flex; justify-content: center; align-items: flex-start; min-width: 0;
+    display: flex; justify-content: center; align-items: flex-start;
   }
+
   .about-photo{
-    display: block; max-width: clamp(300px, 34vw, 470px);
-    margin: 0 auto 8px; width: 100%;
+    display: block;
+    max-width: clamp(300px, 34vw, 470px);
+    margin: 0 auto 8px;
+    width: 100%;
   }
+
   .about-photo img{ display: block; width: 100%; height: auto; }
 
   .right-col{
     grid-column: 2; grid-row: 1;
-    display: flex; flex-direction: column; gap: 12px; padding-right: 8px; min-width: 0;
+    display: flex; flex-direction: column; gap: 12px; padding-right: 8px;
   }
 
   .utd{
@@ -417,13 +411,15 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0px 6p 0px 6px;               /* top | right | bottom | left */
-    margin: -10px -10px 4px -10px;
+    padding: 0 6px;                     /* fully removes vertical padding */
+    margin: -10px -10px 0 -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
-    min-height: 25px;
+    min-height: 0;
   }
-  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; margin:0; }
+
+  .utd-bar > *{ margin:0; }
+  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; }
   .utd-unlock{
     padding: 0 8px;
     height: 18px;
@@ -435,7 +431,6 @@
   .avatar-overlay{
     position: absolute;
     width: var(--avatar-size);
-    height: auto;
     right: var(--avatar-x);
     top: var(--avatar-y);
     z-index: 6;
@@ -445,49 +440,68 @@
 
 
 /* =========================
-   GLOBAL “definitive” avatar rule
-   (keep this AFTER any older avatar rules elsewhere)
+   SMALL PHONE • PORTRAIT (≤480px)
    ========================= */
-.utd{ position: relative; }
-.avatar-overlay{
-  position: absolute;
-  right: var(--avatar-x, -6px);
-  top: var(--avatar-y, -30px) !important;  /* !important beats legacy rules */
-  width: var(--avatar-size, 80px);
-  height: auto;
-  z-index: 6;
-  pointer-events: none;
-}
+@media (max-width:480px) and (orientation:portrait){
+  :root{
+    --avatar-size: clamp(60px, 18vw, 92px);
+    --avatar-x: -6px;
+    --avatar-y: -45px;
+  }
 
-/* Default: hide injected <br> on bigger screens */
-.utd-title .title-br{ display:none; }
+  .utd-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 0 6px;
+    margin: -10px -10px 0 -10px;
+    border-bottom: 2px solid rgb(143,143,143);
+    line-height: 1;
+    min-height: 0;
+  }
+
+  .utd-bar > *{ margin:0; }
+  .utd-title{
+    font-size:10px;
+    line-height:1;
+    margin:0;
+    white-space: normal;
+  }
+
+  .utd-unlock{
+    height: 18px;
+    line-height: 18px;
+    padding: 0 10px;
+    white-space: nowrap;
+    font-size: 9.5px;
+  }
+
+  .avatar-overlay{
+    width: var(--avatar-size);
+    right: var(--avatar-x);
+    top: var(--avatar-y);
+  }
+}
 
 
 /* =========================
    SMALL PHONE • LANDSCAPE (short height)
-   Put this AFTER the generic landscape block so it overrides it.
    ========================= */
 @media (orientation:landscape) and (max-height: 430px){
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: 0px;     /* positive = lower */
-
-    --bar-min: 32px;
-    --bar-pad-top: 0px;
-    --bar-pad-bottom: 2px;
+    --avatar-y: 0px;
   }
 
   .utd-bar{
-    box-sizing: border-box;
     display:flex; align-items:center; justify-content:space-between;
-    padding: var(--bar-pad-top) 8px var(--bar-pad-bottom) 8px; /* T R B L */
-    min-height: var(--bar-min);
-    line-height: 1;
-    margin: 0 -10px 0 -10px;
+    padding: 0 6px;
+    margin: -10px -10px 0 -10px;
     border-bottom: 2px solid rgb(143,143,143);
+    line-height: 1;
+    min-height: 0;
   }
 
+  .utd-bar > *{ margin:0; }
   .utd-title{
     display:block;
     max-width: 65%;
@@ -499,6 +513,7 @@
     margin:0;
     text-wrap: balance;
   }
+
   .utd-title .title-br{ display:inline; }
 
   .utd-unlock{
@@ -506,45 +521,10 @@
     padding: 0 12px; white-space: nowrap;
     font-size: 9.5px; word-spacing: -1px;
   }
-}
 
-
-/* =========================
-   SMALL PHONE • PORTRAIT (≤480px)
-   Put this AFTER the generic portrait block so it overrides it.
-   ========================= */
-@media (max-width:480px) and (orientation:portrait){
-  :root{
-    --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;
-    --avatar-y: -45px;   /* negative = higher, positive = lower */
-
-    --bar-min: 30px;
-    --bar-pad-top: 0px;
-    --bar-pad-bottom: 0;
-  }
-
-  .utd-bar{
-    box-sizing: border-box;
-    display:flex; align-items:center; justify-content:space-between;
-    padding: var(--bar-pad-top) 8px var(--bar-pad-bottom) 8px; /* T R B L */
-    min-height: var(--bar-min);
-    line-height: 1;
-    margin: 0 -10px 0 -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-  }
-
-  .utd-title{
-    font-size:10px;
-    line-height:1.12;
-    margin:0;
-    white-space: normal;
-  }
-  .utd-title .title-br{ display:inline; }
-
-  .utd-unlock{
-    height: 18px; line-height: 18px;
-    padding: 0 10px; white-space: nowrap;
-    font-size: 9.5px; word-spacing: -1px;
+  .avatar-overlay{
+    width: var(--avatar-size);
+    right: var(--avatar-x);
+    top: var(--avatar-y);
   }
 }
