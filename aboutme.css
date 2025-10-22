@@ -339,7 +339,7 @@
   max-width: clamp(180px, 55vw, 260px);  
 
   /* ↓ adds more space underneath */
-  margin: 6px auto 32px; /* top | left/right | bottom */
+  margin: 6px auto calc(4 * var(--row)); /* was 3 * var(--row) */
 
   width: 100%;
 }
