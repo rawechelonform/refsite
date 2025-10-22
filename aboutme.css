@@ -313,7 +313,7 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 3px 8px;
+    padding: 6px 8px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 2;
@@ -359,7 +359,7 @@
     grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 12px; padding-right: 8px; min-width: 0;
   }
   .utd{ position: relative; padding-top: 0; }
-  .utd-bar{ padding: 3px 8px; margin: -10px -10px 4px -10px; line-height: 2; }
+  .utd-bar{ padding: 6px 8px; margin: -10px -10px 4px -10px; line-height: 2; }
   .utd-title{ font-size: 10px; letter-spacing: .02em; }
   .utd-unlock{ padding: 0 6px; height: 16px; line-height: 14px; font-size: 9.5px; }
   .avatar-overlay{
