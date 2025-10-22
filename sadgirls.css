@@ -295,11 +295,16 @@ body {
 
 
 
-
-/* — Ensure the menubar reserves the same space as other pages (mobile portrait) — */
+/* Sad Girls only: make the menubar fixed on mobile portrait */
 @media (max-width: 480px) and (orientation: portrait) {
+  .top-margin {
+    position: fixed !important;
+    top: env(safe-area-inset-top, 0) !important;
+    left: 0; right: 0;
+  }
+  /* Reserve space so content doesn't jump under it */
   .menubar-slot {
-    display: block;
+    display: block !important;
     height: calc(var(--barh) + env(safe-area-inset-top, 0)) !important;
   }
 }
