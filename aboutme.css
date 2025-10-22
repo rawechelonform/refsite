@@ -299,7 +299,7 @@
 
   :root{
     --row: 14px;
-    --gutter: 50px;
+    --gutter: 40px;
 
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
@@ -336,7 +336,7 @@
 .about-photo{
   display: block;
   /* ↓ makes the photo smaller */
-  max-width: clamp(180px, 55vw, 260px);  
+  max-width: clamp(180px, 62vw, 260px);  
 
   /* ↓ adds more space underneath */
   margin: 6px auto calc(4 * var(--row)); /* was 3 * var(--row) */
@@ -417,7 +417,7 @@
   }
  .about-photo{
   display: block;
-  max-width: clamp(220px, 28vw, 320px); /* smaller than 300/34vw/470 */
+  max-width: clamp(220px, 35vw, 320px); /* smaller than 300/34vw/470 */
   margin: 0 auto 16px;                  /* a bit more breathing room below */
   width: 100%;
 }
@@ -554,7 +554,7 @@
 /* Small phone — landscape (short height) */
 .about-photo{
   margin: 0 0 8px 0;
-  max-width: clamp(160px, 45vw, 240px); /* smaller than 360px/34vw/470px */
+  max-width: clamp(160px, 55vw, 240px); /* smaller than 360px/34vw/470px */
   width: 100%;
 }
 
