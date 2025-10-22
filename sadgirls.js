@@ -267,6 +267,19 @@
 })();
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+// === Vertical shooting stars (random x, random timing) ===
 (() => {
   const overlay = document.getElementById('sky-overlay');
   if (!overlay) return;
@@ -274,13 +287,17 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let paused = document.hidden;
 
-  // Tweakables
-  const MIN_INTERVAL_MS = 3000;   // min gap between stars
-  const MAX_INTERVAL_MS = 12000;  // max gap between stars
-  const MIN_DURATION_MS = 900;    // shortest streak
-  const MAX_DURATION_MS = 1800;   // longest streak
-  const ANGLE_DEG_MIN = 24;       // shallow diagonal
-  const ANGLE_DEG_MAX = 36;
+  // Frequency window (randomized each time)
+  const MIN_INTERVAL_MS = 2500;
+  const MAX_INTERVAL_MS = 11000;
+
+  // Fall speed window
+  const MIN_DURATION_MS = 900;
+  const MAX_DURATION_MS = 2200;
+
+  // Tail length window
+  const MIN_TAIL = 120;
+  const MAX_TAIL = 210;
 
   function scheduleNext() {
     const wait = rand(MIN_INTERVAL_MS, MAX_INTERVAL_MS);
@@ -294,30 +311,33 @@
     const star = document.createElement('div');
     star.className = 'shooting-star';
 
-    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
     const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-    const startX = rand(-0.15 * vw, 0.35 * vw);
-    const startY = rand(-0.10 * vh, 0.35 * vh);
+    // Random x across the viewport with a tiny margin
+    const startX = rand(0.02 * vw, 0.98 * vw);
 
-    const path = rand(1.1, 1.5) * Math.hypot(vw, vh);
+    // Random tail
+    const tail = rand(MIN_TAIL, MAX_TAIL);
+    star.style.setProperty('--tail', `${tail}px`);
 
-    const angleDeg = rand(ANGLE_DEG_MIN, ANGLE_DEG_MAX);
-    const angleRad = angleDeg * Math.PI / 180;
+    // Start just above the screen so the tail is fully offscreen at spawn
+    const startTop = -tail - 20;
 
-    const dx = Math.cos(angleRad) * path;
-    const dy = Math.sin(angleRad) * path;
+    // Distance to travel: full viewport height + tail + a little extra
+    const distance = vh + tail + 60;
+    star.style.setProperty('--sg-distance', `${distance}px`);
 
+    // Place it
     star.style.left = `${startX}px`;
-    star.style.top  = `${startY}px`;
-    star.style.setProperty('--sg-angle', `${angleDeg}deg`);
-    star.style.setProperty('--sg-dx', `${dx}px`);
-    star.style.setProperty('--sg-dy', `${dy}px`);
+    star.style.top  = `${startTop}px`;
 
+    // Random fall duration and a tiny per-star delay
     const duration = rand(MIN_DURATION_MS, MAX_DURATION_MS);
-    const delay = rand(0, 250);
-    star.style.animation = `sg_streak ${duration}ms ease-out ${delay}ms forwards`;
+    const delay = rand(0, 180);
+    star.style.animation = `sg_fall ${duration}ms linear ${delay}ms forwards`;
 
+    // Clean up after it exits
     star.addEventListener('animationend', () => star.remove());
     overlay.appendChild(star);
   }
@@ -332,7 +352,7 @@
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
   if (!reduceMotion.matches) {
-    setTimeout(() => spawnStar(), rand(800, 2500));
+    setTimeout(() => spawnStar(), rand(400, 1800)); // first one at a random moment
     scheduleNext();
   }
 })();

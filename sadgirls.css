@@ -233,72 +233,66 @@ body {
 
 
 
-(() => {
-  const overlay = document.getElementById('sky-overlay');
-  if (!overlay) return;
 
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let paused = document.hidden;
 
-  // Tweakables
-  const MIN_INTERVAL_MS = 3000;   // min gap between stars
-  const MAX_INTERVAL_MS = 12000;  // max gap between stars
-  const MIN_DURATION_MS = 900;    // shortest streak
-  const MAX_DURATION_MS = 1800;   // longest streak
-  const ANGLE_DEG_MIN = 24;       // shallow diagonal
-  const ANGLE_DEG_MAX = 36;
 
-  function scheduleNext() {
-    const wait = rand(MIN_INTERVAL_MS, MAX_INTERVAL_MS);
-    setTimeout(() => {
-      if (!paused && !reduceMotion.matches) spawnStar();
-      scheduleNext();
-    }, wait);
-  }
 
-  function spawnStar() {
-    const star = document.createElement('div');
-    star.className = 'shooting-star';
 
-    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-    const startX = rand(-0.15 * vw, 0.35 * vw);
-    const startY = rand(-0.10 * vh, 0.35 * vh);
 
-    const path = rand(1.1, 1.5) * Math.hypot(vw, vh);
 
-    const angleDeg = rand(ANGLE_DEG_MIN, ANGLE_DEG_MAX);
-    const angleRad = angleDeg * Math.PI / 180;
 
-    const dx = Math.cos(angleRad) * path;
-    const dy = Math.sin(angleRad) * path;
 
-    star.style.left = `${startX}px`;
-    star.style.top  = `${startY}px`;
-    star.style.setProperty('--sg-angle', `${angleDeg}deg`);
-    star.style.setProperty('--sg-dx', `${dx}px`);
-    star.style.setProperty('--sg-dy', `${dy}px`);
 
-    const duration = rand(MIN_DURATION_MS, MAX_DURATION_MS);
-    const delay = rand(0, 250);
-    star.style.animation = `sg_streak ${duration}ms ease-out ${delay}ms forwards`;
 
-    star.addEventListener('animationend', () => star.remove());
-    overlay.appendChild(star);
-  }
 
-  function rand(min, max) {
-    if (Number.isInteger(min) && Number.isInteger(max)) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-    return Math.random() * (max - min) + min;
-  }
 
-  document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
-  if (!reduceMotion.matches) {
-    setTimeout(() => spawnStar(), rand(800, 2500));
-    scheduleNext();
-  }
-})();
+
+
+
+
+
+
+/* === Vertical falling star overlay === */
+.sky-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.shooting-star {
+  position: absolute;
+  width: 2px;                 /* streak thickness */
+  height: 2px;                /* tiny head */
+  background: #fff;           /* white head */
+  border-radius: 50%;
+  filter: drop-shadow(0 0 6px #fff);
+  will-change: transform, opacity;
+}
+
+/* Tail sits *above* the head (since it’s falling down) */
+.shooting-star::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: var(--tail, 160px); /* tail length */
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 85%, #fff 100%);
+  opacity: 0.95;
+  filter: blur(0.2px);
+}
+
+@keyframes sg_fall {
+  0%   { transform: translateY(0); opacity: 0; }
+  5%   { opacity: 1; }
+  100% { transform: translateY(var(--sg-distance)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shooting-star { animation: none !important; }
+}
