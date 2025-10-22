@@ -272,11 +272,8 @@
 
 
 
-
-
-
-// === Vertical shooting stars: random x, distance>=4/5 page (some beyond),
-// old-speed style duration, random thickness, random timing, up to 3 concurrent ===
+// === Vertical shooting stars: cross entire page (always), random x,
+// old-speed duration, random thickness, random timing, up to 3 concurrent ===
 (() => {
   const overlay = document.getElementById('sky-overlay');
   if (!overlay) return;
@@ -289,8 +286,8 @@
   const MAX_INTERVAL_MS = 12000;
 
   // duration window ("old speed", ms)
-  const MIN_DURATION_MS = 900;
-  const MAX_DURATION_MS = 2200;
+  const MIN_DURATION_MS = 1100; //increase for slower
+  const MAX_DURATION_MS = 2500;
 
   // tail & thickness (px)
   const MIN_TAIL = 120;
@@ -298,10 +295,9 @@
   const MIN_THICK = 2;
   const MAX_THICK = 4;
 
-  // distance as a fraction of viewport height
-  // min 4/5 page, some go beyond the bottom (>1)
-  const MIN_DIST_FRAC = 0.80;
-  const MAX_DIST_FRAC = 1.12;
+  // how far the head goes past the bottom after crossing (px)
+  const MIN_EXTRA_BEYOND = 60;
+  const MAX_EXTRA_BEYOND = 140;
 
   // cap concurrent stars
   const MAX_CONCURRENT = 3;
@@ -355,12 +351,10 @@
     const startTop = -tail - 20;
     star.style.top = `${startTop}px`;
 
-    // random travel distance so the HEAD reaches >= 4/5 of viewport
-    // include the starting offset (tail+20); add a small extra when crossing bottom
-    const distFrac = rand(MIN_DIST_FRAC, MAX_DIST_FRAC);
-    const baseDistance = distFrac * vh + tail + 20;
-    const extra = distFrac > 1 ? 60 : 0;
-    const distance = baseDistance + extra;
+    // ALWAYS cross entire page:
+    // distance = full viewport height + starting offset (tail+20) + a bit beyond
+    const extraBeyond = randInt(MIN_EXTRA_BEYOND, MAX_EXTRA_BEYOND);
+    const distance = vh + tail + 20 + extraBeyond;
     star.style.setProperty('--sg-distance', `${distance}px`);
 
     // old-speed style duration with tiny jitter

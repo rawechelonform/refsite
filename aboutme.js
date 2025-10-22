@@ -254,3 +254,44 @@
   if ($title) $title.textContent = loadTitle();
   render();
 })();
+
+
+// --- Small-phone title formatting: "USELESS THOUGHT" / "OF THE DAY" on 2 lines ---
+function applySmallTitleBreak(){
+  if (!$title) return;
+
+  // the *saved* title string
+  const raw = (localStorage.getItem('utd_title_v2') || 'USELESS THOUGHT OF THE DAY').trim();
+
+  // small-phone media queries (match either: ≤400px portrait OR ≤600px landscape)
+  const isSmall = window.matchMedia('(max-width: 400px) and (orientation: portrait), (max-width: 600px) and (orientation: landscape)').matches;
+
+  // only enforce the split when the title is the standard phrase
+  const desired = /^USELESS\s+THOUGHT\s+OF\s+THE\s+DAY$/i;
+
+  if (isSmall && desired.test(raw)){
+    // inject a controlled break element we can toggle via CSS
+    $title.innerHTML = 'USELESS THOUGHT<br class="title-br">OF THE DAY';
+  } else {
+    // show the raw title (single line or natural wrapping)
+    $title.textContent = raw;
+  }
+}
+
+// call once on load and again on resize
+applySmallTitleBreak();
+window.addEventListener('resize', applySmallTitleBreak);
+
+// when owner edits title, re-apply the rule after saving
+const _origOnTitleInput = typeof onTitleInput === 'function' ? onTitleInput : null;
+function onTitleInput(){
+  const v = $title.textContent.trim();
+  localStorage.setItem('utd_title_v2', v);
+  applySmallTitleBreak();
+}
+// make sure our input handler is attached (in case we override earlier)
+if ($title){
+  $title.removeEventListener('input', onTitleInput);
+  $title.addEventListener('input', onTitleInput);
+}
+
