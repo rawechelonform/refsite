@@ -104,14 +104,20 @@
 .utd-title{ font-size:11px; letter-spacing:.02em; text-transform:none; }
 .utd-title[contenteditable="true"]{ outline:2px dashed rgb(var(--utd-gray)); outline-offset:2px; cursor:text; }
 
-/* Creator unlock button */
-.utd-unlock{
-  background:#000; color:rgb(var(--utd-gray));
-  border:2px solid rgb(var(--utd-gray));
-  padding:1px 8px; font-size:10px; text-transform:uppercase; cursor:pointer;
-  -webkit-appearance:none; appearance:none;
-  position:relative; z-index:4;
-}
+/* Creator unlock button (desktop/base look) */
+@media (min-width: 901px){
+  .utd-unlock{
+    background:#000;
+    color: rgb(90,90,90);              /* dark grey text */
+    border: 1px solid rgb(90,90,90);   /* thin dark grey border */
+    padding: 0 6px;                   /* match mobile side padding */
+    height: 18px;
+    line-height: 18px;
+    font-size: 10px;
+    text-transform: uppercase;
+    -webkit-appearance:none; appearance:none;
+  }
+  
 .utd-unlock:hover{ background:rgb(90,90,90); color:#000; }
 
 /* Owner icons (pencil/trash) */
@@ -149,7 +155,7 @@
   margin-top:6px;
   display:flex;
   gap:6px;
-  justify-content:flex-end;        /* << right align */
+  justify-content:flex-end;        /* right align */
 }
 .utd-actions button{
   background:#000; color:rgb(var(--utd-gray)); border:2px solid rgb(var(--utd-gray));
@@ -190,7 +196,7 @@
   margin-top:6px;
   display:flex;
   gap:6px;
-  justify-content:flex-end;        /* << right align */
+  justify-content:flex-end;
 }
 
 /* Save/Cancel in edit row */
@@ -229,58 +235,51 @@
   color:#000;
 }
 
-/* Optional: hide the whole icons cluster while editing */
+/* Hide icons while editing */
 .utd-line.is-editing .utd-icons{ display:none !important; }
 
-/* ===== Avatar ===== */
-/* ↓↓↓ ONLY CHANGE HERE for desktop avatar size ↓↓↓ */
+/* ===== Avatar (DESKTOP) =====
+   Fixed size so it never gets huge on big screens */
+/* ==== Desktop avatar placement (>= 901px) ==== */
 @media (min-width: 901px){
   .avatar-overlay{
-    position:absolute;
-    top:-64px;
-    right:-8px;
-    width: 90px;            /* desktop fixed width */
-    height:auto;
-    z-index:3;
-    pointer-events:none;
-    image-rendering:pixelated;
-    opacity:.95;
+    position: absolute;            /* keep it anchored to the UTD box */
+    top: -56px !important;         /* less negative = lower; make positive to drop below */
+    right: -8px;                   /* tweak left/right if needed */
+    width: 90px;                   /* desktop size; adjust to taste */
+    height: auto;
   }
 }
-@media (max-width:900px){
-  .avatar-overlay{ top:-18px; right:-6px; width: clamp(60px, 18vw, 92px); }
-}
 
-/* Photo sizing */
-.about-photo{
-  margin: 0 0 8px 0;
-  max-width: clamp(360px, 34vw, 470px);
-}
-.about-photo img{
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 2px solid #000;
-  box-sizing: border-box;
-  opacity: 1 !important;
-  visibility: visible !important;
-  position: relative;
-  z-index: 2 !important;
-}
-.corner-img{ display: none; }
 
-/* ========= Mobile common tweaks (safe globally) ========= */
-/* Feed padding matches your 6px title feel */
+/* ======= MOBILE COMMON (safe globally) ======= */
+/* Feed padding matches title bar’s 6px L/R padding */
 .utd-feed{
-  /* cancel the .utd { padding:10px } on the sides */
-  margin: 0 -10px 6px -10px;   /* top | right | bottom | left */
-  /* same inner L/R padding as .utd-bar */
+  margin: 0 -10px 6px -10px;   /* cancel .utd side padding */
   padding: 0 6px 6px 6px;      /* top | right | bottom | left */
 }
 .utd-line{ padding: 0; }
 
-/* Hide forced line-break by default; we turn it on only for small breakpoints */
+/* Don’t show forced title break unless small */
 .utd-title .title-br{ display:none; }
+
+/* Muted Creator Unlock everywhere on mobile */
+@media (max-width:900px){
+  .utd-unlock{
+    background:#000;
+    color: rgb(90,90,90);
+    border: 1px solid rgb(90,90,90);   /* thinner */
+    padding: 0 6px;                    /* narrower */
+    height: 18px;
+    line-height: 18px;
+    font-size: 10px;
+    text-transform: uppercase;
+    -webkit-appearance:none; appearance:none;
+  }
+  /* avoid “stuck hover” after tapping lock */
+  .utd-unlock:active,
+  .utd-unlock:focus{ background:#000 !important; color: rgb(90,90,90) !important; }
+}
 
 /* =========================
    MOBILE • PORTRAIT (≤900px)
@@ -330,7 +329,7 @@
   }
   .about-photo img{ margin: 0; }
 
-  /* ===== UTD box ===== */
+  /* UTD box */
   .utd{
     order: 3;
     position: relative;
@@ -344,43 +343,19 @@
   /* Header */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;                     /* fixed (no vertical padding) */
-    margin: -10px -10px 4px -10px;      /* keep your original bottom gap */
+    padding: 0 7px;                     /* no vertical padding */
+    margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
     min-height: 25px;
   }
   .utd-title{
-    font-size:10px;
-    line-height:1;
-    margin:0;
-    padding:6px 0;
-
-    /* single line + safe overflow handling */
-    white-space: nowrap;
-    text-wrap: nowrap;       /* modern alias */
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size:10px; line-height:1; margin:0; padding:6px 0;
+    white-space: nowrap; text-wrap: nowrap; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis;   /* keep on one line */
   }
 
-  /* keep any forced <br> hidden at this size */
-  .utd-title .title-br{ display:none; }
-}
-
-  /* Muted Creator Unlock (mobile only) */
-  .utd-unlock{
-    background:#000;
-    color: rgb(90,90,90);
-    border: 1px solid rgb(90,90,90);  /* thinner border */
-    padding: 0 6px;                   /* smaller L/R padding */
-    height: 18px;
-    line-height: 18px;
-    font-size: 10px;
-    text-transform: uppercase;
-    -webkit-appearance:none; appearance:none;
-  }
-
+  /* Avatar for this range */
   .avatar-overlay{
     position: absolute;
     width: var(--avatar-size);
@@ -389,9 +364,10 @@
     top: var(--avatar-y);
     z-index: 6;
     pointer-events: none;
+    image-rendering: pixelated;
+    opacity:.95;
   }
 }
-
 
 /* =========================
    MOBILE • LANDSCAPE (≤900px)
@@ -401,7 +377,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -156px;     /* vertical offset */
+    --avatar-y: -156px;    /* vertical offset */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -443,41 +419,16 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;                     /* fixed (no vertical padding) */
+    padding: 0 7px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
     min-height: 25px;
   }
   .utd-title{
-    font-size:10px;
-    line-height:1;
-    margin:0;
-    padding:6px 0;
-
-    /* single line + safe overflow handling */
-    white-space: nowrap;
-    text-wrap: nowrap;       /* modern alias */
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* keep any forced <br> hidden at this size */
-  .utd-title .title-br{ display:none; }
-}
-
-  /* Muted Creator Unlock (mobile only) */
-  .utd-unlock{
-    background:#000;
-    color: rgb(90,90,90);
-    border: 1px solid rgb(90,90,90);
-    padding: 0 6px;
-    height: 18px;
-    line-height: 18px;
-    font-size: 10px;
-    text-transform: uppercase;
-    -webkit-appearance:none; appearance:none;
+    font-size:10px; line-height:1; margin:0; padding:6px 0;
+    white-space: nowrap; text-wrap: nowrap; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis;
   }
 
   .avatar-overlay{
@@ -488,9 +439,10 @@
     top: var(--avatar-y);
     z-index: 6;
     pointer-events: none;
+    image-rendering: pixelated;
+    opacity:.95;
   }
 }
-
 
 /* =========================
    SMALL PHONE • PORTRAIT (≤480px)
@@ -505,17 +457,16 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;                     /* keep your compact header */
+    padding: 0 7px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
     min-height: 25px;
   }
 
-  /* Encourage 2-line wrap; mirrors your small-landscape behavior */
   .utd-title{
     display:block;
-    max-width: 65%;              /* tweak 60–70% to hit the break after THOUGHT */
+    max-width: 65%;                   /* encourage wrap after “THOUGHT” */
     white-space: normal;
     word-break: keep-all;
     line-height: 1.12;
@@ -527,21 +478,12 @@
   }
   .utd-title .title-br{ display:inline; }
 
-  .utd-unlock{
-    background:#000;
-    color: rgb(90,90,90);
-    border: 1px solid rgb(90,90,90);
-    padding: 0 6px;   /* tighter sides on small phones too */
-    height: 18px; line-height: 18px; font-size: 9.5px;
-  }
-
   .avatar-overlay{
     width: var(--avatar-size);
     right: var(--avatar-x);
     top: var(--avatar-y);
   }
 }
-
 
 /* =========================
    SMALL PHONE • LANDSCAPE (short height)
@@ -577,17 +519,27 @@
   }
   .utd-title .title-br{ display:inline; }
 
-  .utd-unlock{
-    background:#000;
-    color: rgb(90,90,90);
-    border: 1px solid rgb(90,90,90);
-    padding: 0 6px;
-    height: 18px; line-height: 18px; font-size: 9.5px; word-spacing: -1px;
-  }
-
   .avatar-overlay{
     width: var(--avatar-size);
     right: var(--avatar-x);
     top: var(--avatar-y);
   }
 }
+
+/* ===== Photo sizing ===== */
+.about-photo{
+  margin: 0 0 8px 0;
+  max-width: clamp(360px, 34vw, 470px);
+}
+.about-photo img{
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #000;
+  box-sizing: border-box;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative;
+  z-index: 2 !important;
+}
+.corner-img{ display: none; }
