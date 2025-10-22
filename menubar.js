@@ -1,10 +1,10 @@
-// /menubar.js (v=mb15)
+
 // Usage on every page:
-//   <link rel="stylesheet" href="/menubar.css?v=mb15">
-//   <script src="/menubar.js?v=mb16" defer></script>
+//   <link rel="stylesheet" href="/menubar.css?v=mb18">
+//   <script src="/menubar.js?v=mb18" defer></script>
 
 (function () {
-  const VER = 'mb16';
+  const VER = 'mb18';
 
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
@@ -28,27 +28,25 @@
   }
 
   // Ensure internal hrefs are root-absolute and clean (no queries, no trailing dots)
-  function normalizeMenuHrefsRootAbsolute() {
-    document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      const raw = (a.getAttribute('href') || '').trim();
-      if (!raw) return;
+  function normalizeMenuHrefs() {
+  document.querySelectorAll('.menu a.menu-link').forEach(a => {
+    const raw = (a.getAttribute('href') || '').trim();
+    if (!raw) return;
 
-      // External links untouched
-      if (/^https?:\/\//i.test(raw)) return;
+    if (/^https?:\/\//i.test(raw)) {
+      a.dataset.abs = raw; // external as-is
+    } else {
+      // strip leading slashes to keep navigation project-relative
+      const rel = raw.replace(/^\/+/, '');
+      a.dataset.abs = new URL(rel, document.baseURI).href;
+      a.setAttribute('href', rel); // optional: rewrite so markup shows the safe value
+    }
 
-      const clean = raw
-        .replace(/\?.*$/, '')   // remove query params
-        .replace(/#.*$/, '')    // remove hash
-        .replace(/\.+$/, '');   // remove trailing dots like "aboutme.."
+    a.setAttribute('target', '_self');
+    a.setAttribute('rel', 'noopener');
+  });
+}
 
-      const rootAbs = clean.startsWith('/') ? clean : `/${clean}`;
-      a.setAttribute('href', rootAbs);
-
-      // Keep anchors plain; no dataset.abs, no forced navigation
-      a.removeAttribute('target');
-      a.removeAttribute('rel');
-    });
-  }
 
   // Mark the current page in the menu (treat / or /index.html as /main.html)
   function highlightCurrentNav() {
