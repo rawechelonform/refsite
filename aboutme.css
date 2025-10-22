@@ -417,7 +417,7 @@
   /* knobs */
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-drop: 5px;         /* increase to move avatar LOWER */
+    --avatar-drop: 0px;         /* increase to move avatar LOWER */
   }
 
   /* Header: centered vertically, compact height, more top padding than bottom */
@@ -464,12 +464,13 @@
    ========================= */
 @media (max-width:600px) and (orientation:landscape){
   /* knob for horizontal nudge (negative = further right, positive = left) */
-  :root{ --avatar-x: -8px; }
+  :root{ --avatar-x: -4px; 
+      --avatar-y: 8px;    /* + = down, - = up */}
 
   /* Header: centered vertically, a bit taller so it’s not cramped */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 10px 10px 6px 10px;
+    padding: 10px 10px 3px 10px;
     min-height: 40px;
     line-height: 1;
   }
@@ -500,7 +501,9 @@
 
   /* Avatar: keep your vertical placement; allow easy horizontal nudge */
   .avatar-overlay{
+    top: calc(-55px + var(--avatar-y));  /* start from your current -55px */
     right: var(--avatar-x);
+    
     /* keep your existing top/size from the main landscape rules, e.g.: */
     /* top: -55px; width: clamp(68px, 10vw, 100px); */
   }
