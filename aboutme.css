@@ -266,9 +266,23 @@
 
 
 
+
+
+
+
+
+
+
+
 /* ========= Mobile common tweaks (safe globally) ========= */
 /* Feed padding matches your 6px title feel */
-.utd-feed{ padding: 0 6px 6px; }
+.utd-feed{
+  /* cancel the .utd { padding:10px } on the sides */
+  margin: 0 -10px 6px -10px;   /* top | right | bottom | left */
+
+  /* same inner L/R padding as .utd-bar */
+  padding: 0 6px 6px 6px;      /* top | right | bottom | left */
+}
 .utd-line{ padding: 0; }
 
 /* Hide forced line-break by default; we turn it on only for small breakpoints */
@@ -286,7 +300,7 @@
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;      /* negative = nudge right, positive = left */
-    --avatar-y: -55px;     /* more negative = higher, positive = lower */
+    --avatar-y: -65px;     /* more negative = higher, positive = lower */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -336,13 +350,27 @@
   /* Header */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;                     /* fixed (no vertical padding) */
+    padding: 0 7px;                     /* fixed (no vertical padding) */
     margin: -10px -10px 4px -10px;      /* keep your original bottom gap */
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
     min-height: 25px;
   }
-  .utd-title{ font-size:10px; letter-spacing:.02em; line-height:1; margin:0; padding:6px 0; }
+ .utd-title{
+    font-size:10px;
+    line-height:1;
+    margin:0;
+    padding:6px 0;
+
+    /* force single line */
+    white-space: nowrap;
+    max-width: 100%;
+    text-wrap: nowrap;            /* modern alias */
+    overflow: hidden;             /* prevent overlap if space is tight */
+    text-overflow: ellipsis;      /* … if it truly can’t fit */
+  }
+
+    .utd-title .title-br{ display:none; }
 
   /* Muted Creator Unlock (mobile only) */
   .utd-unlock{
@@ -377,7 +405,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -70px;     /* vertical offset */
+    --avatar-y: -150px;     /* vertical offset */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -419,7 +447,7 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;                     /* fixed (no vertical padding) */
+    padding: 0 7px;                     /* fixed (no vertical padding) */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
@@ -460,12 +488,12 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -45px;
+    --avatar-y: -43px;
   }
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;                     /* keep your compact header */
+    padding: 0 7px;                     /* keep your compact header */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
@@ -511,12 +539,12 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: 0px;
+    --avatar-y: -50px;
   }
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 6px;
+    padding: 0 7px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
