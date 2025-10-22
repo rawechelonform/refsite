@@ -470,7 +470,7 @@
   }
 
   .utd-bar{
-    padding: 8px 10px 2px 10px;
+    padding: 2px 10px 0px 10px; /* top | right | bottom | left */
     min-height: 34px;
   }
 
@@ -490,11 +490,11 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -48px;  /* vertical offset: increase (less negative) to move DOWN */
+    --avatar-y: -35px;  /* vertical offset: increase (less negative) to move DOWN */
   }
 
   .utd-bar{
-    padding: 6px 10px 2px 10px;
+    padding: 2px 10px 1px 10px; /* top | right | bottom | left */
     min-height: 34px;
   }
 
