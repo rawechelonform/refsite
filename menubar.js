@@ -1,6 +1,6 @@
-// menubar.js
+// menubar.js  (use on every page as: <script src="menubar.js?v=mb23" defer></script>)
 (function () {
-  const VER = 'mb22';
+  const VER = 'mb23';
 
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
@@ -15,27 +15,38 @@
       const menuRoot = tmp.querySelector('.top-margin') || tmp.firstElementChild;
       if (menuRoot) slot.replaceWith(menuRoot);
 
-      normalizeMenuHrefsStrict();
+      enforceKnownHrefs();       // <— hard fix: guarantee correct targets
       highlightCurrentNav();
       twoLinePrincipalOnPhones();
     } catch (_) {}
   }
 
-  // Make every href a clean, project-relative file path (e.g. "sadgirls.html")
-  function normalizeMenuHrefsStrict() {
-    const baseDir = location.pathname.replace(/[^/]*$/, ''); // current dir with trailing slash
-    document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      let raw = (a.getAttribute('href') || '').trim();
-      if (!raw) return;
-      if (/^https?:\/\//i.test(raw)) return; // external
+  // Map link text -> file. This wins even if the fragment was stale/wrong.
+  function enforceKnownHrefs() {
+    const map = new Map([
+      ['REF',                   'main.html'],
+      ['SAD GIRLS',             'sadgirls.html'],
+      ['MACHINES',              'machines.html'],
+      ["PRINCIPAL’S OFFICE",    'aboutme.html'],
+      ['CAFETERIA',             'shop.html'],
+    ]);
 
-      const file = raw.replace(/^\/+/, '').split('/').pop();
-      const safeFile = /\.[a-z0-9]+$/i.test(file) ? file : `${file}.html`;
-      a.setAttribute('href', safeFile);
-      a.dataset.abs = new URL(safeFile, `${location.origin}${baseDir}`).href;
+    document.querySelectorAll('.menu a.menu-link').forEach(a => {
+      const label = (a.textContent || '').trim().toUpperCase();
+      // normalize curly apostrophe vs straight
+      const key = label.replace(/PRINCIPAL[’']/,'PRINCIPAL’S');
+      const file = map.get(key);
+      if (file) a.setAttribute('href', file);
       a.setAttribute('target', '_self');
       a.setAttribute('rel', 'noopener');
     });
+
+    // Optional debug: show what the DOM ended up with
+    try {
+      console.log('[menubar hrefs]',
+        [...document.querySelectorAll('.menu a.menu-link')]
+          .map(a => [a.textContent.trim(), a.getAttribute('href')]));
+    } catch {}
   }
 
   function highlightCurrentNav() {
@@ -52,8 +63,8 @@
 
   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
-    const a = Array.from(document.querySelectorAll('.menu a.menu-link'))
-      .find(x => (x.getAttribute('href') || '').toLowerCase().endsWith('aboutme.html'));
+    const a = [...document.querySelectorAll('.menu a.menu-link')]
+      .find(x => ((x.getAttribute('href') || '').toLowerCase() === 'aboutme.html'));
     if (!a) return;
     const txt = (a.textContent || '').trim();
     if (!a.innerHTML.includes('<br>')) {
