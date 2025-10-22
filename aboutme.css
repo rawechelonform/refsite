@@ -300,7 +300,7 @@
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;      /* negative = nudge right, positive = left */
-    --avatar-y: -68px;     /* more negative = higher, positive = lower */
+    --avatar-y: -74px;     /* more negative = higher, positive = lower */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -407,7 +407,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -157px;     /* vertical offset */
+    --avatar-y: -156px;     /* vertical offset */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -506,7 +506,7 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: --44px;
+    --avatar-y: -44px;
   }
 
   .utd-bar{
@@ -557,7 +557,7 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -54px;
+    --avatar-y: -53px;
   }
 
   .utd-bar{
