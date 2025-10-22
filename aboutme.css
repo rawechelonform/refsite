@@ -506,7 +506,7 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -43px;
+    --avatar-y: --50px;
   }
 
   .utd-bar{
@@ -557,7 +557,7 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -50px;
+    --avatar-y: -55px;
   }
 
   .utd-bar{
