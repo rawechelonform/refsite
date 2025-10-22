@@ -319,7 +319,7 @@
   /* Header: center title + button vertically */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 8px 10px;                /* ↑ first value controls height */
+    padding: 5px 10px;                /* ↑ first value controls height */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;                   /* use flex centering, not line-height */
@@ -341,7 +341,7 @@
     width: var(--avatar-size);
     height: auto;
     right: -6px;
-    top: calc(-1 * var(--avatar-size) + var(--avatar-drop));  /* lower = larger --avatar-drop */
+    top: calc(-3 * var(--avatar-size) + var(--avatar-drop));  /* lower = larger --avatar-drop */
     z-index: 6;
     pointer-events: none;
   }
@@ -381,7 +381,7 @@
 
   /* Header: centered vertically, with a bit more height */
   .utd-bar{
-    padding: 8px 10px;               /* ↑ taller vertical padding */
+    padding: 5px 10px;               /* ↑ taller vertical padding */
     margin: -10px -10px 4px -10px;
     line-height: 1;
     display:flex; align-items:center; justify-content:space-between;
@@ -410,7 +410,7 @@
   /* SMALL PHONE VERTICAL */
 
 @media (max-width:400px) and (orientation:portrait){
-  :root{ --avatar-drop: 32px; }       /* lower the avatar further on tiny phones */
+  :root{ --avatar-drop: 26px; }       /* lower the avatar further on tiny phones */
   .utd-bar{ min-height: 40px; padding: 10px 10px; }
 }
 
@@ -420,7 +420,7 @@
 @media (max-width:600px) and (orientation:landscape){
   /* header height + centering */
   .utd-bar{
-    padding: 10px 10px;         /* a bit taller to avoid feeling cramped */
+    padding: 7px 10px;         /* a bit taller to avoid feeling cramped */
     min-height: 40px;
     display:flex; align-items:center; justify-content:space-between;
     line-height: 1;
