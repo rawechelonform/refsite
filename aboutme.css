@@ -249,7 +249,29 @@
 /* Hide icons while editing */
 .utd-line.is-editing .utd-icons{ display:none !important; }
 
-/* ======= MOBILE COMMON (safe globally) ======= */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ========= Mobile common tweaks (safe globally) ========= */
 /* Feed padding matches title bar’s 6px L/R padding */
 .utd-feed{
   margin: 0 -10px 6px -10px;   /* cancel .utd side padding */
@@ -522,21 +544,3 @@
     top: var(--avatar-y);
   }
 }
-
-/* ===== Photo sizing ===== */
-.about-photo{
-  margin: 0 0 8px 0;
-  max-width: clamp(360px, 34vw, 470px);
-}
-.about-photo img{
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 2px solid #000;
-  box-sizing: border-box;
-  opacity: 1 !important;
-  visibility: visible !important;
-  position: relative;
-  z-index: 2 !important;
-}
-.corner-img{ display: none; }
