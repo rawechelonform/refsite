@@ -1,4 +1,4 @@
-// aboutme.js (v6) — local-only UTD with unlock/lock toggle + edit/delete + title edit
+// aboutme.js (v10) — UTD with inline edit, right-aligned actions, no glow/rounded
 (() => {
   const KEY        = 'utd_entries_v7';
   const TITLE_KEY  = 'utd_title_v2';
@@ -38,16 +38,17 @@
   function render(){
     const items = load();
     $feed.innerHTML = '';
-    items.forEach(({id, t, ts, edited}) => {
+    items.forEach(({id, t, ts}) => {
       const line = document.createElement('div');
       line.className = 'utd-line';
+      line.dataset.id = id;
 
-      const tsEl = document.createElement('span'); tsEl.className = 'ts'; tsEl.textContent = ts;
+      const tsEl  = document.createElement('span'); tsEl.className = 'ts';  tsEl.textContent = ts;
       const sepEl = document.createElement('span'); sepEl.className = 'sep'; sepEl.textContent = '|';
 
       const msgEl = document.createElement('span'); msgEl.className = 'msg';
       const oneLine = String(t || '').replace(/\s*\n\s*/g, ' ').trim();
-      msgEl.textContent = `${oneLine}${edited ? ' (edited)' : ''}`;
+      msgEl.textContent = oneLine;
 
       line.appendChild(tsEl); line.appendChild(sepEl); line.appendChild(msgEl);
 
@@ -67,6 +68,7 @@
     $utd.classList.toggle('is-owner', ownerMode);
 
     if (ownerMode){
+      // wire up edit/delete
       $feed.querySelectorAll('.utd-icon').forEach(btn => {
         btn.addEventListener('click', () => {
           const id  = btn.dataset.id;
@@ -81,20 +83,88 @@
               save(items2); render();
             }
           } else if (act === 'edit'){
-            const current = items2[idx].t;
-            const next = prompt('Edit entry:', current);
-            if (next !== null){
-              items2[idx].t = next.trim();
-              items2[idx].edited = true;
-              save(items2); render();
+            const line = btn.closest('.utd-line');
+            if (!line) return;
+            const msgSpan = line.querySelector('.msg');
+            if (!msgSpan) return;
+            if (line.querySelector('.utd-edit-wrap')) return; // already editing
+
+            line.classList.add('is-editing');
+
+            const original = items2[idx].t;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'utd-edit-wrap';
+
+            const ta = document.createElement('textarea');
+            ta.className = 'utd-edit';
+            ta.value = original;
+
+            const actions = document.createElement('div');
+            actions.className = 'utd-edit-actions';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.type = 'button';
+            saveBtn.className = 'utd-edit-save';
+            saveBtn.textContent = 'save';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'utd-edit-cancel';
+            cancelBtn.textContent = 'cancel';
+
+            // move TRASH into actions row; hide the pencil
+            const icons = line.querySelector('.utd-icons');
+            const editIcon  = icons?.querySelector('[data-act="edit"]');
+            const trashIcon = icons?.querySelector('[data-act="del"]');
+
+            if (editIcon) editIcon.style.display = 'none';
+            if (trashIcon) {
+              trashIcon.classList.add('utd-edit-del');
+              actions.appendChild(saveBtn);
+              actions.appendChild(cancelBtn);
+              actions.appendChild(trashIcon);  // order: Save, Cancel, Trash (right-aligned via CSS)
+            } else {
+              actions.appendChild(saveBtn);
+              actions.appendChild(cancelBtn);
             }
+
+            wrap.appendChild(ta);
+            wrap.appendChild(actions);
+
+            msgSpan.replaceWith(wrap);
+            ta.focus();
+            ta.selectionStart = ta.selectionEnd = ta.value.length;
+
+            function cleanup(){ line.classList.remove('is-editing'); }
+
+            function doSave(){
+              const next = (ta.value || '').trim();
+              if (next !== original){
+                items2[idx].t = next;
+                save(items2);
+              }
+              cleanup();
+              render(); // rebuild row/icons
+            }
+            function doCancel(){
+              cleanup();
+              render();
+            }
+
+            ta.addEventListener('keydown', (e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); doSave(); }
+              else if (e.key === 'Escape'){ e.preventDefault(); doCancel(); }
+            });
+            saveBtn.addEventListener('click', doSave);
+            cancelBtn.addEventListener('click', doCancel);
           }
         });
       });
     }
   }
 
-  // submit
+  // submit new entry
   if ($form) {
     $form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -120,7 +190,6 @@
   if ($unlock) {
     $unlock.addEventListener('click', () => {
       if (ownerMode) {
-        // LOCK: hide form and disable title editing
         ownerMode = false;
         $unlock.textContent = 'CREATOR UNLOCK';
         if ($form) $form.hidden = true;
@@ -129,7 +198,6 @@
         return;
       }
 
-      // UNLOCK: prompt passphrase
       const pass = prompt('Enter passphrase:');
       if (pass && pass === OWNER_PASSPHRASE) {
         ownerMode = true;

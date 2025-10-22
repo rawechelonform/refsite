@@ -4,9 +4,10 @@
 :root{
   --maxw: 1200px;
   --ui-mono: "input-mono", "Input Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --utd-gray: 143,143,143; /* R,G,B for borders & text */
 }
 
-/* Page container (centered content, normal margins) */
+/* Page container */
 .page{
   padding: 24px 0 48px;
   display: flex;
@@ -18,7 +19,7 @@
 
 /* Instagram link styling */
 .ext-link{
-  color: rgb(143,143,143);
+  color: rgb(var(--utd-gray));
   text-decoration: none;
   transition: color .15s ease-in-out;
   font-family: var(--ui-mono);
@@ -27,29 +28,29 @@
 }
 .ext-link:hover{ color: rgb(110,110,110); text-decoration: underline; }
 
-/* ===== Two-column layout (original proportions) ===== */
+/* ===== Two-column layout ===== */
 .about-grid{
   width: 100%;
   max-width: var(--maxw);
   margin: 48px auto 20px;
   display: grid;
-  grid-template-columns: 1fr 0.9fr;   /* ORIGINAL split — preserves text width */
-  column-gap: 5px;                     /* gap between photo & text (edit to taste) */
-  row-gap: 10px;                       /* vertical spacing */
+  grid-template-columns: 1fr 0.9fr;
+  column-gap: 5px;
+  row-gap: 10px;
   align-items: start;
 }
-.about-grid > * { min-width: 0; }      /* prevent weird shrinking */
+.about-grid > * { min-width: 0; }
 
-/* LEFT column — portrait (center the photo in its column) */
+/* LEFT column — portrait */
 .about-blurb{
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
-  justify-content: center;             /* center figure horizontally */
+  justify-content: center;
   overflow: visible;
 }
 
-/* RIGHT column — stack bio, IG, UTD */
+/* RIGHT column */
 .right-col{
   display: flex;
   flex-direction: column;
@@ -61,60 +62,102 @@
   font-family: var(--ui-mono);
   font-size: 14px;
   line-height: 1.6;
-  color: rgb(143,143,143);
+  color: rgb(var(--utd-gray));
   margin: 4px 0 0;
   text-align: left;
 }
 
-/* Extra space between IG paragraph and the UTD box */
 .right-col .bio + .utd{ margin-top: 10px; }
 
 /* ===== UTD box ===== */
 .utd{
   position: relative;
   background:#000;
-  color:rgb(143,143,143);
-  border:2px solid rgb(143,143,143);
+  color:rgb(var(--utd-gray));
+  border:2px solid rgb(var(--utd-gray));
   padding:10px;
   font-family:'FS TI-92 ENO C', monospace;
   font-size:12px;
   box-sizing:border-box;
+  border-radius:0 !important;            /* square box */
 }
+
+/* kill glow and rounding for all controls inside UTD */
+.utd *{
+  border-radius:0 !important;
+  box-shadow:none !important;
+}
+.utd *:focus,
+.utd *:focus-visible{
+  outline:none !important;
+  box-shadow:none !important;
+}
+
 .utd-bar{
   display:flex;
   align-items:center;
   justify-content:space-between;
   margin:-10px -10px 8px -10px;
   padding:6px 10px;
-  border-bottom:2px solid rgb(143,143,143);
+  border-bottom:2px solid rgb(var(--utd-gray));
 }
 .utd-title{ font-size:11px; letter-spacing:.02em; text-transform:none; }
-.utd-title[contenteditable="true"]{ outline:2px dashed rgb(143,143,143); outline-offset:2px; cursor:text; }
+.utd-title[contenteditable="true"]{ outline:2px dashed rgb(var(--utd-gray)); outline-offset:2px; cursor:text; }
 
+/* Creator unlock button */
 .utd-unlock{
-  background:#000; color:rgb(60,60,60);
-  border:2px solid rgb(60,60,60);
-  padding:1px 8px; font-size:10px; text-transform:uppercase; border-radius:0; cursor:pointer;
+  background:#000; color:rgb(var(--utd-gray));
+  border:2px solid rgb(var(--utd-gray));
+  padding:1px 8px; font-size:10px; text-transform:uppercase; cursor:pointer;
+  -webkit-appearance:none; appearance:none;
   position:relative; z-index:4;
 }
-.utd-unlock:hover{ background:rgb(40,40,40); color:#000; border-color:rgb(70,70,70); }
+.utd-unlock:hover{ background:rgb(90,90,90); color:#000; }
 
+/* Owner icons (pencil/trash) */
+.utd-icons{ display:none; gap:6px; margin-left:8px; }
+.utd.is-owner .utd-icons{ display:inline-flex; }
+.utd-icon{
+  background:#000; color:rgb(var(--utd-gray)); border:2px solid rgb(var(--utd-gray));
+  padding:0 6px; height:18px; line-height:14px; font-size:10px; cursor:pointer;
+  -webkit-appearance:none; appearance:none;
+}
+.utd-icon:hover{ background:rgb(90,90,90); color:#000; }
+
+/* ===== Post form ===== */
 .utd-form{ margin-bottom:8px; }
 
+/* POST textarea (black bg, grey text) */
 .utd-textarea{
-  width:100%; box-sizing:border-box; background:#000; color:rgb(143,143,143);
-  border:2px solid rgb(143,143,143); padding:6px; font-size:11px; line-height:1.25;
-  font-family:'FS TI-92 ENO C', monospace; max-height: calc(1.25em * 8 + 12px);
-  overflow-y:auto; resize:vertical;
+  width:100%;
+  box-sizing:border-box;
+  background:#000;
+  color: rgb(var(--utd-gray));
+  caret-color: rgb(var(--utd-gray));
+  border:2px solid rgb(var(--utd-gray));
+  padding:6px;
+  font-size:11px;
+  line-height:1.25;
+  font-family:'FS TI-92 ENO C', monospace;
+  max-height: calc(1.25em * 8 + 12px);
+  overflow-y:auto;
+  resize:vertical;
 }
 
-.utd-actions{ margin-top:6px; display:flex; gap:6px; }
+/* POST button row — align to right */
+.utd-actions{
+  margin-top:6px;
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;        /* << right align */
+}
 .utd-actions button{
-  background:#000; color:rgb(143,143,143); border:2px solid rgb(143,143,143);
-  padding:1px 8px; font-size:11px; text-transform:uppercase; border-radius:0; cursor:pointer;
+  background:#000; color:rgb(var(--utd-gray)); border:2px solid rgb(var(--utd-gray));
+  padding:1px 8px; font-size:11px; text-transform:uppercase; cursor:pointer;
 }
 .utd-actions button:hover{ background:rgb(90,90,90); color:#000; }
 
+/* ===== Feed ===== */
 .utd-feed{ display:flex; flex-direction:column; gap:4px; }
 .utd-line{
   display:block; font-size:9.5px; line-height:1.3;
@@ -123,28 +166,84 @@
 .utd-line .ts{ white-space:nowrap; margin-right:2ch; font-variant-numeric:tabular-nums; }
 .utd-line .sep{ white-space:nowrap; margin-right:2ch; }
 
-.utd-icons{ display:none; gap:6px; margin-left:8px; }
-.utd.is-owner .utd-icons{ display:inline-flex; }
-.utd-icon{
-  background:#000; color:rgb(143,143,143); border:2px solid rgb(143,143,143);
-  padding:0 6px; height:18px; line-height:14px; font-size:10px; border-radius:0; cursor:pointer;
-}
-.utd-icon:hover{ background:rgb(90,90,90); color:#000; }
+/* ===== Inline editor — match post box exactly ===== */
+.utd-edit-wrap{ display:block; width:100%; }
 
-/* Avatar perched top-right */
+/* Edit textarea */
+.utd-edit{
+  width:100%;
+  box-sizing:border-box;
+  background:#000;
+  color: rgb(var(--utd-gray));
+  caret-color: rgb(var(--utd-gray));
+  border:2px solid rgb(var(--utd-gray));
+  padding:6px;
+  font-size:11px;
+  line-height:1.25;
+  font-family:'FS TI-92 ENO C', monospace;
+  resize:vertical;
+  max-height: calc(1.25em * 8 + 12px);
+}
+
+/* Edit actions row — right align */
+.utd-edit-actions{
+  margin-top:6px;
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;        /* << right align */
+}
+
+/* Save/Cancel in edit row */
+.utd-edit-actions .utd-edit-save,
+.utd-edit-actions .utd-edit-cancel{
+  background:#000;
+  color:rgb(var(--utd-gray));
+  border:2px solid rgb(var(--utd-gray));
+  padding:0 8px;
+  height:18px;
+  line-height:16px;
+  font-size:10px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.utd-edit-actions .utd-edit-save:hover,
+.utd-edit-actions .utd-edit-cancel:hover{
+  background:rgb(90,90,90);
+  color:#000;
+}
+
+/* Trash moved into edit row should look like a button */
+.utd-edit-actions .utd-edit-del{
+  background:#000;
+  color:rgb(var(--utd-gray));
+  border:2px solid rgb(var(--utd-gray));
+  padding:0 8px;
+  height:18px;
+  line-height:16px;
+  font-size:10px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.utd-edit-actions .utd-edit-del:hover{
+  background:rgb(90,90,90);
+  color:#000;
+}
+
+/* Optional: hide the whole icons cluster while editing */
+.utd-line.is-editing .utd-icons{ display:none !important; }
+
+/* ===== Avatar ===== */
 .avatar-overlay{
   position:absolute; top:-64px; right:-8px;
   width: clamp(68px, 10vw, 100px);
   height:auto;
   z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
 }
-
 @media (max-width:900px){
   .avatar-overlay{ top:-18px; right:-6px; width: clamp(60px, 18vw, 92px); }
 }
 
-
-/* ===== Base photo sizing (desktop + defaults) ===== */
+/* Photo sizing */
 .about-photo{
   margin: 0 0 8px 0;
   max-width: clamp(360px, 34vw, 470px);
@@ -160,10 +259,106 @@
   position: relative;
   z-index: 2 !important;
 }
-
-/* Safety: kill any old fixed image rule */
 .corner-img{ display: none; }
 
+/* =========================
+   MOBILE • PORTRAIT (≤900px)
+   ========================= */
+@media (max-width:900px) and (orientation:portrait){
+  :root{ --row: 14px; --gutter: 22px; }
+  .page{ padding-left: 0; padding-right: 0; }
+  .about-grid{
+    display: flex; flex-direction: column;
+    row-gap: var(--row);
+    margin-top: 20px;
+    padding-left: var(--gutter); padding-right: var(--gutter);
+    width: 100%; max-width: 100%; box-sizing: border-box;
+  }
+  .right-col{ display: contents; }
+  .bio{ order: 1; margin-bottom: var(--row); }
+  .about-blurb{
+    order: 2; display: flex; justify-content: center; align-items: flex-start;
+    width: 100%; min-width: 0;
+  }
+  .about-photo{
+    display: block; max-width: clamp(220px, 68vw, 340px);
+    margin: 6px auto calc(3 * var(--row)); width: 100%;
+  }
+  .about-photo img{ margin: 0; }
 
+  .utd{
+    order: 3; position: relative; margin-top: var(--row);
+    padding: 10px;
+    padding-top: clamp(40px, 14vw, 72px);   /* room for perched avatar */
+    border: 2px solid rgb(var(--utd-gray)) !important;
+    background: #000; color: rgb(var(--utd-gray));
+  }
+  .utd-bar{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 3px 8px; margin: -10px -10px 4px -10px;
+    border-bottom: 2px solid rgb(var(--utd-gray));
+    line-height: 3; position: relative; z-index: 5;
+  }
+  .utd-title{ font-size: 10px; letter-spacing: .02em; }
+  .utd-unlock{ padding: 0 6px; height: 16px; line-height: 14px; font-size: 9.5px; pointer-events: auto; }
 
-/* =============*
+  .avatar-overlay{
+    position: absolute;
+    top: calc(-1 * clamp(40px, 14vw, 72px) + 6px);
+    right: -6px;
+    width: clamp(60px, 18vw, 92px); height: auto; z-index: 3; pointer-events: none;
+  }
+}
+
+/* =========================
+   MOBILE • LANDSCAPE (≤900px)
+   ========================= */
+@media (max-width:900px) and (orientation:landscape){
+  .page{ padding-left: 0; padding-right: 0; }
+  .about-grid{
+    display: grid; grid-template-columns: 1fr 0.9fr;
+    column-gap: 3px; row-gap: 10px; margin-top: 28px;
+    max-width: var(--maxw); width: 100%; padding-inline: 10px; box-sizing: border-box;
+  }
+  .about-blurb{
+    grid-column: 1; grid-row: 1;
+    display: flex; justify-content: center; align-items: flex-start; min-width: 0;
+  }
+  .about-photo{
+    display: block; max-width: clamp(300px, 34vw, 470px);
+    margin: 0 auto 8px; width: 100%;
+  }
+  .about-photo img{ display: block; width: 100%; height: auto; }
+  .right-col{
+    grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 12px; padding-right: 8px; min-width: 0;
+  }
+  .utd{ position: relative; padding-top: 0; }
+  .utd-bar{ padding: 3px 8px; margin: -10px -10px 4px -10px; line-height: 2; }
+  .utd-title{ font-size: 10px; letter-spacing: .02em; }
+  .utd-unlock{ padding: 0 6px; height: 16px; line-height: 14px; font-size: 9.5px; }
+  .avatar-overlay{
+    position: absolute; top: -55px; right: -8px;
+    width: clamp(68px, 10vw, 100px); height: auto; z-index: 4; pointer-events: none;
+  }
+}
+
+/* ===== DEBUG ===== */
+@media (max-width:900px){
+  body.debug{ outline: 3px solid red !important; outline-offset: -3px !important; }
+  body.debug .about-grid{ border: 2px solid #00ff6a !important; position: relative; box-sizing: border-box; }
+  body.debug .about-blurb{ border: 2px dashed #ff9f0a !important; }
+  body.debug .right-col { border: 2px dashed #00d1ff !important; }
+  body.debug .bio       { border: 1px dotted #ff2d55 !important; }
+  body.debug .about-photo{ border: 1px dotted #af52de !important; }
+  body.debug .utd       { border: 2px dotted #ff3b30 !important; }
+  body.debug .utd-bar   { border: 2px solid  #ff3b30 !important; }
+  body.debug .about-grid,
+  body.debug .about-blurb,
+  body.debug .right-col,
+  body.debug .bio,
+  body.debug .about-photo,
+  body.debug .utd,
+  body.debug .utd-bar{
+    background-clip: padding-box !important;
+  }
+}
