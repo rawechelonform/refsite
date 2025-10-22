@@ -313,7 +313,7 @@
 
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 8px 8px;
+    padding: 12px 8px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 2;

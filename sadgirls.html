@@ -18,9 +18,6 @@
 
   <!-- Safety: ensure no default margin pushes the bar down on mobile -->
   <style>html,body{margin:0;padding:0}</style>
-
-
-  
 </head>
 
 <body>
@@ -30,6 +27,9 @@
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
   </script>
+
+  <!-- overlay for shooting stars -->
+  <div class="sky-overlay" id="sky-overlay" aria-hidden="true"></div>
 
   <div class="page">
     <!-- shared header + reserved space -->
