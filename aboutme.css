@@ -287,7 +287,7 @@
     /* Avatar controls (universal system) */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;     /* horizontal nudge: negative = right, positive = left */
-    --avatar-y: -25px;   /* vertical offset: increase (less negative) to move DOWN */
+    --avatar-y: -60px;   /* vertical offset: more negative = UP */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -339,7 +339,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding: 2px 10px 0px 10px;   /* top | right | bottom | left */
+    padding: 0px 10px -2px 10px;   /* top | right | bottom | left */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
@@ -376,7 +376,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;      /* horizontal nudge */
-    --avatar-y: -58px;      /* vertical offset: increase (less negative) to move DOWN */
+    --avatar-y: -52px;      /* vertical offset: more negative = UP */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -431,7 +431,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding: 2px 10px -3px 10px; /* top | right | bottom | left */
+    padding: -5px 10px -10px 10px; /* top | right | bottom | left */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;
@@ -490,11 +490,11 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -35px;  /* vertical offset: increase (less negative) to move DOWN */
+    --avatar-y: -5px;  /* vertical offset: more negative = UP */
   }
 
   .utd-bar{
-    padding: 2px 10px 1px 10px; /* top | right | bottom | left */
+    padding: -5px 10px -10px 10px; /* top | right | bottom | left */
     min-height: 34px;
   }
 
