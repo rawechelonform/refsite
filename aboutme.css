@@ -466,7 +466,7 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -10px;      /* vertical offset: more negative = UP */
+    --avatar-y: 0px;      /* vertical offset: more negative = UP */
   }
 
   .utd-bar{
@@ -490,7 +490,7 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: 2px;  /* vertical offset: more negative = UP */
+    --avatar-y: 10px;  /* vertical offset: more negative = UP */
   }
 
   .utd-bar{
