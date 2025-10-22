@@ -1,4 +1,4 @@
-// aboutme.js (v10) — UTD with inline edit, right-aligned actions, no glow/rounded
+// aboutme.js (v11) — UTD with inline edit, right-aligned actions, Enter to post/save
 (() => {
   const KEY        = 'utd_entries_v7';
   const TITLE_KEY  = 'utd_title_v2';
@@ -50,7 +50,9 @@
       const oneLine = String(t || '').replace(/\s*\n\s*/g, ' ').trim();
       msgEl.textContent = oneLine;
 
-      line.appendChild(tsEl); line.appendChild(sepEl); line.appendChild(msgEl);
+      line.appendChild(tsEl);
+      line.appendChild(sepEl);
+      line.appendChild(msgEl);
 
       if (ownerMode){
         const icons = document.createElement('span');
@@ -68,7 +70,6 @@
     $utd.classList.toggle('is-owner', ownerMode);
 
     if (ownerMode){
-      // wire up edit/delete
       $feed.querySelectorAll('.utd-icon').forEach(btn => {
         btn.addEventListener('click', () => {
           const id  = btn.dataset.id;
@@ -80,9 +81,13 @@
           if (act === 'del'){
             if (confirm('Delete this entry?')){
               items2.splice(idx, 1);
-              save(items2); render();
+              save(items2);
+              render();
             }
-          } else if (act === 'edit'){
+            return;
+          }
+
+          if (act === 'edit'){
             const line = btn.closest('.utd-line');
             if (!line) return;
             const msgSpan = line.querySelector('.msg');
@@ -113,17 +118,16 @@
             cancelBtn.className = 'utd-edit-cancel';
             cancelBtn.textContent = 'cancel';
 
-            // move TRASH into actions row; hide the pencil
+            // Move TRASH into actions row; hide the pencil
             const icons = line.querySelector('.utd-icons');
             const editIcon  = icons?.querySelector('[data-act="edit"]');
             const trashIcon = icons?.querySelector('[data-act="del"]');
-
             if (editIcon) editIcon.style.display = 'none';
             if (trashIcon) {
-              trashIcon.classList.add('utd-edit-del');
+              trashIcon.classList.add('utd-edit-del'); // for CSS in actions row
               actions.appendChild(saveBtn);
               actions.appendChild(cancelBtn);
-              actions.appendChild(trashIcon);  // order: Save, Cancel, Trash (right-aligned via CSS)
+              actions.appendChild(trashIcon); // order: Save, Cancel, Trash (right-aligned via CSS)
             } else {
               actions.appendChild(saveBtn);
               actions.appendChild(cancelBtn);
@@ -136,8 +140,9 @@
             ta.focus();
             ta.selectionStart = ta.selectionEnd = ta.value.length;
 
-            function cleanup(){ line.classList.remove('is-editing'); }
-
+            function cleanup(){
+              line.classList.remove('is-editing');
+            }
             function doSave(){
               const next = (ta.value || '').trim();
               if (next !== original){
@@ -152,9 +157,16 @@
               render();
             }
 
+            // Enter = SAVE, Shift+Enter = newline, Esc = cancel
             ta.addEventListener('keydown', (e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); doSave(); }
-              else if (e.key === 'Escape'){ e.preventDefault(); doCancel(); }
+              if (e.isComposing) return;
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                doSave();
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                doCancel();
+              }
             });
             saveBtn.addEventListener('click', doSave);
             cancelBtn.addEventListener('click', doCancel);
@@ -177,13 +189,17 @@
       render();
     });
 
-    // Ctrl/Cmd + Enter to post
-    $text.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        $form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-      }
-    });
+    // Enter = POST, Shift+Enter = newline
+    if ($text){
+      $text.addEventListener('keydown', (e) => {
+        if (e.isComposing) return;                   // let IME composition finish
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (typeof $form.requestSubmit === 'function') $form.requestSubmit();
+          else $form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+      });
+    }
   }
 
   // unlock / lock toggle
