@@ -1,9 +1,9 @@
 // Usage on every page:
-//   <link rel="stylesheet" href="menubar.css?v=mb20">
-//   <script src="menubar.js?v=mb20" defer></script>
+//   <link rel="stylesheet" href="menubar.css?v=mb21">
+//   <script src="menubar.js?v=mb21" defer></script>
 
 (function () {
-  const VER = 'mb20';
+  const VER = 'mb21';
 
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
@@ -20,47 +20,50 @@
       const menuRoot = tmp.querySelector('.top-margin') || tmp.firstElementChild;
       if (menuRoot) slot.replaceWith(menuRoot);
 
-      normalizeMenuHrefs();       // <-- fixed name
-      forceAbsoluteNavigation();  // <-- robust mobile nav
+      normalizeMenuHrefsStrict();  // <-- harden every href to a valid path
       highlightCurrentNav();
       twoLinePrincipalOnPhones();
     } catch (_) { /* ignore */ }
   }
 
-  // Make internal hrefs project-relative and compute safe absolute URLs
-  function normalizeMenuHrefs() {
+  // Rewrite each href to a project-relative absolute URL from *this* directory.
+  // This avoids root-absolute mistakes and subfolder traps, and prevents 404 → main.html fallbacks.
+  function normalizeMenuHrefsStrict() {
+    // Directory of the current page (keeps trailing slash)
+    const baseDir = location.pathname.replace(/[^\/]*$/, '');
+
     document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      const raw = (a.getAttribute('href') || '').trim();
+      let raw = (a.getAttribute('href') || '').trim();
       if (!raw) return;
 
+      // External? leave it alone.
       if (/^https?:\/\//i.test(raw)) {
-        a.dataset.abs = raw;                        // external as-is
-      } else {
-        const rel = raw.replace(/^\/+/, '');        // strip any leading slashes
-        a.setAttribute('href', rel);                // normalize DOM
-        a.dataset.abs = new URL(rel, document.baseURI).href;  // compute absolute
+        a.setAttribute('target', '_self');
+        a.setAttribute('rel', 'noopener');
+        return;
       }
 
+      // Get just the file name (ignore any accidental leading '/')
+      const file = raw.replace(/^\/+/, '').split('/').pop();
+
+      // Ensure it ends with .html (if you ever write "sadgirls")
+      const safeFile = /\.[a-z0-9]+$/i.test(file) ? file : `${file}.html`;
+
+      // Build a *project-relative absolute* URL resolved from the current page's directory
+      const abs = new URL(safeFile, `${location.origin}${baseDir}`).href;
+
+      // Write back a clean relative href (no leading slash) so highlight logic stays simple
+      a.setAttribute('href', safeFile);
+
+      // Store the resolved absolute in case you ever want to log/debug
+      a.dataset.abs = abs;
+
+      // Make sure navigation happens in-tab
       a.setAttribute('target', '_self');
       a.setAttribute('rel', 'noopener');
 
-      // (Optional) debug to verify targets
-      try { console.log('[menubar] link', a.textContent.trim(), '→', a.getAttribute('href'), 'abs:', a.dataset.abs); } catch(_) {}
-    });
-  }
-
-  // Single captured click handler to avoid iOS pointer/touch races
-  function forceAbsoluteNavigation() {
-    document.querySelectorAll('.menu a.menu-link').forEach(a => {
-      a.addEventListener('click', ev => {
-        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // allow new-tab etc.
-        const url = a.dataset.abs || a.href;
-        if (!url) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        try { console.log('[menubar] nav ->', url); } catch(_) {}
-        window.location.href = url;
-      }, { capture: true });
+      // Debug (optional): uncomment if you want to see where each item points
+      // console.log('[menubar]', a.textContent.trim(), '→ href:', a.getAttribute('href'), 'abs:', abs);
     });
   }
 
@@ -79,19 +82,22 @@
     });
   }
 
-  // Phone-only: split “PRINCIPAL’S OFFICE” into two lines & keep centered
+  // Phone-only: split “PRINCIPAL’S OFFICE” across two lines & keep centered
   function twoLinePrincipalOnPhones() {
     if (window.innerWidth > 480) return;
     const a = Array.from(document.querySelectorAll('.menu a.menu-link'))
       .find(x => {
-        const h = x.getAttribute('href') || '';
-        return h.endsWith('/aboutme.html') || h.endsWith('aboutme.html');
+        const h = (x.getAttribute('href') || '').toLowerCase();
+        return h.endsWith('aboutme.html');
       });
     if (!a) return;
     const txt = (a.textContent || '').trim();
     if (!a.innerHTML.includes('<br>')) {
       a.innerHTML = txt.replace(/(PRINCIPAL[’']?S)\s+(OFFICE)/i, '$1<br>$2');
     }
+    // Center the two lines (the link is display:grid from CSS)
+    a.style.textAlign = 'center';
+    a.style.justifyItems = 'center';
   }
 
   if (document.readyState === 'loading') {
