@@ -278,7 +278,7 @@
     /* avatar perched OUTSIDE the box */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-overlap: 0px;   /* how much it sits above the border (keep 0) */
-    --avatar-drop: 20px;     /* ↑ increase to LOWER the avatar */
+    --avatar-drop: 80px;     /* ↑ increase to LOWER the avatar */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -319,7 +319,7 @@
   /* Header: center title + button vertically */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 5px 10px;                /* ↑ first value controls height */
+    padding: 3px 10px;                /* ↑ first value controls height */
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
     line-height: 1;                   /* use flex centering, not line-height */

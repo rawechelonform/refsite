@@ -278,8 +278,7 @@
 
 
 
-
-// === Vertical shooting stars (random x, random timing) ===
+// === Vertical shooting stars with random x, distance, speed, timing ===
 (() => {
   const overlay = document.getElementById('sky-overlay');
   if (!overlay) return;
@@ -287,17 +286,22 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let paused = document.hidden;
 
-  // Frequency window (randomized each time)
-  const MIN_INTERVAL_MS = 2500;
-  const MAX_INTERVAL_MS = 11000;
+  // Spawn timing window (randomized each time)
+  const MIN_INTERVAL_MS = 2200;
+  const MAX_INTERVAL_MS = 12000;
 
-  // Fall speed window
-  const MIN_DURATION_MS = 900;
-  const MAX_DURATION_MS = 2200;
+  // Tail length window (px)
+  const MIN_TAIL = 110;
+  const MAX_TAIL = 230;
 
-  // Tail length window
-  const MIN_TAIL = 120;
-  const MAX_TAIL = 210;
+  // Travel distance as a fraction of viewport height (0.35vh … 1.15vh)
+  // Values < 1 stop mid-page; > 1 go off the bottom
+  const MIN_DIST_FRAC = 0.35;
+  const MAX_DIST_FRAC = 1.15;
+
+  // Speed range in pixels per second — duration will be distance / speed
+  const MIN_SPEED_PX_S = 700;
+  const MAX_SPEED_PX_S = 1500;
 
   function scheduleNext() {
     const wait = rand(MIN_INTERVAL_MS, MAX_INTERVAL_MS);
@@ -314,30 +318,34 @@
     const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
     const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-    // Random x across the viewport with a tiny margin
+    // Random column to fall down
     const startX = rand(0.02 * vw, 0.98 * vw);
+    star.style.left = `${startX}px`;
 
-    // Random tail
+    // Random tail length
     const tail = rand(MIN_TAIL, MAX_TAIL);
     star.style.setProperty('--tail', `${tail}px`);
 
-    // Start just above the screen so the tail is fully offscreen at spawn
+    // Start just above the screen so the tail isn’t visible at spawn
     const startTop = -tail - 20;
+    star.style.top = `${startTop}px`;
 
-    // Distance to travel: full viewport height + tail + a little extra
-    const distance = vh + tail + 60;
+    // Random travel distance
+    const distFrac = rand(MIN_DIST_FRAC, MAX_DIST_FRAC);
+    const distance = distFrac * vh + (distFrac >= 1 ? 60 : 0); // tiny extra if going off bottom
     star.style.setProperty('--sg-distance', `${distance}px`);
 
-    // Place it
-    star.style.left = `${startX}px`;
-    star.style.top  = `${startTop}px`;
+    // Random speed → duration
+    const speedPxS = rand(MIN_SPEED_PX_S, MAX_SPEED_PX_S);
+    const durationMs = Math.max(200, Math.round((distance / speedPxS) * 1000));
 
-    // Random fall duration and a tiny per-star delay
-    const duration = rand(MIN_DURATION_MS, MAX_DURATION_MS);
-    const delay = rand(0, 180);
-    star.style.animation = `sg_fall ${duration}ms linear ${delay}ms forwards`;
+    // Tiny per-star delay jitter
+    const delayMs = rand(0, 220);
 
-    // Clean up after it exits
+    // Animate
+    star.style.animation = `sg_fall ${durationMs}ms linear ${delayMs}ms forwards`;
+
+    // Clean up
     star.addEventListener('animationend', () => star.remove());
     overlay.appendChild(star);
   }
@@ -352,7 +360,7 @@
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
   if (!reduceMotion.matches) {
-    setTimeout(() => spawnStar(), rand(400, 1800)); // first one at a random moment
+    setTimeout(() => spawnStar(), rand(300, 1800)); // first one at a random moment
     scheduleNext();
   }
 })();
