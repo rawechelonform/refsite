@@ -295,16 +295,23 @@ body {
 
 
 
-/* Sad Girls only: make the menubar fixed on mobile portrait */
-@media (max-width: 480px) and (orientation: portrait) {
+
+
+
+/* Sad Girls — mobile portrait: fixed menubar + matched top spacing */
+@media (max-width: 720px) and (orientation: portrait) {
   .top-margin {
     position: fixed !important;
     top: env(safe-area-inset-top, 0) !important;
     left: 0; right: 0;
   }
-  /* Reserve space so content doesn't jump under it */
   .menubar-slot {
     display: block !important;
     height: calc(var(--barh) + env(safe-area-inset-top, 0)) !important;
   }
+  /* Make Sad Girls use the same top padding as your other pages */
+  .page {
+    padding: 24px 10px 32px !important;
+  }
 }
+
