@@ -104,21 +104,32 @@
 .utd-title{ font-size:11px; letter-spacing:.02em; text-transform:none; }
 .utd-title[contenteditable="true"]{ outline:2px dashed rgb(var(--utd-gray)); outline-offset:2px; cursor:text; }
 
-/* Creator unlock button (desktop/base look) */
+/* ====== DESKTOP-ONLY (>=901px): muted unlock + fixed avatar size/position ====== */
 @media (min-width: 901px){
+  /* Creator unlock button (desktop/base look) */
   .utd-unlock{
     background:#000;
     color: rgb(90,90,90);              /* dark grey text */
     border: 1px solid rgb(90,90,90);   /* thin dark grey border */
-    padding: 0 6px;                   /* match mobile side padding */
+    padding: 0 6px;                    /* match mobile side padding */
     height: 18px;
     line-height: 18px;
     font-size: 10px;
     text-transform: uppercase;
     -webkit-appearance:none; appearance:none;
   }
+  .utd-unlock:hover{ background:rgb(90,90,90); color:#000; }
 
-.utd-unlock:hover{ background:rgb(90,90,90); color:#000; }
+  /* Avatar (desktop) — fixed width so it never gets huge */
+  .avatar-overlay{
+    position: absolute;            /* keep it anchored to the UTD box */
+    top: -56px !important;         /* less negative = lower; positive drops below */
+    right: -8px;                   /* tweak left/right if needed */
+    width: 90px;                   /* desktop size; adjust to taste */
+    height: auto;
+    z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
+  }
+}
 
 /* Owner icons (pencil/trash) */
 .utd-icons{ display:none; gap:6px; margin-left:8px; }
@@ -238,19 +249,6 @@
 /* Hide icons while editing */
 .utd-line.is-editing .utd-icons{ display:none !important; }
 
-/* ===== Avatar (DESKTOP) =====
-   Fixed size so it never gets huge on big screens */
-/* ==== Desktop avatar placement (>= 901px) ==== */
-@media (min-width: 901px){
-  .avatar-overlay{
-    position: absolute;            /* keep it anchored to the UTD box */
-    top: -56px !important;         /* less negative = lower; make positive to drop below */
-    right: -8px;                   /* tweak left/right if needed */
-    width: 90px;                   /* desktop size; adjust to taste */
-    height: auto;
-  }
-}
-
 /* ======= MOBILE COMMON (safe globally) ======= */
 /* Feed padding matches title bar’s 6px L/R padding */
 .utd-feed{
@@ -354,7 +352,7 @@
     overflow: hidden; text-overflow: ellipsis;   /* keep on one line */
   }
 
-  /* Avatar for this range */
+  /* Avatar (mobile portrait) */
   .avatar-overlay{
     position: absolute;
     width: var(--avatar-size);
