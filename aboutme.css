@@ -249,6 +249,20 @@
 /* Hide icons while editing */
 .utd-line.is-editing .utd-icons{ display:none !important; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ======= MOBILE COMMON (safe globally) ======= */
 /* Feed padding matches title bar’s 6px L/R padding */
 .utd-feed{
@@ -285,7 +299,7 @@
 
   :root{
     --row: 14px;
-    --gutter: 22px;
+    --gutter: 30px;
 
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
