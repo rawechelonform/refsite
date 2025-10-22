@@ -299,7 +299,7 @@
 
   :root{
     --row: 14px;
-    --gutter: 30px;
+    --gutter: 50px;
 
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
@@ -332,12 +332,18 @@
     width: 100%;
     min-width: 0;
   }
-  .about-photo{
-    display: block;
-    max-width: clamp(220px, 68vw, 340px);
-    margin: 6px auto calc(3 * var(--row));
-    width: 100%;
-  }
+  
+.about-photo{
+  display: block;
+  /* ↓ makes the photo smaller */
+  max-width: clamp(180px, 55vw, 260px);  
+
+  /* ↓ adds more space underneath */
+  margin: 6px auto 32px; /* top | left/right | bottom */
+
+  width: 100%;
+}
+
   .about-photo img{ margin: 0; }
 
   /* UTD box */
@@ -409,11 +415,18 @@
     grid-column: 1; grid-row: 1;
     display: flex; justify-content: center; align-items: flex-start; min-width: 0;
   }
-  .about-photo{
-    display: block; max-width: clamp(300px, 34vw, 470px);
-    margin: 0 auto 8px; width: 100%;
-  }
-  .about-photo img{ display: block; width: 100%; height: auto; }
+ .about-photo{
+  display: block;
+  max-width: clamp(220px, 28vw, 320px); /* smaller than 300/34vw/470 */
+  margin: 0 auto 16px;                  /* a bit more breathing room below */
+  width: 100%;
+}
+.about-photo img{
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 
   .right-col{
     grid-column: 2; grid-row: 1;
@@ -538,10 +551,13 @@
 }
 
 /* ===== Photo sizing ===== */
+/* Small phone — landscape (short height) */
 .about-photo{
   margin: 0 0 8px 0;
-  max-width: clamp(360px, 34vw, 470px);
+  max-width: clamp(160px, 45vw, 240px); /* smaller than 360px/34vw/470px */
+  width: 100%;
 }
+
 .about-photo img{
   display: block;
   width: 100%;
@@ -553,4 +569,5 @@
   position: relative;
   z-index: 2 !important;
 }
+
 .corner-img{ display: none; }
