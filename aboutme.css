@@ -300,7 +300,7 @@
     /* Avatar controls (unified) */
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;      /* negative = nudge right, positive = left */
-    --avatar-y: -50px;     /* more negative = higher, positive = lower */
+    --avatar-y: -48px;     /* more negative = higher, positive = lower */
   }
 
   .page{ padding-left: 0; padding-right: 0; }
@@ -506,7 +506,7 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -55px;
+    --avatar-y: -53px;
   }
 
   .utd-bar{
