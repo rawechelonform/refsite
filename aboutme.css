@@ -267,12 +267,10 @@
 
 
 
-
 /* ======= MOBILE COMMON (safe globally) ======= */
-/* Feed padding matches title bar’s 6px L/R padding */
 .utd-feed{
-  margin: 0 -10px 6px -10px;   /* cancel .utd side padding */
-  padding: 0 6px 6px 6px;      /* top | right | bottom | left */
+  margin: 0 -10px 6px -10px;
+  padding: 0 6px 6px 6px;
 }
 .utd-line{ padding: 0; }
 
@@ -284,17 +282,19 @@
   .utd-unlock{
     background:#000;
     color: rgb(90,90,90);
-    border: 1px solid rgb(90,90,90);   /* thinner */
-    padding: 0 6px;                    /* narrower */
+    border: 1px solid rgb(90,90,90);
+    padding: 0 6px;
     height: 18px;
     line-height: 18px;
     font-size: 10px;
     text-transform: uppercase;
     -webkit-appearance:none; appearance:none;
   }
-  /* avoid “stuck hover” after tapping lock */
   .utd-unlock:active,
-  .utd-unlock:focus{ background:#000 !important; color: rgb(90,90,90) !important; }
+  .utd-unlock:focus{
+    background:#000 !important;
+    color: rgb(90,90,90) !important;
+  }
 }
 
 
@@ -302,24 +302,19 @@
    MOBILE • PORTRAIT (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
-
   :root{
     --row: 14px;
-    --gutter: 35px;
-
-    /* Avatar controls (unified) */
+    --gutter: 28px;
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
     --avatar-y: -49px;
   }
 
-  .page{ padding-left: 0; padding-right: 0; }
-
   .about-grid{
     display: flex;
     flex-direction: column;
     row-gap: var(--row);
-    margin-top: 20px;
+    margin-top: 30px;
     padding-left: var(--gutter);
     padding-right: var(--gutter);
     width: 100%;
@@ -327,68 +322,56 @@
     box-sizing: border-box;
   }
 
-  .right-col{ display: contents; }
   .bio{ order: 1; margin-bottom: var(--row); }
-
   .about-blurb{
     order: 2;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     width: 100%;
-    min-width: 0;
   }
 
-  /* PHOTO — bigger + more space above/below */
+  /* PHOTO — much bigger + more space */
   .about-photo{
     display: block;
-    max-width: clamp(240px, 80vw, 400px);   /* bigger photo */
-    margin: 48px auto 64px;                 /* more top & bottom spacing */
+    max-width: clamp(260px, 88vw, 420px);
+    margin: 56px auto 72px; /* big space top & bottom */
     width: 100%;
   }
   .about-photo img{
     display: block;
     width: 100%;
     height: auto;
-    margin: 0;
   }
 
   /* UTD box */
   .utd{
     order: 3;
     position: relative;
-    margin-top: var(--row);
+    margin-top: 24px;
     padding: 10px;
     border: 2px solid rgb(var(--utd-gray)) !important;
     background: #000;
     color: rgb(var(--utd-gray));
   }
 
-  /* Header */
+  /* Header — one-line title */
   .utd-bar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+    display:flex; align-items:center; justify-content:space-between;
     padding: 0 7px;
     margin: -10px -10px 4px -10px;
     border-bottom: 2px solid rgb(143,143,143);
-    line-height: 1;
-    min-height: 25px;
   }
-
-  /* Title — FORCE single row */
   .utd-title{
     font-size:10px;
     line-height:1;
     margin:0;
     padding:6px 0;
-    white-space: nowrap;       /* keep one line */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-wrap: nowrap;
   }
 
-  /* Avatar (mobile portrait) */
   .avatar-overlay{
     position: absolute;
     width: var(--avatar-size);
@@ -407,40 +390,32 @@
    MOBILE • LANDSCAPE (≤900px)
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
-
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;
     --avatar-y: -156px;
   }
 
-  .page{ padding-left: 0; padding-right: 0; }
-
   .about-grid{
     display: grid;
     grid-template-columns: 1fr 0.9fr;
     column-gap: 3px;
     row-gap: 10px;
-    margin-top: 28px;
-    max-width: var(--maxw);
-    width: 100%;
-    padding-inline: 10px;
-    box-sizing: border-box;
+    margin-top: 36px;
+    padding-inline: 12px;
   }
 
   .about-blurb{
-    grid-column: 1; grid-row: 1;
+    grid-column: 1;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    min-width: 0;
   }
 
   /* PHOTO — bigger */
   .about-photo{
     display: block;
-    max-width: clamp(260px, 60vw, 420px); /* bigger than before */
-    margin: 16px auto 24px;               /* extra space below */
+    max-width: clamp(280px, 65vw, 440px);
+    margin: 20px auto 28px;
     width: 100%;
   }
   .about-photo img{
@@ -449,57 +424,19 @@
     height: auto;
   }
 
-  .right-col{
-    grid-column: 2; grid-row: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-right: 8px;
-    min-width: 0;
-  }
-
-  .utd{
-    position: relative;
-    padding: 10px;
-    border: 2px solid rgb(var(--utd-gray)) !important;
-    background: #000;
-    color: rgb(var(--utd-gray));
-  }
-
-  /* Header */
-  .utd-bar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding: 0 7px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height: 1;
-    min-height: 25px;
-  }
-
-  /* Title — FORCE single row */
+  /* One-line UTD title */
   .utd-title{
-    font-size:10px;
-    line-height:1;
-    margin:0;
-    padding:6px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-wrap: nowrap;
+    line-height: 1;
   }
 
   .avatar-overlay{
-    position: absolute;
     width: var(--avatar-size);
     height: auto;
     right: var(--avatar-x);
     top: var(--avatar-y);
-    z-index: 6;
-    pointer-events: none;
-    image-rendering: pixelated;
-    opacity:.95;
   }
 }
 
@@ -514,20 +451,22 @@
     --avatar-y: -53px;
   }
 
+  /* PHOTO — bigger + extra spacing */
   .about-photo{
-    max-width: clamp(200px, 85vw, 360px);
-    margin: 40px auto 56px;
+    max-width: clamp(220px, 90vw, 420px);
+    margin: 60px auto 80px;
     width: 100%;
+  }
+  .about-photo img{
+    width: 100%;
+    height: auto;
   }
 
   .utd-title{
-    white-space: normal;
-    word-break: keep-all;
-    line-height: 1.12;
-    font-size: 10px;
-    margin:0;
-    padding:6px 0;
-    text-wrap: balance;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
   }
 }
 
@@ -542,17 +481,21 @@
     --avatar-y: -50px;
   }
 
+  /* PHOTO — larger */
   .about-photo{
-    max-width: clamp(180px, 55vw, 340px);
-    margin: 12px auto 20px;
+    max-width: clamp(200px, 60vw, 380px);
+    margin: 16px auto 24px;
     width: 100%;
+  }
+  .about-photo img{
+    width: 100%;
+    height: auto;
   }
 
   .utd-title{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-wrap: nowrap;
   }
 
   .avatar-overlay{
@@ -562,10 +505,11 @@
   }
 }
 
-/* ===== Photo sizing (fallback + desktop reset) ===== */
+
+/* ===== Fallback / Desktop ===== */
 .about-photo{
   margin: 0 0 8px 0;
-  max-width: clamp(160px, 65vw, 240px);
+  max-width: clamp(360px, 34vw, 470px);
   width: 100%;
 }
 
@@ -582,12 +526,3 @@
 }
 
 .corner-img{ display: none; }
-
-/* ==== DESKTOP RESET ==== */
-@media (min-width: 901px){
-  .about-photo{
-    max-width: clamp(360px, 34vw, 470px);
-    margin: 0 0 8px 0;
-    width: 100%;
-  }
-}
