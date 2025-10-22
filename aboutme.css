@@ -462,45 +462,54 @@
    SMALL PHONE • PORTRAIT (≤400px)
    ========================= */
 @media (max-width:400px) and (orientation:portrait){
-
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;
-    --avatar-y: 0px;      /* vertical offset: more negative = UP */
+    --avatar-x: -6px;   /* left/right (neg = right) */
+    --avatar-y: 40px;   /* ↓ increase to move further DOWN */
   }
 
+  .utd{ position: relative; }
+
   .utd-bar{
-    padding: 0px 6px 0px 6px; /* top | right | bottom | left */
+    padding: 0 6px;     /* top | right | bottom | left */
     min-height: 24px;
   }
 
   .avatar-overlay{
+    position: absolute;
     width: var(--avatar-size);
     right: var(--avatar-x);
-    top: var(--avatar-y);
+    top: var(--avatar-y) !important; /* ensure this wins */
+    z-index: 6;
+    pointer-events: none;
   }
 }
 
 
-/* =========================
-   SMALL PHONE • LANDSCAPE (≤600px)
-   ========================= */
-@media (max-width:600px) and (orientation:landscape){
 
+/* =========================
+   SMALL PHONE • PORTRAIT (≤400px)
+   ========================= */
+@media (max-width:400px) and (orientation:portrait){
   :root{
-    --avatar-size: clamp(60px, 16vw, 84px);
-    --avatar-x: -4px;
-    --avatar-y: 10px;  /* vertical offset: more negative = UP */
+    --avatar-size: clamp(60px, 18vw, 92px);
+    --avatar-x: -6px;   /* left/right (neg = right) */
+    --avatar-y: 40px;   /* ↓ increase to move further DOWN */
   }
 
+  .utd{ position: relative; }
+
   .utd-bar{
-    padding: 0px 6px 0px 6px; /* top | right | bottom | left */
+    padding: 0 6px;     /* top | right | bottom | left */
     min-height: 24px;
   }
 
   .avatar-overlay{
+    position: absolute;
     width: var(--avatar-size);
     right: var(--avatar-x);
-    top: var(--avatar-y);
+    top: var(--avatar-y) !important; /* ensure this wins */
+    z-index: 6;
+    pointer-events: none;
   }
 }
