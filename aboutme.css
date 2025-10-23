@@ -271,20 +271,26 @@
 
 
 
-
-/* ======= MOBILE COMMON (unchanged basics) ======= */
-.utd-feed{ margin: 0 -10px 6px -10px; padding: 0 6px 6px 6px; }
+/* ======= MOBILE COMMON (safe globally) ======= */
+.utd-feed{
+  margin: 0 -10px 6px -10px;
+  padding: 0 6px 6px 6px;
+}
 .utd-line{ padding: 0; }
-.utd-title .title-br{ display:none; } /* we re-enable only for small portrait */
+.utd-title .title-br{ display:none; }
 
-/* Muted Creator Unlock on mobile (unchanged) */
 @media (max-width:900px){
   .utd-unlock{
-    background:#000; color: rgb(90,90,90);
+    background:#000;
+    color: rgb(90,90,90);
     border: 1px solid rgb(90,90,90);
-    padding: 0 6px; height: 18px; line-height: 18px;
-    font-size: 10px; text-transform: uppercase;
-    -webkit-appearance:none; appearance:none; white-space: nowrap;
+    padding: 0 6px;
+    height: 18px;
+    line-height: 18px;
+    font-size: 10px;
+    text-transform: uppercase;
+    -webkit-appearance:none; appearance:none;
+    white-space: nowrap;
   }
   .utd-unlock:active, .utd-unlock:focus{
     background:#000 !important; color: rgb(90,90,90) !important;
@@ -312,32 +318,43 @@
 
   /* ORDER: bio (1), IG (2), photo (3), thought box (4) */
   .bio{ order:1; margin-bottom: var(--row); }
-  .about-grid .ext-link{ order:2; display:inline-block; }   /* IG link */
-  .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; min-width:0; }
-  .utd{ order:4; position:relative; margin-top: var(--row); padding: 10px;
-        border:2px solid rgb(var(--utd-gray)) !important; background:#000; color:rgb(var(--utd-gray)); }
+  .about-grid .ext-link{ order:2; display:inline-block; } /* IG link */
+  .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
+  .utd{ order:4; }
 
-  /* PHOTO — slightly smaller than your last edit, with extra space */
+  /* PHOTO — slightly smaller, keep space above/below */
   .about-photo{
     display:block;
-    max-width: clamp(240px, 76vw, 380px);  /* between your last two sizes */
-    margin: 28px auto 44px;                /* extra space above/below */
+    max-width: clamp(220px, 72vw, 360px);
+    margin: 36px auto 52px;
     width:100%;
   }
-  .about-photo img{ display:block; width:100%; height:auto; margin:0; }
+  .about-photo img{ width:100%; height:auto; }
 
-  /* Header: keep one line on large portrait */
+  /* UTD box unchanged */
+  .utd{
+    position: relative;
+    margin-top: var(--row);
+    padding: 10px;
+    border: 2px solid rgb(var(--utd-gray)) !important;
+    background: #000;
+    color: rgb(var(--utd-gray));
+  }
+
+  /* One-line title */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px; margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143); line-height:1; min-height:25px;
+    padding: 0 7px;
+    margin: -10px -10px 4px -10px;
+    border-bottom: 2px solid rgb(143,143,143);
+    line-height:1; min-height:25px;
   }
   .utd-title{
     font-size:10px; line-height:1; margin:0; padding:6px 0;
-    white-space: nowrap; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
-  /* Avatar perched top-right of UTD */
+  /* Avatar perched top-right */
   .avatar-overlay{
     position:absolute; width: var(--avatar-size); height:auto;
     right: var(--avatar-x); top: var(--avatar-y);
@@ -352,55 +369,53 @@
 @media (max-width:900px) and (orientation:landscape){
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
-    --avatar-x: -8px;         /* keep anchored to the RIGHT */
+    --avatar-x: -8px;
     --avatar-y: -156px;
   }
 
   .about-grid{
     display:grid; grid-template-columns: 1fr 0.9fr;
     column-gap:3px; row-gap:10px; margin-top:28px;
-    max-width: var(--maxw); width:100%; padding-inline:10px; box-sizing:border-box;
+    padding-inline:10px;
   }
 
   .about-blurb{
-    grid-column:1; grid-row:1;
-    display:flex; justify-content:center; align-items:flex-start; min-width:0;
+    grid-column:1; display:flex; justify-content:center;
   }
 
-  /* PHOTO — slightly smaller than last landscape edit */
+  /* PHOTO — slightly smaller */
   .about-photo{
     display:block;
-    max-width: clamp(260px, 56vw, 400px);
-    margin: 12px auto 20px;
+    max-width: clamp(240px, 55vw, 380px);
+    margin: 16px auto 24px;
     width:100%;
   }
-  .about-photo img{ display:block; width:100%; height:auto; }
+  .about-photo img{ width:100%; height:auto; }
 
-  .right-col{
-    grid-column:2; grid-row:1;
-    display:flex; flex-direction:column; gap:12px; padding-right:8px; min-width:0;
-  }
-
-  /* Thought box (unchanged height/padding behavior) */
+  /* UTD box unchanged, one-line title */
   .utd{
-    position:relative; padding:10px;
-    border:2px solid rgb(var(--utd-gray)) !important; background:#000; color:rgb(var(--utd-gray));
+    position: relative;
+    padding: 10px;
+    border: 2px solid rgb(var(--utd-gray)) !important;
+    background: #000;
+    color: rgb(var(--utd-gray));
   }
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px; margin: -10px -10px 4px -10px;
-    border-bottom:2px solid rgb(143,143,143); line-height:1; min-height:25px;
+    padding: 0 7px;
+    margin: -10px -10px 4px -10px;
+    border-bottom: 2px solid rgb(143,143,143);
+    line-height:1; min-height:25px;
   }
-  /* Force ONE line for big landscape */
   .utd-title{
-    font-size:10px; line-height:1; margin:0; padding:6px 0;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    line-height:1; margin:0; padding:6px 0;
   }
 
-  /* Avatar anchored to the RIGHT edge of the UTD */
+  /* Avatar restored to top-right perch */
   .avatar-overlay{
     position:absolute; width: var(--avatar-size); height:auto;
-    right: var(--avatar-x); top: var(--avatar-y); /* keep using RIGHT — not left */
+    right: var(--avatar-x); top: var(--avatar-y);
     z-index:6; pointer-events:none; image-rendering:pixelated; opacity:.95;
   }
 }
@@ -422,31 +437,37 @@
   .about-blurb{ order:3; }
   .utd{ order:4; }
 
-  /* PHOTO — slightly smaller than the previous “big” setting + extra space */
+  /* PHOTO — slightly smaller */
   .about-photo{
-    max-width: clamp(230px, 82vw, 360px);
-    margin: 40px auto 56px;
+    max-width: clamp(210px, 75vw, 340px);
+    margin: 28px auto 48px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* TWO-LINE title (restore wrap) */
+  /* Two-line title wrap restored */
   .utd-title{
     display:block; max-width: 65%;
-    white-space: normal; word-break: keep-all;
-    line-height: 1.12; font-size:10px; letter-spacing:.02em;
-    margin:0; padding:6px 0; text-wrap: balance;
+    white-space: normal;
+    word-break: keep-all;
+    line-height: 1.12;
+    font-size: 10px;
+    letter-spacing: .02em;
+    margin:0; padding:6px 0;
+    text-wrap: balance;
   }
-  .utd-title .title-br{ display:inline; }  /* enable forced line break here */
+  .utd-title .title-br{ display:inline; }
 
-  /* Creator button text overflow fix */
   .utd-unlock{
-    font-size: 9.5px; padding: 0 6px; height:18px; line-height:18px;
-    white-space: nowrap; overflow:hidden; text-overflow: ellipsis;
+    font-size:9.5px; padding:0 6px;
+    white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis;
   }
 
   .avatar-overlay{
-    width: var(--avatar-size); right: var(--avatar-x); top: var(--avatar-y);
+    width: var(--avatar-size);
+    right: var(--avatar-x);
+    top: var(--avatar-y);
   }
 }
 
@@ -461,21 +482,30 @@
     --avatar-y: -50px;
   }
 
-  /* PHOTO — slightly smaller than last, still bigger than original */
+  /* PHOTO — smaller */
   .about-photo{
-    max-width: clamp(190px, 58vw, 360px);
-    margin: 12px auto 18px;
+    max-width: clamp(180px, 50vw, 340px);
+    margin: 12px auto 20px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* Keep big title to one line on this layout */
+  /* Title in TWO lines (“Useless Thought” / “of the Day”) */
   .utd-title{
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1;
-    font-size:10px; margin:0; padding:6px 0;
+    display:block; max-width:65%;
+    white-space: normal;
+    word-break: keep-all;
+    line-height:1.12;
+    font-size:10px;
+    letter-spacing:.02em;
+    margin:0; padding:6px 0;
+    text-wrap: balance;
   }
+  .utd-title .title-br{ display:inline; }
 
   .avatar-overlay{
-    width: var(--avatar-size); right: var(--avatar-x); top: var(--avatar-y);
+    width: var(--avatar-size);
+    right: var(--avatar-x);
+    top: var(--avatar-y);
   }
 }
