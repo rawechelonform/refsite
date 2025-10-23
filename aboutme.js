@@ -259,6 +259,7 @@
   render();
 })();
 
+
 // === Small-phone title break helper ===
 // works independently of variables inside the main IIFE
 (function () {
@@ -344,4 +345,47 @@
     // initial pull
     syncFromServer();
   });
+})();
+
+
+
+
+
+// Custom cursor logic
+(() => {
+  const cursor = document.getElementById('custom-cursor');
+  let rafId = null;
+
+  // track mouse and move the custom cursor
+  window.addEventListener('mousemove', (e) => {
+    // use rAF to keep it smooth
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top  = e.clientY + 'px';
+    });
+  }, { passive: true });
+
+  // spin on any click/tap
+  const triggerSpin = () => {
+    // restart animation if it's mid-spin
+    cursor.classList.remove('spin');
+    // force reflow so the class re-applies cleanly
+    // eslint-disable-next-line no-unused-expressions
+    cursor.offsetWidth;
+    cursor.classList.add('spin');
+  };
+
+  window.addEventListener('mousedown', triggerSpin);
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches[0]) {
+      cursor.style.left = e.touches[0].clientX + 'px';
+      cursor.style.top  = e.touches[0].clientY + 'px';
+    }
+    triggerSpin();
+  }, { passive: true });
+
+  // optional: hide cursor when leaving window
+  document.addEventListener('mouseleave', () => { cursor.style.display = 'none' });
+  document.addEventListener('mouseenter', () => { cursor.style.display = 'block' });
 })();

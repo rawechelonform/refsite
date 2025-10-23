@@ -433,3 +433,64 @@
   .about-blurb{ order: 3 !important; }
   .utd{ order: 4 !important; }
 }
+
+
+
+
+
+
+
+/* Hide the default cursor on the whole page */
+html, body { cursor: none }
+
+/* Cursor container */
+#custom-cursor {
+  position: fixed;
+  left: 0; top: 0;
+  width: 22px; height: 22px; /* overall size */
+  transform: translate(-50%, -50%); /* center on pointer */
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+}
+
+/* the two crossing arms (to make an X) */
+#custom-cursor .arm {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 22px; height: 2px;
+  transform-origin: 50% 50%;
+  translate: -50% -50%;
+  background: currentColor;
+}
+
+/* rotate to form an X */
+#custom-cursor .arm-a { rotate: 45deg }
+#custom-cursor .arm-b { rotate: -45deg }
+
+/* center dot */
+#custom-cursor .dot {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 4px; height: 4px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* color + subtle opacity */
+#custom-cursor { color: #111; opacity: 0.9 }
+
+/* click spin animation */
+@keyframes cursor-spin {
+  from { rotate: 0deg }
+  to   { rotate: 360deg }
+}
+#custom-cursor.spin {
+  animation: cursor-spin 360ms ease-out;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  #custom-cursor.spin { animation: none }
+}
