@@ -1,7 +1,7 @@
 // main.js — page-specific for main.html
 // Desktop: swap hover image on hover/focus (unchanged)
-// Mobile: reveal hub after fonts+images, preload hover art, and on tap:
-//         flash hover image briefly before following the link
+// Mobile: wait for fonts + both images to fully decode, then reveal hub all at once
+//         plus: on tap, show the hover image for ~1s before navigating
 
 (() => {
   'use strict';
@@ -33,7 +33,6 @@
       const hover  = img.getAttribute('data-hover-src');
       if (!normal || !hover) return;
 
-      // Preload hover for instant swap
       const pre = new Image();
       pre.src = hover;
 
@@ -62,17 +61,16 @@
     return;
   }
 
-  // --- mobile path ---
+  // --- mobile path: hold everything until ready, then reveal together ---
   async function initMobile() {
     const hub = document.getElementById('hub');
     if (!hub) return;
 
-    // Hide hub until fonts + base images are ready
     hub.setAttribute('data-wait', '1');
 
     const imgs = Array.from(document.querySelectorAll('img.swap-on-hover'));
 
-    // Ensure base sources + decode
+    // lock to base art, decode
     const decodePromises = imgs.map(img => {
       const normal = img.getAttribute('data-src') || img.getAttribute('src');
       if (normal) img.src = normal;
@@ -81,7 +79,7 @@
       return decodeImg(img);
     });
 
-    // Preload hover variants for instant tap-flash
+    // preload hover art so the tap swap is instant
     imgs.forEach(img => {
       const hover = img.getAttribute('data-hover-src');
       if (hover) {
@@ -93,55 +91,56 @@
 
     await Promise.all([waitFonts(), ...decodePromises]);
 
-    // Reveal hub all at once
     hub.removeAttribute('data-wait');
 
-    // Wire tap-to-flash-then-navigate behavior
-    wireTapFlash();
+    // tap → show hover for ~1s → navigate
+    wireTapHold(imgs);
   }
 
-  function wireTapFlash() {
+  function wireTapHold(imgs) {
+    const HOLD_MS = 1000; // 1s
     const links = Array.from(document.querySelectorAll('a.tile'));
+
+    // map images by their containing link for quick lookup
+    const imgByLink = new Map();
+    links.forEach(link => {
+      const img = link.querySelector('img.swap-on-hover');
+      if (img) imgByLink.set(link, img);
+    });
+
     links.forEach(link => {
       link.addEventListener('click', e => {
-        // allow modifier clicks to behave normally (rare on mobile, but safe)
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        if (link.dataset.busy === '1') { e.preventDefault(); return; }
 
-        const img   = link.querySelector('img.swap-on-hover');
+        const img = imgByLink.get(link);
         if (!img) return;
 
+        const hover = img.getAttribute('data-hover-src');
         const normal = img.getAttribute('data-src') || img.getAttribute('src');
-        const hover  = img.getAttribute('data-hover-src');
         if (!hover) return;
 
-        // prevent immediate navigation, flash hover, then follow
+        if (link.dataset.busy === '1') { e.preventDefault(); return; }
+
         e.preventDefault();
         link.dataset.busy = '1';
 
-        // swap to hover immediately
+        // swap to hover and ensure it paints before starting the hold
         img.src = hover;
-
-        // small delay for the user to perceive the change
-        // use rAF to ensure the swap paints before timing
         requestAnimationFrame(() => {
           setTimeout(() => {
-            // navigate respecting target if present
+            // optional tidy-up before nav on very slow connections
+            // img.src = normal;
+
             const href = link.getAttribute('href');
             const target = (link.getAttribute('target') || '_self').toLowerCase();
-
-            // optional: restore image to normal after starting nav
-            // not strictly needed, but keeps state tidy on slow connections
-            img.src = normal;
-
             if (target === '_self') {
               window.location.href = href;
             } else {
               window.open(href, target);
             }
-          }, 180); // ~1–2 frames of "flash" at 60Hz
+          }, HOLD_MS);
         });
-      }, { passive: false }); // we call preventDefault()
+      }, { passive: false });
     });
   }
 
