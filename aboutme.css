@@ -236,7 +236,7 @@
     width:100%; max-width:100%; box-sizing:border-box;
   }
   /* Order: bio → IG → photo → UTD */
-  .bio{ order:1; margin-bottom: px !important;   /* was 14px or var(--row); tighten it */}
+  .bio{ order:1; margin-bottom: 3px !important;   /* was 14px or var(--row); tighten it */}
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
   .utd{ order:4; }
@@ -440,23 +440,21 @@
 
 
 
-
-
-
-/* ===== Custom X cursor (white, large center gap + dot) ===== */
+/* ===== Custom X cursor (white, big center gap + dot) ===== */
 #custom-cursor {
-  --size: 30px;   /* overall X length */
-  --thick: 2px;   /* stroke thickness */
-  --gap: 14px;    /* empty space around the dot (total width) */
+  --size: 32px;   /* overall X length */
+  --thick: 2px;   /* line thickness */
+  --gap: 16px;    /* empty space around the dot (total width) */
   --dot: 3px;     /* dot size */
+
   position: fixed;
   left: 0; top: 0;
   width: var(--size);
   height: var(--size);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 99999;
-  color: #fff; /* white */
+  z-index: 2147483647;
+  color: #fff;
 }
 
 /* arms with a centered gap */
@@ -475,9 +473,7 @@
       currentColor calc(50% + (var(--gap) / 2)) 100%
     );
 }
-#custom-cursor .arm-b {
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
+#custom-cursor .arm-b { transform: translate(-50%, -50%) rotate(-45deg); }
 
 /* center dot */
 #custom-cursor .dot {

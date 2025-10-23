@@ -1,5 +1,79 @@
 /* aboutme.js — secure unlock + UTD feed + server sync + spinning cursor */
 
+/* ========= A) Nuke the native cursor everywhere ========= */
+(() => {
+  const KILL_CSS = `html,body,*,:before,:after{cursor:none !important}`;
+
+  // inject into main document
+  const s = document.createElement('style');
+  s.id = 'kill-native-cursor';
+  s.textContent = KILL_CSS;
+  document.head.appendChild(s);
+
+  // patch attachShadow so new shadow roots inherit the rule
+  const origAttach = Element.prototype.attachShadow;
+  Element.prototype.attachShadow = function(init){
+    const root = origAttach.call(this, init);
+    try {
+      const st = document.createElement('style');
+      st.textContent = KILL_CSS;
+      root.appendChild(st);
+    } catch(_) {}
+    return root;
+  };
+
+  // inject into existing shadow roots and iframes (same-origin)
+  const tryInject = (node) => {
+    if (!node || node.nodeType !== 1) return;
+
+    if (node.shadowRoot) {
+      try {
+        const st = document.createElement('style');
+        st.textContent = KILL_CSS;
+        node.shadowRoot.appendChild(st);
+      } catch(_) {}
+    }
+
+    if (node.tagName === 'IFRAME') {
+      try {
+        const doc = node.contentDocument;
+        if (doc && doc.head) {
+          const st = doc.createElement('style');
+          st.textContent = KILL_CSS;
+          doc.head.appendChild(st);
+        } else {
+          node.addEventListener('load', () => {
+            try {
+              const d2 = node.contentDocument;
+              if (d2 && d2.head) {
+                const st2 = d2.createElement('style');
+                st2.textContent = KILL_CSS;
+                d2.head.appendChild(st2);
+              }
+            } catch(_){}
+          }, { once:true });
+        }
+      } catch(_) {
+        // cross-origin iframe: can’t inject; prevent hover so OS cursor won’t appear
+        node.style.pointerEvents = 'none';
+      }
+    }
+  };
+
+  // scan existing elements
+  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
+  while (walker.nextNode()) tryInject(walker.currentNode);
+
+  // watch for future nodes
+  new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(tryInject)))
+    .observe(document.documentElement, { childList: true, subtree: true });
+
+  // first pass for any iframes present now
+  document.querySelectorAll('iframe').forEach(tryInject);
+})();
+
+/* ========= B) UTD + server sync (your existing logic, kept) ========= */
+
 /* ======= CONFIG ======= */
 const API = 'https://script.google.com/macros/s/AKfycbzExL0U0srFXrAkkjJHNT0oCamBSjEUk4F1Dc7MyNwxi9mvleuwd9vdtnJoJlMHCKpl6A/exec';
 
@@ -314,65 +388,42 @@ if ($title) $title.textContent = loadTitle();
 render();
 syncFromServer();
 
-/* ======= Spinning X cursor (desktop only) ======= */
+/* ========= C) Spinning X cursor driver ========= */
 (() => {
-  const cursor = document.getElementById('custom-cursor');
-  if (!cursor) return;
-
-  const fine = matchMedia('(pointer: fine)').matches;
-  if (!fine) { cursor.style.display = 'none'; return; } // skip on phones
-
-  let rafId = null;
-  window.addEventListener('mousemove', (e) => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      cursor.style.left = e.clientX + 'px';
-      cursor.style.top  = e.clientY + 'px';
-    });
-  }, { passive: true });
-
-  const spin = () => {
-    cursor.classList.remove('spin'); void cursor.offsetWidth; cursor.classList.add('spin');
-  };
-  window.addEventListener('mousedown', spin);
-
-  document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
-  document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
-})();
-
-
-
-
-// --- Kill native cursor everywhere, including inside shadow roots ---
-(() => {
-  const CSS = `html,body,*,:before,:after{cursor:none !important}`;
-  // Inject into main document
-  const s = document.createElement('style');
-  s.id = 'kill-native-cursor';
-  s.textContent = CSS;
-  document.head.appendChild(s);
-
-  // Inject into existing shadow roots
-  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
-  while (walker.nextNode()) {
-    const el = walker.currentNode;
-    if (el.shadowRoot) {
-      const s2 = document.createElement('style');
-      s2.textContent = CSS;
-      el.shadowRoot.appendChild(s2);
-    }
+  // Ensure the cursor element exists (will use your CSS in aboutme.css)
+  let cursor = document.getElementById('custom-cursor');
+  if (!cursor) {
+    cursor = document.createElement('div');
+    cursor.id = 'custom-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    cursor.innerHTML = `
+      <span class="arm arm-a"></span>
+      <span class="arm arm-b"></span>
+      <span class="dot"></span>
+    `;
+    document.body.appendChild(cursor);
   }
 
-  // Watch for future shadow roots added dynamically
-  new MutationObserver(muts => {
-    muts.forEach(m => {
-      m.addedNodes.forEach(n => {
-        if (n.nodeType === 1 && n.shadowRoot) {
-          const s3 = document.createElement('style');
-          s3.textContent = CSS;
-          n.shadowRoot.appendChild(s3);
-        }
-      });
+  // Follow pointer
+  let rafId = null;
+  const move = (x, y) => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      cursor.style.left = x + 'px';
+      cursor.style.top  = y + 'px';
     });
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  };
+  window.addEventListener('pointermove', (e) => move(e.clientX, e.clientY), { passive: true });
+
+  // Spin on click
+  const spin = () => {
+    cursor.classList.remove('spin');
+    void cursor.offsetWidth; // restart animation
+    cursor.classList.add('spin');
+  };
+  window.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); }, { passive: true });
+
+  // Hide cursor when leaving/entering the window
+  document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
+  document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
 })();

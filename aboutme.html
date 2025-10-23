@@ -3,33 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta http-equiv="Content-Security-Policy"
-      content="default-src 'self';
-               script-src 'self' 'unsafe-inline';
-               style-src  'self' 'unsafe-inline' https://use.typekit.net;
-               img-src    'self' data: blob:;
-               font-src   'self' data: https://use.typekit.net;
-               connect-src 'self' https://script.google.com https://*.googleusercontent.com;">
-
-
-
-
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline';
+                 style-src  'self' 'unsafe-inline' https://use.typekit.net;
+                 img-src    'self' data: blob:;
+                 font-src   'self' data: https://use.typekit.net;
+                 connect-src 'self' https://script.google.com https://*.googleusercontent.com;">
 
   <title>REF</title>
 
   <!-- Fonts -->
-  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
-        as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
   <!-- Page CSS first -->
   <link rel="stylesheet" href="sadgirls.css" />
-  <link rel="stylesheet" href="aboutme.css?v=27">
+  <link rel="stylesheet" href="aboutme.css?v=27"><!-- make sure cursor block is at the END of this file -->
 
   <!-- Shared menubar CSS -->
   <link rel="stylesheet" href="menubar.css?v=mb23">
-
-  
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
@@ -49,7 +42,6 @@
       <section class="about-blurb">
         <figure class="about-photo">
           <img src="/aboutme/artistphoto_cropped.png?v=5" alt="artist portrait" decoding="async">
-
         </figure>
       </section>
 
@@ -59,18 +51,15 @@
           I'm a terminal user, a post-industrial artist, and an archivist of retro circuits. Daughter to a watchsmith, in favor of analog and low tech. This site is a memory dump of my paintings.
         </p>
 
-      <p class="bio">
-  IG:
-  <a class="ext-link"
-     href="https://www.instagram.com/rawechelonform"
-     target="_blank"
-     rel="noopener noreferrer">
-    @rawechelonform
-  </a>
-</p>
-
-
-
+        <p class="bio">
+          IG:
+          <a class="ext-link"
+             href="https://www.instagram.com/rawechelonform"
+             target="_blank"
+             rel="noopener noreferrer">
+            @rawechelonform
+          </a>
+        </p>
 
         <section class="utd">
           <img src="/aboutme/aboutmeavatar.png" alt="site avatar" class="avatar-overlay">
@@ -94,21 +83,14 @@
     </div>
   </div>
 
-
-<!-- Add once, near the end of <body> -->
-<div id="custom-cursor" aria-hidden="true">
-  <span class="arm arm-a"></span>
-  <span class="arm arm-b"></span>
-  <span class="dot"></span>
-</div>
-
-
+  <!-- Custom cursor root (good spot: just before </body>) -->
+  <div id="custom-cursor" aria-hidden="true">
+    <span class="arm arm-a"></span>
+    <span class="arm arm-b"></span>
+    <span class="dot"></span>
+  </div>
 
   <script src="menubar.js?v=mb23" defer></script>
-  <script src="aboutme.js?v=13" defer></script>
+  <script src="aboutme.js?v=14" defer></script> <!-- ↑ bump this after uploading the new JS -->
 </body>
 </html>
-
-
-
-
