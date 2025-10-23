@@ -102,7 +102,7 @@
   }
 
   function wireTapHold() {
-    const HOLD_MS = 1000; // 1s
+    const HOLD_MS = 7000; // 1s
     const links = Array.from(document.querySelectorAll('a.tile'));
 
     links.forEach(link => {
