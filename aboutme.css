@@ -406,3 +406,30 @@
     margin:0 0 8px 0 !important;
   }
 }
+
+
+
+/* --- FIX ORDER: Mobile portrait (≤900px) --- */
+/* Desired order: bio → IG → photo → thought box */
+@media (max-width:900px) and (orientation:portrait){
+  /* Ensure .right-col contents can reorder properly */
+  .right-col{ display: contents !important; }
+
+  .bio{ order: 1 !important; }
+  /* Adjust this selector to your actual IG container */
+  .about-grid .ext-link,
+  .right-col a.ext-link{ order: 2 !important; }
+  .about-blurb{ order: 3 !important; }
+  .utd{ order: 4 !important; }
+}
+
+/* --- FIX ORDER: Small mobile portrait (≤480px) --- */
+@media (max-width:480px) and (orientation:portrait){
+  .right-col{ display: contents !important; }
+
+  .bio{ order: 1 !important; }
+  .about-grid .ext-link,
+  .right-col a.ext-link{ order: 2 !important; }
+  .about-blurb{ order: 3 !important; }
+  .utd{ order: 4 !important; }
+}
