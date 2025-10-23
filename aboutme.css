@@ -224,7 +224,7 @@
     --gutter: 35px;
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -49px;
+    --avatar-y: -45px;
   }
 
   /* Stack and control order */
@@ -236,7 +236,7 @@
     width:100%; max-width:100%; box-sizing:border-box;
   }
   /* Order: bio → IG → photo → UTD */
-  .bio{ order:1; margin-bottom: 6px !important;   /* was 14px or var(--row); tighten it */}
+  .bio{ order:1; margin-bottom: px !important;   /* was 14px or var(--row); tighten it */}
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
   .utd{ order:4; }
@@ -244,7 +244,7 @@
   /* Photo: slightly smaller + more vertical space */
   .about-photo{
     display:block;
-    max-width:clamp(200px, 68vw, 340px);
+    max-width:clamp(200px, 72vw, 340px);
     margin:28px auto 40px;
     width:100%;
   }
@@ -253,7 +253,7 @@
   /* Title: force single line */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 5px 0 7px; margin:-10px -10px 4px -10px;
+    padding:0 3px 0 7px; margin:-10px -10px 4px -10px;
     border-bottom:2px solid rgb(143,143,143);
     line-height:1; min-height:25px;
   }
@@ -277,7 +277,7 @@
   :root{
     --avatar-size: clamp(68px, 10vw, 100px);
     --avatar-x: -8px;
-    --avatar-y: -156px;
+    --avatar-y: -160px;
   }
 
   .about-grid{
@@ -310,7 +310,7 @@
   }
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 7px; margin:-10px -10px 4px -10px;
+    padding:0 4px 0 7px; margin:-10px -10px 4px -10px;
     border-bottom:2px solid rgb(143,143,143);
     line-height:1; min-height:25px;
   }
@@ -333,11 +333,11 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -53px;
+    --avatar-y: -49px;
   }
 
   /* Order stays: bio → IG → photo → UTD */
-  .bio{ order:1;  margin-bottom: 6px !important;}
+  .bio{ order:1;  margin-bottom: 3px !important;}
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; }
   .utd{ order:4; }
@@ -362,7 +362,7 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -50px;
+    --avatar-y: -55px;
   }
 
   /* Photo */
