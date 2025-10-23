@@ -440,12 +440,36 @@
 
 
 
-/* ===== Custom X cursor (white, big center gap + dot) ===== */
-#custom-cursor {
-  --size: 32px;   /* overall X length */
+
+
+
+
+
+
+
+
+
+
+/* ====== Cursor: invisible OS pointer + custom spinning X ====== */
+
+/* 1) Full-page mask: forces the native cursor to be invisible */
+#cursor-mask{
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646; /* just under the custom cursor */
+  background: transparent;
+  /* transparent 1x1 PNG + 'none' — wins even when elements force their own cursor */
+  cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgW3zY4QAAAAASUVORK5CYII=') 0 0, none !important;
+}
+
+/* 2) Custom cursor root */
+#custom-cursor{
+  /* tweak these to taste */
+  --size: 34px;   /* overall X length */
   --thick: 2px;   /* line thickness */
-  --gap: 16px;    /* empty space around the dot (total width) */
-  --dot: 3px;     /* dot size */
+  --gap: 18px;    /* empty space around center (total) */
+  --dot: 3px;     /* center dot size */
+  --cursor-color: #fff; /* white */
 
   position: fixed;
   left: 0; top: 0;
@@ -453,12 +477,12 @@
   height: var(--size);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 2147483647;
-  color: #fff;
+  z-index: 2147483647;   /* always on top of the mask */
+  color: var(--cursor-color);
 }
 
-/* arms with a centered gap */
-#custom-cursor .arm {
+/* arms with a centered gap (drawn with a gradient so the middle is empty) */
+#custom-cursor .arm{
   position: absolute;
   left: 50%; top: 50%;
   width: var(--size);
@@ -473,10 +497,12 @@
       currentColor calc(50% + (var(--gap) / 2)) 100%
     );
 }
-#custom-cursor .arm-b { transform: translate(-50%, -50%) rotate(-45deg); }
+#custom-cursor .arm-b{
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
 
 /* center dot */
-#custom-cursor .dot {
+#custom-cursor .dot{
   position: absolute;
   left: 50%; top: 50%;
   width: var(--dot);
@@ -486,13 +512,16 @@
   background: currentColor;
 }
 
-/* spin animation */
-@keyframes cursor-spin {
+/* click spin */
+@keyframes cursor-spin{
   from { transform: translate(-50%, -50%) rotate(0); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
-#custom-cursor.spin { animation: cursor-spin 360ms ease-out; }
+#custom-cursor.spin{ animation: cursor-spin 360ms ease-out; }
 
-@media (prefers-reduced-motion: reduce) {
-  #custom-cursor.spin { animation: none; }
+@media (prefers-reduced-motion: reduce){
+  #custom-cursor.spin{ animation: none; }
 }
+
+/* (Optional belt-and-suspenders) — prevent any element from re-enabling the OS cursor */
+html, body, body *, *::before, *::after { cursor: none !important; }

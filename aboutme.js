@@ -1,78 +1,125 @@
-/* aboutme.js — secure unlock + UTD feed + server sync + spinning cursor */
+/* aboutme.js — secure unlock + UTD feed + server sync + custom spinning X cursor */
 
-/* ========= A) Nuke the native cursor everywhere ========= */
+/* ========= 0) Transparent OS cursor + iframe/shadow coverage ========= */
 (() => {
-  const KILL_CSS = `html,body,*,:before,:after{cursor:none !important}`;
+  const TRANSPARENT_CURSOR = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgW3zY4QAAAAASUVORK5CYII=') 0 0, none";
+  const KILL_CSS = `html,body,*,:before,:after{cursor:${TRANSPARENT_CURSOR} !important}`;
 
-  // inject into main document
+  // main doc
   const s = document.createElement('style');
-  s.id = 'kill-native-cursor';
   s.textContent = KILL_CSS;
   document.head.appendChild(s);
 
-  // patch attachShadow so new shadow roots inherit the rule
+  // patch attachShadow so new shadow roots inherit rule
   const origAttach = Element.prototype.attachShadow;
   Element.prototype.attachShadow = function(init){
     const root = origAttach.call(this, init);
-    try {
-      const st = document.createElement('style');
-      st.textContent = KILL_CSS;
-      root.appendChild(st);
-    } catch(_) {}
+    try { const st = document.createElement('style'); st.textContent = KILL_CSS; root.appendChild(st); } catch(_){}
     return root;
   };
 
-  // inject into existing shadow roots and iframes (same-origin)
+  // inject into existing shadow roots + same-origin iframes; disable x-origin iframes
   const tryInject = (node) => {
     if (!node || node.nodeType !== 1) return;
-
     if (node.shadowRoot) {
-      try {
-        const st = document.createElement('style');
-        st.textContent = KILL_CSS;
-        node.shadowRoot.appendChild(st);
-      } catch(_) {}
+      try { const st = document.createElement('style'); st.textContent = KILL_CSS; node.shadowRoot.appendChild(st); } catch(_){}
     }
-
     if (node.tagName === 'IFRAME') {
       try {
-        const doc = node.contentDocument;
-        if (doc && doc.head) {
-          const st = doc.createElement('style');
-          st.textContent = KILL_CSS;
-          doc.head.appendChild(st);
+        const d = node.contentDocument;
+        if (d?.head) {
+          const st = d.createElement('style'); st.textContent = KILL_CSS; d.head.appendChild(st);
         } else {
           node.addEventListener('load', () => {
-            try {
-              const d2 = node.contentDocument;
-              if (d2 && d2.head) {
-                const st2 = d2.createElement('style');
-                st2.textContent = KILL_CSS;
-                d2.head.appendChild(st2);
-              }
-            } catch(_){}
+            try { const d2 = node.contentDocument; if (d2?.head) { const st2 = d2.createElement('style'); st2.textContent = KILL_CSS; d2.head.appendChild(st2); } } catch(_){}
           }, { once:true });
         }
       } catch(_) {
-        // cross-origin iframe: can’t inject; prevent hover so OS cursor won’t appear
         node.style.pointerEvents = 'none';
       }
     }
   };
 
-  // scan existing elements
   const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
   while (walker.nextNode()) tryInject(walker.currentNode);
-
-  // watch for future nodes
   new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(tryInject)))
-    .observe(document.documentElement, { childList: true, subtree: true });
-
-  // first pass for any iframes present now
+    .observe(document.documentElement, { childList:true, subtree:true });
   document.querySelectorAll('iframe').forEach(tryInject);
 })();
 
-/* ========= B) UTD + server sync (your existing logic, kept) ========= */
+/* ========= 1) Cursor mask overlay + custom X cursor (single source of truth) ========= */
+(() => {
+  // 1) Mask that always wins cursor styling and forwards events underneath
+  const mask = document.createElement('div');
+  mask.id = 'cursor-mask';
+  // If body exists now, append; else wait for DOMContentLoaded
+  const appendMask = () => document.body && document.body.appendChild(mask);
+  if (document.body) appendMask(); else document.addEventListener('DOMContentLoaded', appendMask);
+
+  // 2) Ensure the custom cursor element exists (once)
+  let cursor = document.getElementById('custom-cursor');
+  if (!cursor) {
+    cursor = document.createElement('div');
+    cursor.id = 'custom-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    cursor.innerHTML = `
+      <span class="arm arm-a"></span>
+      <span class="arm arm-b"></span>
+      <span class="dot"></span>
+    `;
+    const appendCursor = () => document.body && document.body.appendChild(cursor);
+    if (document.body) appendCursor(); else document.addEventListener('DOMContentLoaded', appendCursor);
+  }
+
+  // 3) Move + spin
+  let rafId = null;
+  const move = (x, y) => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      cursor.style.left = x + 'px';
+      cursor.style.top  = y + 'px';
+    });
+  };
+  const spin = () => { cursor.classList.remove('spin'); void cursor.offsetWidth; cursor.classList.add('spin'); };
+
+  // 4) Forwarding helpers
+  const forwardPointer = (e) => {
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (!target || target === mask || target === cursor) return;
+    const evt = new PointerEvent(e.type, {
+      bubbles:true, cancelable:true, composed:true,
+      pointerId:e.pointerId, pointerType:e.pointerType,
+      clientX:e.clientX, clientY:e.clientY, screenX:e.screenX, screenY:e.screenY,
+      button:e.button, buttons:e.buttons,
+      ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey
+    });
+    target.dispatchEvent(evt);
+  };
+  const forwardWheel = (e) => {
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (!target || target === mask || target === cursor) return;
+    const evt = new WheelEvent('wheel', {
+      bubbles:true, cancelable:true, composed:true,
+      deltaX:e.deltaX, deltaY:e.deltaY, deltaZ:e.deltaZ, deltaMode:e.deltaMode,
+      clientX:e.clientX, clientY:e.clientY
+    });
+    target.dispatchEvent(evt);
+  };
+
+  // 5) Hook on the mask so its cursor always wins
+  mask.addEventListener('pointermove', (e) => { move(e.clientX, e.clientY); forwardPointer(e); }, { passive:true });
+  mask.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); forwardPointer(e); }, { passive:true });
+  mask.addEventListener('pointerup',   forwardPointer, { passive:true });
+  mask.addEventListener('click',       forwardPointer, { passive:true });
+  mask.addEventListener('dblclick',    forwardPointer, { passive:true });
+  mask.addEventListener('contextmenu', forwardPointer);
+  mask.addEventListener('wheel',       forwardWheel, { passive:false });
+
+  document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
+  document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
+})();
+
+/* ========= 2) UTD + server sync (unchanged) ========= */
 
 /* ======= CONFIG ======= */
 const API = 'https://script.google.com/macros/s/AKfycbzExL0U0srFXrAkkjJHNT0oCamBSjEUk4F1Dc7MyNwxi9mvleuwd9vdtnJoJlMHCKpl6A/exec';
@@ -105,8 +152,7 @@ function normalizeServerPosts(posts){
   return (posts || []).map(p => ({
     id: p.id,
     t: p.body || '',
-    ts: new Date(p.ts).toLocaleString('en-GB', { hour12:false })
-      .replace(',', '').replace(/\//g,' ')
+    ts: new Date(p.ts).toLocaleString('en-GB', { hour12:false }).replace(',', '').replace(/\//g,' ')
   }));
 }
 
@@ -152,7 +198,6 @@ function render(){
       `;
       line.appendChild(icons);
     }
-
     $feed.prepend(line);
   });
 
@@ -171,8 +216,8 @@ function render(){
           if (!confirm('Delete this entry?')) return;
           try {
             await fetch(API, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
               body: JSON.stringify({ action:'delete', token: sessionToken, id })
             });
             items2.splice(idx, 1);
@@ -195,8 +240,7 @@ function render(){
           wrap.className = 'utd-edit-wrap';
 
           const ta = document.createElement('textarea');
-          ta.className = 'utd-edit';
-          ta.value = original;
+          ta.className = 'utd-edit'; ta.value = original;
 
           const actions = document.createElement('div');
           actions.className = 'utd-edit-actions';
@@ -228,8 +272,8 @@ function render(){
             if (next !== original){
               try {
                 await fetch(API, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  method:'POST',
+                  headers:{'Content-Type':'application/json'},
                   body: JSON.stringify({ action:'edit', token: sessionToken, id, body: next })
                 });
                 items2[idx].t = next; saveLocal(items2);
@@ -253,6 +297,15 @@ function render(){
 }
 
 /* ======= Posting ======= */
+const $utd   = document.querySelector('.utd');
+const $feed  = document.getElementById('utdFeed');
+const $form  = document.getElementById('utdForm');
+const $text  = document.getElementById('utdText');
+const $unlock= document.getElementById('utdUnlock');
+const $title = document.getElementById('utdTitle');
+const $avatar= document.querySelector('.avatar-overlay');
+if ($avatar) $avatar.style.pointerEvents = 'none';
+
 if ($form) {
   $form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -267,8 +320,8 @@ if ($form) {
 
     try {
       await fetch(API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ action:'post', token: sessionToken, body: val })
       });
       syncFromServer();
@@ -281,7 +334,7 @@ if ($form) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (typeof $form.requestSubmit === 'function') $form.requestSubmit();
-        else $form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        else $form.dispatchEvent(new Event('submit', { bubbles:true, cancelable:true }));
       }
     });
   }
@@ -328,7 +381,7 @@ if ($unlock) {
         body: JSON.stringify({ action:'verify', password: pass })
       });
       const j = await r.json();
-      if (j && j.ok && j.token) {
+      if (j?.ok && j.token) {
         ownerMode = true;
         sessionToken = j.token;
         $unlock.textContent = 'CREATOR LOCK';
@@ -349,7 +402,7 @@ async function syncFromServer(){
   try{
     const r = await fetch(API + '?limit=100');
     const j = await r.json();
-    if (j && j.ok && Array.isArray(j.posts)){
+    if (j?.ok && Array.isArray(j.posts)){
       saveLocal(normalizeServerPosts(j.posts));
       window.dispatchEvent(new Event('utd:refresh'));
     }
@@ -387,43 +440,3 @@ window.addEventListener('utd:refresh', render);
 if ($title) $title.textContent = loadTitle();
 render();
 syncFromServer();
-
-/* ========= C) Spinning X cursor driver ========= */
-(() => {
-  // Ensure the cursor element exists (will use your CSS in aboutme.css)
-  let cursor = document.getElementById('custom-cursor');
-  if (!cursor) {
-    cursor = document.createElement('div');
-    cursor.id = 'custom-cursor';
-    cursor.setAttribute('aria-hidden', 'true');
-    cursor.innerHTML = `
-      <span class="arm arm-a"></span>
-      <span class="arm arm-b"></span>
-      <span class="dot"></span>
-    `;
-    document.body.appendChild(cursor);
-  }
-
-  // Follow pointer
-  let rafId = null;
-  const move = (x, y) => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      cursor.style.left = x + 'px';
-      cursor.style.top  = y + 'px';
-    });
-  };
-  window.addEventListener('pointermove', (e) => move(e.clientX, e.clientY), { passive: true });
-
-  // Spin on click
-  const spin = () => {
-    cursor.classList.remove('spin');
-    void cursor.offsetWidth; // restart animation
-    cursor.classList.add('spin');
-  };
-  window.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); }, { passive: true });
-
-  // Hide cursor when leaving/entering the window
-  document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
-  document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
-})();
