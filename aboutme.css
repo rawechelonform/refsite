@@ -271,29 +271,31 @@
 
 
 
+
+
+
+
+
+
+
+
+
 /* ======= MOBILE COMMON (safe globally) ======= */
-.utd-feed{
-  margin: 0 -10px 6px -10px;
-  padding: 0 6px 6px 6px;
-}
-.utd-line{ padding: 0; }
+.utd-feed{ margin:0 -10px 6px -10px; padding:0 6px 6px 6px; }
+.utd-line{ padding:0; }
 .utd-title .title-br{ display:none; }
 
 @media (max-width:900px){
   .utd-unlock{
-    background:#000;
-    color: rgb(90,90,90);
-    border: 1px solid rgb(90,90,90);
-    padding: 0 6px;
-    height: 18px;
-    line-height: 18px;
-    font-size: 10px;
-    text-transform: uppercase;
+    background:#000; color:rgb(90,90,90);
+    border:1px solid rgb(90,90,90);
+    padding:0 6px; height:18px; line-height:18px;
+    font-size:10px; text-transform:uppercase;
     -webkit-appearance:none; appearance:none;
-    white-space: nowrap;
+    white-space:nowrap;
   }
-  .utd-unlock:active, .utd-unlock:focus{
-    background:#000 !important; color: rgb(90,90,90) !important;
+  .utd-unlock:active,.utd-unlock:focus{
+    background:#000!important; color:rgb(90,90,90)!important;
   }
 }
 
@@ -303,61 +305,47 @@
    ========================= */
 @media (max-width:900px) and (orientation:portrait){
   :root{
-    --row: 14px;
-    --gutter: 35px;
-    --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;
-    --avatar-y: -49px;
+    --row:14px; --gutter:35px;
+    --avatar-size:clamp(60px,18vw,92px);
+    --avatar-x:-6px; --avatar-y:-49px;
   }
 
   .about-grid{
-    display:flex; flex-direction:column; row-gap: var(--row);
-    margin-top: 20px; padding-left: var(--gutter); padding-right: var(--gutter);
+    display:flex; flex-direction:column; row-gap:var(--row);
+    margin-top:20px; padding-left:var(--gutter); padding-right:var(--gutter);
     width:100%; max-width:100%; box-sizing:border-box;
   }
 
-  /* ORDER: bio (1), IG (2), photo (3), thought box (4) */
-  .bio{ order:1; margin-bottom: var(--row); }
-  .about-grid .ext-link{ order:2; display:inline-block; } /* IG link */
+  /* ORDER: bio → IG → photo → UTD */
+  .bio{ order:1; margin-bottom:var(--row); }
+  .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
   .utd{ order:4; }
 
-  /* PHOTO — slightly smaller, keep space above/below */
+  /* PHOTO — smaller + balanced spacing */
   .about-photo{
     display:block;
-    max-width: clamp(220px, 72vw, 360px);
-    margin: 36px auto 52px;
+    max-width:clamp(200px,70vw,340px);
+    margin:28px auto 40px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* UTD box unchanged */
-  .utd{
-    position: relative;
-    margin-top: var(--row);
-    padding: 10px;
-    border: 2px solid rgb(var(--utd-gray)) !important;
-    background: #000;
-    color: rgb(var(--utd-gray));
-  }
-
-  /* One-line title */
+  /* One-line UTD title */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height:1; min-height:25px;
+    padding:0 7px; margin:-10px -10px 4px -10px;
+    border-bottom:2px solid rgb(143,143,143); line-height:1; min-height:25px;
   }
   .utd-title{
     font-size:10px; line-height:1; margin:0; padding:6px 0;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
-  /* Avatar perched top-right */
+  /* Avatar on top-right */
   .avatar-overlay{
-    position:absolute; width: var(--avatar-size); height:auto;
-    right: var(--avatar-x); top: var(--avatar-y);
+    position:absolute; width:var(--avatar-size); height:auto;
+    right:var(--avatar-x); top:var(--avatar-y);
     z-index:6; pointer-events:none; image-rendering:pixelated; opacity:.95;
   }
 }
@@ -368,13 +356,12 @@
    ========================= */
 @media (max-width:900px) and (orientation:landscape){
   :root{
-    --avatar-size: clamp(68px, 10vw, 100px);
-    --avatar-x: -8px;
-    --avatar-y: -156px;
+    --avatar-size:clamp(68px,10vw,100px);
+    --avatar-x:-8px; --avatar-y:-156px;
   }
 
   .about-grid{
-    display:grid; grid-template-columns: 1fr 0.9fr;
+    display:grid; grid-template-columns:1fr 0.9fr;
     column-gap:3px; row-gap:10px; margin-top:28px;
     padding-inline:10px;
   }
@@ -383,39 +370,29 @@
     grid-column:1; display:flex; justify-content:center;
   }
 
-  /* PHOTO — slightly smaller */
+  /* PHOTO — smaller */
   .about-photo{
     display:block;
-    max-width: clamp(240px, 55vw, 380px);
-    margin: 16px auto 24px;
-    width:100%;
+    max-width:clamp(220px,52vw,360px);
+    margin:16px auto 22px; width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* UTD box unchanged, one-line title */
-  .utd{
-    position: relative;
-    padding: 10px;
-    border: 2px solid rgb(var(--utd-gray)) !important;
-    background: #000;
-    color: rgb(var(--utd-gray));
-  }
+  /* Restore box look & avatar */
+  .utd{ position:relative; padding:10px; border:2px solid rgb(var(--utd-gray))!important;
+        background:#000; color:rgb(var(--utd-gray)); }
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height:1; min-height:25px;
+    padding:0 7px; margin:-10px -10px 4px -10px;
+    border-bottom:2px solid rgb(143,143,143); line-height:1; min-height:25px;
   }
   .utd-title{
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     line-height:1; margin:0; padding:6px 0;
   }
-
-  /* Avatar restored to top-right perch */
   .avatar-overlay{
-    position:absolute; width: var(--avatar-size); height:auto;
-    right: var(--avatar-x); top: var(--avatar-y);
+    position:absolute; width:var(--avatar-size); height:auto;
+    right:var(--avatar-x); top:var(--avatar-y);
     z-index:6; pointer-events:none; image-rendering:pixelated; opacity:.95;
   }
 }
@@ -426,86 +403,72 @@
    ========================= */
 @media (max-width:480px) and (orientation:portrait){
   :root{
-    --avatar-size: clamp(60px, 18vw, 92px);
-    --avatar-x: -6px;
-    --avatar-y: -53px;
+    --avatar-size:clamp(60px,18vw,92px);
+    --avatar-x:-6px; --avatar-y:-53px;
   }
 
-  /* ORDER: bio, IG, photo, UTD */
+  /* ORDER: bio → IG → photo → UTD */
   .bio{ order:1; }
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; }
   .utd{ order:4; }
 
-  /* PHOTO — slightly smaller */
+  /* PHOTO — smaller */
   .about-photo{
-    max-width: clamp(210px, 75vw, 340px);
-    margin: 28px auto 48px;
+    max-width:clamp(200px,74vw,330px);
+    margin:24px auto 40px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* Two-line title wrap restored */
+  /* Two-line title */
   .utd-title{
-    display:block; max-width: 65%;
-    white-space: normal;
-    word-break: keep-all;
-    line-height: 1.12;
-    font-size: 10px;
-    letter-spacing: .02em;
-    margin:0; padding:6px 0;
-    text-wrap: balance;
+    display:block; max-width:65%;
+    white-space:normal; word-break:keep-all;
+    line-height:1.12; font-size:10px; letter-spacing:.02em;
+    margin:0; padding:6px 0; text-wrap:balance;
   }
   .utd-title .title-br{ display:inline; }
 
   .utd-unlock{
     font-size:9.5px; padding:0 6px;
-    white-space:nowrap; overflow:hidden;
-    text-overflow:ellipsis;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
   .avatar-overlay{
-    width: var(--avatar-size);
-    right: var(--avatar-x);
-    top: var(--avatar-y);
+    width:var(--avatar-size); right:var(--avatar-x); top:var(--avatar-y);
   }
 }
 
 
 /* =========================
-   SMALL PHONE • LANDSCAPE (max-height:430px)
+   SMALL PHONE • LANDSCAPE (≤430px)
    ========================= */
-@media (orientation:landscape) and (max-height: 430px){
+@media (orientation:landscape) and (max-height:430px){
   :root{
-    --avatar-size: clamp(60px, 16vw, 84px);
-    --avatar-x: -4px;
-    --avatar-y: -50px;
+    --avatar-size:clamp(60px,16vw,84px);
+    --avatar-x:-4px; --avatar-y:-50px;
   }
 
   /* PHOTO — smaller */
   .about-photo{
-    max-width: clamp(180px, 50vw, 340px);
-    margin: 12px auto 20px;
+    max-width:clamp(170px,50vw,330px);
+    margin:12px auto 18px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* Title in TWO lines (“Useless Thought” / “of the Day”) */
+  /* TWO-LINE title (“Useless Thought” / “of the Day”) */
   .utd-title{
     display:block; max-width:65%;
-    white-space: normal;
-    word-break: keep-all;
-    line-height:1.12;
-    font-size:10px;
-    letter-spacing:.02em;
-    margin:0; padding:6px 0;
-    text-wrap: balance;
+    white-space:normal; word-break:keep-all;
+    line-height:1.12; font-size:10px; letter-spacing:.02em;
+    margin:0; padding:6px 0; text-wrap:balance;
   }
   .utd-title .title-br{ display:inline; }
 
   .avatar-overlay{
-    width: var(--avatar-size);
-    right: var(--avatar-x);
-    top: var(--avatar-y);
+    width:var(--avatar-size); right:var(--avatar-x); top:var(--avatar-y);
   }
 }
+
