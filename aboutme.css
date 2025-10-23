@@ -236,7 +236,7 @@
     width:100%; max-width:100%; box-sizing:border-box;
   }
   /* Order: bio → IG → photo → UTD */
-  .bio{ order:1; margin-bottom:var(--row); }
+  .bio{ order:1; margin-bottom: 6px !important;   /* was 14px or var(--row); tighten it */}
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
   .utd{ order:4; }
@@ -253,7 +253,7 @@
   /* Title: force single line */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 7px; margin:-10px -10px 4px -10px;
+    padding:0 5px 0 7px; margin:-10px -10px 4px -10px;
     border-bottom:2px solid rgb(143,143,143);
     line-height:1; min-height:25px;
   }
@@ -337,7 +337,7 @@
   }
 
   /* Order stays: bio → IG → photo → UTD */
-  .bio{ order:1; }
+  .bio{ order:1;  margin-bottom: 6px !important;}
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; }
   .utd{ order:4; }
