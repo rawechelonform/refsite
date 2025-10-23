@@ -443,28 +443,23 @@
 
 
 
-
-/* ===== FORCE-HIDE the native cursor everywhere ===== */
-html, body, body *, *::before, *::after { cursor: none !important; }
-
-/* ===== Custom X cursor (white, large gap + center dot) ===== */
+/* ===== Custom X cursor (white, large center gap + dot) ===== */
 #custom-cursor {
-  --size: 28px;         /* overall X length */
-  --thick: 2px;         /* stroke thickness */
-  --gap: 12px;          /* empty space around the dot (total) */
-  --dot: 3px;           /* dot size */
+  --size: 30px;   /* overall X length */
+  --thick: 2px;   /* stroke thickness */
+  --gap: 14px;    /* empty space around the dot (total width) */
+  --dot: 3px;     /* dot size */
   position: fixed;
   left: 0; top: 0;
   width: var(--size);
   height: var(--size);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 9999;
-  color: #fff;          /* white X */
-  opacity: 1;
+  z-index: 99999;
+  color: #fff; /* white */
 }
 
-/* arms with a center gap */
+/* arms with a centered gap */
 #custom-cursor .arm {
   position: absolute;
   left: 50%; top: 50%;
@@ -495,7 +490,7 @@ html, body, body *, *::before, *::after { cursor: none !important; }
   background: currentColor;
 }
 
-/* spin animation (animates the whole cursor) */
+/* spin animation */
 @keyframes cursor-spin {
   from { transform: translate(-50%, -50%) rotate(0); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
@@ -503,5 +498,5 @@ html, body, body *, *::before, *::after { cursor: none !important; }
 #custom-cursor.spin { animation: cursor-spin 360ms ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
-  #custom-curs
-
+  #custom-cursor.spin { animation: none; }
+}

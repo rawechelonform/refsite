@@ -339,3 +339,40 @@ syncFromServer();
   document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
   document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
 })();
+
+
+
+
+// --- Kill native cursor everywhere, including inside shadow roots ---
+(() => {
+  const CSS = `html,body,*,:before,:after{cursor:none !important}`;
+  // Inject into main document
+  const s = document.createElement('style');
+  s.id = 'kill-native-cursor';
+  s.textContent = CSS;
+  document.head.appendChild(s);
+
+  // Inject into existing shadow roots
+  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
+  while (walker.nextNode()) {
+    const el = walker.currentNode;
+    if (el.shadowRoot) {
+      const s2 = document.createElement('style');
+      s2.textContent = CSS;
+      el.shadowRoot.appendChild(s2);
+    }
+  }
+
+  // Watch for future shadow roots added dynamically
+  new MutationObserver(muts => {
+    muts.forEach(m => {
+      m.addedNodes.forEach(n => {
+        if (n.nodeType === 1 && n.shadowRoot) {
+          const s3 = document.createElement('style');
+          s3.textContent = CSS;
+          n.shadowRoot.appendChild(s3);
+        }
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
