@@ -1,14 +1,17 @@
 // main.js — page-specific for main.html
 // Desktop: swap hover image on hover/focus (unchanged)
-// Mobile: wait for fonts + both images to fully decode, then reveal hub all at once
-//         plus: on tap, show the hover image for ~1s before navigating
+// Mobile: reveal hub after fonts+images, and on tap show hover image for ~1s before navigating
 
 (() => {
   'use strict';
 
-  const mqHover = window.matchMedia ? window.matchMedia('(hover: hover)') : null;
-  const mqFine  = window.matchMedia ? window.matchMedia('(pointer: fine)') : null;
-  const supportsDesktopHover = mqHover && mqHover.matches && mqFine && mqFine.matches;
+  // robust touch detection (iPadOS etc.)
+  const isTouchLike =
+    (window.matchMedia && (
+      window.matchMedia('(any-hover: none)').matches ||
+      window.matchMedia('(hover: none), (pointer: coarse)').matches
+    )) ||
+    ('ontouchstart' in window);
 
   // --- helpers ---
   function decodeImg(img) {
@@ -27,12 +30,13 @@
   }
 
   // --- desktop path (unchanged behavior) ---
-  if (supportsDesktopHover) {
+  if (!isTouchLike) {
     function wireSwap(img) {
       const normal = img.getAttribute('data-src') || img.getAttribute('src');
       const hover  = img.getAttribute('data-hover-src');
       if (!normal || !hover) return;
 
+      // preload hover for instant swap
       const pre = new Image();
       pre.src = hover;
 
@@ -61,7 +65,7 @@
     return;
   }
 
-  // --- mobile path: hold everything until ready, then reveal together ---
+  // --- mobile path ---
   async function initMobile() {
     const hub = document.getElementById('hub');
     if (!hub) return;
@@ -94,53 +98,52 @@
     hub.removeAttribute('data-wait');
 
     // tap → show hover for ~1s → navigate
-    wireTapHold(imgs);
+    wireTapHold();
   }
 
-  function wireTapHold(imgs) {
-    const HOLD_MS = 10000; // 1s
+  function wireTapHold() {
+    const HOLD_MS = 1000; // 1s
     const links = Array.from(document.querySelectorAll('a.tile'));
 
-    // map images by their containing link for quick lookup
-    const imgByLink = new Map();
     links.forEach(link => {
-      const img = link.querySelector('img.swap-on-hover');
-      if (img) imgByLink.set(link, img);
-    });
-
-    links.forEach(link => {
-      link.addEventListener('click', e => {
+      // use pointerup for immediacy on touch, with click as a fallback
+      const handler = (e) => {
+        // let modified clicks do their thing
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
-        const img = imgByLink.get(link);
+        const img = link.querySelector('img.swap-on-hover');
         if (!img) return;
 
-        const hover = img.getAttribute('data-hover-src');
+        const hover  = img.getAttribute('data-hover-src');
         const normal = img.getAttribute('data-src') || img.getAttribute('src');
         if (!hover) return;
 
-        if (link.dataset.busy === '1') { e.preventDefault(); return; }
-
+        // prevent default nav and double-activation
         e.preventDefault();
+        if (link.dataset.busy === '1') return;
         link.dataset.busy = '1';
 
-        // swap to hover and ensure it paints before starting the hold
+        // swap to hover and make sure it paints before starting the hold
         img.src = hover;
         requestAnimationFrame(() => {
           setTimeout(() => {
-            // optional tidy-up before nav on very slow connections
+            // optional tidy-up
             // img.src = normal;
 
             const href = link.getAttribute('href');
             const target = (link.getAttribute('target') || '_self').toLowerCase();
             if (target === '_self') {
-              window.location.href = href;
+              // iOS Safari friendly
+              window.location.assign(href);
             } else {
               window.open(href, target);
             }
           }, HOLD_MS);
         });
-      }, { passive: false });
+      };
+
+      link.addEventListener('pointerup', handler, { passive: false });
+      link.addEventListener('click',     handler, { passive: false }); // backup
     });
   }
 
