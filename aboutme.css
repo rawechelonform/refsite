@@ -28,7 +28,7 @@
 }
 .ext-link:hover{ color: rgb(110,110,110); text-decoration: underline; }
 
-/* ===== Two-column layout ===== */
+/* ===== Two-column layout (DESKTOP base) ===== */
 .about-grid{
   width: 100%;
   max-width: var(--maxw);
@@ -66,7 +66,6 @@
   margin: 4px 0 0;
   text-align: left;
 }
-
 .right-col .bio + .utd{ margin-top: 10px; }
 
 /* ===== UTD box ===== */
@@ -79,19 +78,10 @@
   font-family:'FS TI-92 ENO C', monospace;
   font-size:12px;
   box-sizing:border-box;
-  border-radius:0 !important;            /* square box */
-}
-
-/* kill glow and rounding for all controls inside UTD */
-.utd *{
   border-radius:0 !important;
-  box-shadow:none !important;
 }
-.utd *:focus,
-.utd *:focus-visible{
-  outline:none !important;
-  box-shadow:none !important;
-}
+.utd *{ border-radius:0 !important; box-shadow:none !important; }
+.utd *:focus, .utd *:focus-visible{ outline:none !important; box-shadow:none !important; }
 
 .utd-bar{
   display:flex;
@@ -104,29 +94,26 @@
 .utd-title{ font-size:11px; letter-spacing:.02em; text-transform:none; }
 .utd-title[contenteditable="true"]{ outline:2px dashed rgb(var(--utd-gray)); outline-offset:2px; cursor:text; }
 
-/* ====== DESKTOP-ONLY (>=901px): muted unlock + fixed avatar size/position ====== */
-@media (min-width: 901px){
-  /* Creator unlock button (desktop/base look) */
+/* Desktop-only unlock + avatar */
+@media (min-width:901px){
   .utd-unlock{
     background:#000;
-    color: rgb(90,90,90);              /* dark grey text */
-    border: 1px solid rgb(90,90,90);   /* thin dark grey border */
-    padding: 0 6px;                    /* match mobile side padding */
-    height: 18px;
-    line-height: 18px;
-    font-size: 10px;
-    text-transform: uppercase;
+    color: rgb(90,90,90);
+    border: 1px solid rgb(90,90,90);
+    padding: 0 6px;
+    height: 18px; line-height: 18px;
+    font-size: 10px; text-transform: uppercase;
     -webkit-appearance:none; appearance:none;
+    white-space: nowrap;
   }
   .utd-unlock:hover{ background:rgb(90,90,90); color:#000; }
 
   /* Avatar (desktop) — fixed width so it never gets huge */
   .avatar-overlay{
-    position: absolute;            /* keep it anchored to the UTD box */
-    top: -56px !important;         /* less negative = lower; positive drops below */
-    right: -8px;                   /* tweak left/right if needed */
-    width: 90px;                   /* desktop size; adjust to taste */
-    height: auto;
+    position: absolute;
+    top: -56px !important;
+    right: -8px;
+    width: 90px; height: auto;
     z-index:3; pointer-events:none; image-rendering:pixelated; opacity:.95;
   }
 }
@@ -144,29 +131,20 @@
 /* ===== Post form ===== */
 .utd-form{ margin-bottom:8px; }
 
-/* POST textarea (black bg, grey text) */
+/* POST textarea */
 .utd-textarea{
-  width:100%;
-  box-sizing:border-box;
-  background:#000;
-  color: rgb(var(--utd-gray));
-  caret-color: rgb(var(--utd-gray));
+  width:100%; box-sizing:border-box;
+  background:#000; color: rgb(var(--utd-gray)); caret-color: rgb(var(--utd-gray));
   border:2px solid rgb(var(--utd-gray));
-  padding:6px;
-  font-size:11px;
-  line-height:1.25;
+  padding:6px; font-size:11px; line-height:1.25;
   font-family:'FS TI-92 ENO C', monospace;
   max-height: calc(1.25em * 8 + 12px);
-  overflow-y:auto;
-  resize:vertical;
+  overflow-y:auto; resize:vertical;
 }
 
 /* POST button row — align to right */
 .utd-actions{
-  margin-top:6px;
-  display:flex;
-  gap:6px;
-  justify-content:flex-end;        /* right align */
+  margin-top:6px; display:flex; gap:6px; justify-content:flex-end;
 }
 .utd-actions button{
   background:#000; color:rgb(var(--utd-gray)); border:2px solid rgb(var(--utd-gray));
@@ -183,129 +161,59 @@
 .utd-line .ts{ white-space:nowrap; margin-right:2ch; font-variant-numeric:tabular-nums; }
 .utd-line .sep{ white-space:nowrap; margin-right:2ch; }
 
-/* ===== Inline editor — match post box exactly ===== */
+/* ===== Inline editor ===== */
 .utd-edit-wrap{ display:block; width:100%; }
-
-/* Edit textarea */
 .utd-edit{
-  width:100%;
-  box-sizing:border-box;
-  background:#000;
-  color: rgb(var(--utd-gray));
-  caret-color: rgb(var(--utd-gray));
+  width:100%; box-sizing:border-box;
+  background:#000; color: rgb(var(--utd-gray)); caret-color: rgb(var(--utd-gray));
   border:2px solid rgb(var(--utd-gray));
-  padding:6px;
-  font-size:11px;
-  line-height:1.25;
+  padding:6px; font-size:11px; line-height:1.25;
   font-family:'FS TI-92 ENO C', monospace;
-  resize:vertical;
-  max-height: calc(1.25em * 8 + 12px);
+  resize:vertical; max-height: calc(1.25em * 8 + 12px);
 }
-
-/* Edit actions row — right align */
 .utd-edit-actions{
-  margin-top:6px;
-  display:flex;
-  gap:6px;
-  justify-content:flex-end;
+  margin-top:6px; display:flex; gap:6px; justify-content:flex-end;
 }
-
-/* Save/Cancel in edit row */
 .utd-edit-actions .utd-edit-save,
-.utd-edit-actions .utd-edit-cancel{
-  background:#000;
-  color:rgb(var(--utd-gray));
-  border:2px solid rgb(var(--utd-gray));
-  padding:0 8px;
-  height:18px;
-  line-height:16px;
-  font-size:10px;
-  text-transform:uppercase;
-  cursor:pointer;
+.utd-edit-actions .utd-edit-cancel,
+.utd-edit-actions .utd-edit-del{
+  background:#000; color:rgb(var(--utd-gray)); border:2px solid rgb(var(--utd-gray));
+  padding:0 8px; height:18px; line-height:16px; font-size:10px; text-transform:uppercase; cursor:pointer;
 }
 .utd-edit-actions .utd-edit-save:hover,
-.utd-edit-actions .utd-edit-cancel:hover{
-  background:rgb(90,90,90);
-  color:#000;
-}
-
-/* Trash moved into edit row should look like a button */
-.utd-edit-actions .utd-edit-del{
-  background:#000;
-  color:rgb(var(--utd-gray));
-  border:2px solid rgb(var(--utd-gray));
-  padding:0 8px;
-  height:18px;
-  line-height:16px;
-  font-size:10px;
-  text-transform:uppercase;
-  cursor:pointer;
-}
-.utd-edit-actions .utd-edit-del:hover{
-  background:rgb(90,90,90);
-  color:#000;
-}
-
-/* Hide icons while editing */
+.utd-edit-actions .utd-edit-cancel:hover,
+.utd-edit-actions .utd-edit-del:hover{ background:rgb(90,90,90); color:#000; }
 .utd-line.is-editing .utd-icons{ display:none !important; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ======= MOBILE COMMON (safe globally) ======= */
-.utd-feed{
-  margin: 0 -10px 6px -10px;
-  padding: 0 6px 6px 6px;
+/* ===== Photo sizing (global desktop default) ===== */
+.about-photo{
+  margin: 0 0 8px 0;
+  max-width: clamp(360px, 34vw, 470px);
+  width: 100%;
 }
+.about-photo img{
+  display: block; width: 100%; height: auto;
+  border: 2px solid #000; box-sizing: border-box;
+  opacity: 1 !important; visibility: visible !important;
+  position: relative; z-index: 2 !important;
+}
+.corner-img{ display: none; }
+
+/* ======= MOBILE COMMON (≤900px) ======= */
+.utd-feed{ margin: 0 -10px 6px -10px; padding: 0 6px 6px 6px; }
 .utd-line{ padding: 0; }
 .utd-title .title-br{ display:none; }
 
 @media (max-width:900px){
   .utd-unlock{
-    background:#000;
-    color: rgb(90,90,90);
+    background:#000; color: rgb(90,90,90);
     border: 1px solid rgb(90,90,90);
-    padding: 0 6px;
-    height: 18px;
-    line-height: 18px;
-    font-size: 10px;
-    text-transform: uppercase;
-    -webkit-appearance:none; appearance:none;
-    white-space: nowrap;
+    padding: 0 6px; height: 18px; line-height: 18px;
+    font-size: 10px; text-transform: uppercase;
+    -webkit-appearance:none; appearance:none; white-space: nowrap;
   }
-  .utd-unlock:active,
-  .utd-unlock:focus{
-    background:#000 !important;
-    color: rgb(90,90,90) !important;
-  }
+  .utd-unlock:active, .utd-unlock:focus{ background:#000 !important; color: rgb(90,90,90) !important; }
 }
-
 
 /* =========================
    MOBILE • PORTRAIT (≤900px)
@@ -319,25 +227,21 @@
     --avatar-y: -49px;
   }
 
+  /* Stack and control order */
   .about-grid{
-    display:flex;
-    flex-direction:column;
+    display:flex; flex-direction:column;
     row-gap:var(--row);
     margin-top:20px;
-    padding-left:var(--gutter);
-    padding-right:var(--gutter);
-    width:100%;
-    max-width:100%;
-    box-sizing:border-box;
+    padding-left:var(--gutter); padding-right:var(--gutter);
+    width:100%; max-width:100%; box-sizing:border-box;
   }
-
-  /* Correct order: bio → IG → photo → thought box */
+  /* Order: bio → IG → photo → UTD */
   .bio{ order:1; margin-bottom:var(--row); }
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
   .utd{ order:4; }
 
-  /* Slightly smaller photo */
+  /* Photo: slightly smaller + more vertical space */
   .about-photo{
     display:block;
     max-width:clamp(200px, 68vw, 340px);
@@ -346,37 +250,25 @@
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* One-line title */
+  /* Title: force single line */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 7px;
-    margin:-10px -10px 4px -10px;
+    padding:0 7px; margin:-10px -10px 4px -10px;
     border-bottom:2px solid rgb(143,143,143);
     line-height:1; min-height:25px;
   }
   .utd-title{
-    font-size:10px;
-    line-height:1;
-    margin:0;
-    padding:6px 0;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    font-size:10px; line-height:1; margin:0; padding:6px 0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
+  /* Mobile avatar */
   .avatar-overlay{
-    position:absolute;
-    width:var(--avatar-size);
-    height:auto;
-    right:var(--avatar-x);
-    top:var(--avatar-y);
-    z-index:6;
-    pointer-events:none;
-    image-rendering:pixelated;
-    opacity:.95;
+    position:absolute; width:var(--avatar-size); height:auto;
+    right:var(--avatar-x); top:var(--avatar-y);
+    z-index:6; pointer-events:none; image-rendering:pixelated; opacity:.95;
   }
 }
-
 
 /* =========================
    MOBILE • LANDSCAPE (≤900px)
@@ -389,41 +281,50 @@
   }
 
   .about-grid{
-    display:grid;
-    grid-template-columns:1fr 0.9fr;
-    column-gap:3px;
-    row-gap:10px;
-    margin-top:28px;
-    padding-inline:10px;
+    display:grid; grid-template-columns:1fr 0.9fr;
+    column-gap:3px; row-gap:10px;
+    margin-top:28px; padding-inline:10px;
   }
 
   .about-blurb{
-    grid-column:1;
-    display:flex;
-    justify-content:center;
+    grid-column:1; display:flex; justify-content:center; align-items:flex-start;
   }
 
+  /* Photo: a bit larger than before but not huge */
   .about-photo{
     display:block;
-    max-width:clamp(220px,52vw,360px);
+    max-width:clamp(220px, 52vw, 360px);
     margin:16px auto 22px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
 
+  .right-col{
+    grid-column:2; display:flex; flex-direction:column; gap:12px; padding-right:8px; min-width:0;
+  }
+
+  .utd{
+    position: relative; padding: 10px;
+    border: 2px solid rgb(var(--utd-gray)) !important;
+    background: #000; color: rgb(var(--utd-gray));
+  }
+  .utd-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 7px; margin:-10px -10px 4px -10px;
+    border-bottom:2px solid rgb(143,143,143);
+    line-height:1; min-height:25px;
+  }
+  .utd-title{
+    font-size:10px; line-height:1; margin:0; padding:6px 0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; /* one line */
+  }
+
   .avatar-overlay{
-    position:absolute;
-    width:var(--avatar-size);
-    height:auto;
-    right:var(--avatar-x);
-    top:var(--avatar-y);
-    z-index:6;
-    pointer-events:none;
-    image-rendering:pixelated;
-    opacity:.95;
+    position:absolute; width:var(--avatar-size); height:auto;
+    right:var(--avatar-x); top:var(--avatar-y);
+    z-index:6; pointer-events:none; image-rendering:pixelated; opacity:.95;
   }
 }
-
 
 /* =========================
    SMALL PHONE • PORTRAIT (≤480px)
@@ -435,24 +336,27 @@
     --avatar-y: -53px;
   }
 
-  /* Correct order: bio → IG → photo → thought box */
+  /* Order stays: bio → IG → photo → UTD */
   .bio{ order:1; }
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; }
   .utd{ order:4; }
 
-  /* Slightly smaller photo */
+  /* Photo slightly smaller than normal portrait */
   .about-photo{
     max-width:clamp(190px, 70vw, 320px);
     margin:24px auto 40px;
     width:100%;
   }
   .about-photo img{ width:100%; height:auto; }
+
+  /* Keep title to one line */
+  .utd-title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .utd-title .title-br{ display:none; }
 }
 
-
 /* =========================
-   SMALL PHONE • LANDSCAPE (≤430px)
+   SMALL PHONE • LANDSCAPE (≤430px height)
    ========================= */
 @media (orientation:landscape) and (max-height:430px){
   :root{
@@ -461,7 +365,7 @@
     --avatar-y: -50px;
   }
 
-  /* Smaller photo */
+  /* Photo */
   .about-photo{
     max-width:clamp(170px, 50vw, 320px);
     margin:12px auto 18px;
@@ -471,15 +375,9 @@
 
   /* Two-line title (“Useless Thought” / “of the Day”) */
   .utd-title{
-    display:block;
-    max-width:65%;
-    white-space:normal;
-    word-break:keep-all;
-    line-height:1.12;
-    font-size:10px;
-    letter-spacing:.02em;
-    margin:0;
-    padding:6px 0;
+    display:block; max-width:65%;
+    white-space:normal; word-break:keep-all; line-height:1.12;
+    font-size:10px; letter-spacing:.02em; margin:0; padding:6px 0;
     text-wrap:balance;
   }
   .utd-title .title-br{ display:inline; }
@@ -491,3 +389,20 @@
   }
 }
 
+/* ===== DESKTOP RE-ASSERT (safety) ===== */
+@media (min-width:901px){
+  .about-grid{
+    display:grid !important;
+    grid-template-columns:1fr 0.9fr !important;
+    column-gap:5px !important;
+    row-gap:10px !important;
+    margin-top:48px !important;
+    padding:0 !important;
+  }
+  .right-col{ display:flex !important; flex-direction:column !important; gap:14px !important; }
+  .about-blurb{ display:flex !important; justify-content:center !important; align-items:flex-start !important; }
+  .about-photo{
+    max-width:clamp(360px,34vw,470px) !important;
+    margin:0 0 8px 0 !important;
+  }
+}
