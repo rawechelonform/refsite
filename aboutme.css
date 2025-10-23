@@ -439,39 +439,69 @@
 
 
 
-/* ===== Custom cursor (desktop only) ===== */
-@media (pointer: fine) { html, body { cursor: none; } }
 
+
+
+
+
+/* ===== FORCE-HIDE the native cursor everywhere ===== */
+html, body, body *, *::before, *::after { cursor: none !important; }
+
+/* ===== Custom X cursor (white, large gap + center dot) ===== */
 #custom-cursor {
+  --size: 28px;         /* overall X length */
+  --thick: 2px;         /* stroke thickness */
+  --gap: 12px;          /* empty space around the dot (total) */
+  --dot: 3px;           /* dot size */
   position: fixed;
   left: 0; top: 0;
-  width: 22px; height: 22px;
+  width: var(--size);
+  height: var(--size);
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 9999;
-  color: #111;
-  opacity: 0.95;
+  color: #fff;          /* white X */
+  opacity: 1;
 }
+
+/* arms with a center gap */
 #custom-cursor .arm {
   position: absolute;
   left: 50%; top: 50%;
-  width: 22px; height: 2px;
+  width: var(--size);
+  height: var(--thick);
   transform-origin: 50% 50%;
   transform: translate(-50%, -50%) rotate(45deg);
-  background: currentColor;
+  background:
+    linear-gradient(
+      90deg,
+      currentColor 0 calc(50% - (var(--gap) / 2)),
+      transparent  calc(50% - (var(--gap) / 2)) calc(50% + (var(--gap) / 2)),
+      currentColor calc(50% + (var(--gap) / 2)) 100%
+    );
 }
-#custom-cursor .arm-b { transform: translate(-50%, -50%) rotate(-45deg); }
+#custom-cursor .arm-b {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* center dot */
 #custom-cursor .dot {
   position: absolute;
   left: 50%; top: 50%;
-  width: 4px; height: 4px;
+  width: var(--dot);
+  height: var(--dot);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: currentColor;
 }
+
+/* spin animation (animates the whole cursor) */
 @keyframes cursor-spin {
   from { transform: translate(-50%, -50%) rotate(0); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 #custom-cursor.spin { animation: cursor-spin 360ms ease-out; }
-@media (prefers-reduced-motion: reduce) { #custom-cursor.spin { animation: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  #custom-curs
+
