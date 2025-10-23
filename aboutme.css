@@ -224,7 +224,7 @@
     --gutter: 35px;
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -45px;
+    --avatar-y: -48px;
   }
 
   /* Stack and control order */
