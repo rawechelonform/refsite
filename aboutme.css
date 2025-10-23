@@ -278,7 +278,6 @@
 
 
 
-
 /* ======= MOBILE COMMON (safe globally) ======= */
 .utd-feed{
   margin: 0 -10px 6px -10px;
@@ -321,62 +320,60 @@
   }
 
   .about-grid{
-    display: flex;
-    flex-direction: column;
-    row-gap: var(--row);
-    margin-top: 20px;
-    padding-left: var(--gutter);
-    padding-right: var(--gutter);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+    display:flex;
+    flex-direction:column;
+    row-gap:var(--row);
+    margin-top:20px;
+    padding-left:var(--gutter);
+    padding-right:var(--gutter);
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
   }
 
-  /* ORDER: bio → IG → photo → thought box */
-  .bio{ order: 1; margin-bottom: var(--row); }
-  .about-grid .ext-link{ order: 2; display: inline-block; }
-  .about-blurb{ order: 3; display: flex; justify-content: center; align-items: flex-start; width: 100%; }
-  .utd{ order: 4; }
+  /* Correct order: bio → IG → photo → thought box */
+  .bio{ order:1; margin-bottom:var(--row); }
+  .about-grid .ext-link{ order:2; display:inline-block; }
+  .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
+  .utd{ order:4; }
 
-  /* PHOTO — slightly smaller for portrait */
+  /* Slightly smaller photo */
   .about-photo{
-    display: block;
-    max-width: clamp(200px, 68vw, 340px);
-    margin: 28px auto 40px;
-    width: 100%;
+    display:block;
+    max-width:clamp(200px, 68vw, 340px);
+    margin:28px auto 40px;
+    width:100%;
   }
-  .about-photo img{ width: 100%; height: auto; }
+  .about-photo img{ width:100%; height:auto; }
 
-  /* UTD box — one line title */
+  /* One-line title */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 0 7px;
-    margin: -10px -10px 4px -10px;
-    border-bottom: 2px solid rgb(143,143,143);
-    line-height: 1;
-    min-height: 25px;
+    padding:0 7px;
+    margin:-10px -10px 4px -10px;
+    border-bottom:2px solid rgb(143,143,143);
+    line-height:1; min-height:25px;
   }
   .utd-title{
-    font-size: 10px;
-    line-height: 1;
-    margin: 0;
-    padding: 6px 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size:10px;
+    line-height:1;
+    margin:0;
+    padding:6px 0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
 
-  /* Avatar — perched on top-right */
   .avatar-overlay{
-    position: absolute;
-    width: var(--avatar-size);
-    height: auto;
-    right: var(--avatar-x);
-    top: var(--avatar-y);
-    z-index: 6;
-    pointer-events: none;
-    image-rendering: pixelated;
-    opacity: .95;
+    position:absolute;
+    width:var(--avatar-size);
+    height:auto;
+    right:var(--avatar-x);
+    top:var(--avatar-y);
+    z-index:6;
+    pointer-events:none;
+    image-rendering:pixelated;
+    opacity:.95;
   }
 }
 
@@ -392,48 +389,38 @@
   }
 
   .about-grid{
-    display: grid;
-    grid-template-columns: 1fr 0.9fr;
-    column-gap: 3px;
-    row-gap: 10px;
-    margin-top: 28px;
-    padding-inline: 10px;
+    display:grid;
+    grid-template-columns:1fr 0.9fr;
+    column-gap:3px;
+    row-gap:10px;
+    margin-top:28px;
+    padding-inline:10px;
   }
 
   .about-blurb{
-    grid-column: 1;
-    display: flex;
-    justify-content: center;
+    grid-column:1;
+    display:flex;
+    justify-content:center;
   }
 
-  /* PHOTO — slightly smaller for landscape */
   .about-photo{
-    display: block;
-    max-width: clamp(220px, 52vw, 360px);
-    margin: 16px auto 22px;
-    width: 100%;
+    display:block;
+    max-width:clamp(220px,52vw,360px);
+    margin:16px auto 22px;
+    width:100%;
   }
-  .about-photo img{ width: 100%; height: auto; }
+  .about-photo img{ width:100%; height:auto; }
 
-  .utd{
-    position: relative;
-    padding: 10px;
-    border: 2px solid rgb(var(--utd-gray)) !important;
-    background: #000;
-    color: rgb(var(--utd-gray));
-  }
-
-  /* Avatar — top-right */
   .avatar-overlay{
-    position: absolute;
-    width: var(--avatar-size);
-    height: auto;
-    right: var(--avatar-x);
-    top: var(--avatar-y);
-    z-index: 6;
-    pointer-events: none;
-    image-rendering: pixelated;
-    opacity: .95;
+    position:absolute;
+    width:var(--avatar-size);
+    height:auto;
+    right:var(--avatar-x);
+    top:var(--avatar-y);
+    z-index:6;
+    pointer-events:none;
+    image-rendering:pixelated;
+    opacity:.95;
   }
 }
 
@@ -448,21 +435,19 @@
     --avatar-y: -53px;
   }
 
-  /* ORDER: bio → IG → photo → thought box */
-  .bio{ order: 1; }
-  .about-grid .ext-link{ order: 2; display: inline-block; }
-  .about-blurb{ order: 3; }
-  .utd{ order: 4; }
+  /* Correct order: bio → IG → photo → thought box */
+  .bio{ order:1; }
+  .about-grid .ext-link{ order:2; display:inline-block; }
+  .about-blurb{ order:3; }
+  .utd{ order:4; }
 
-  /* PHOTO — slightly smaller for small portrait */
+  /* Slightly smaller photo */
   .about-photo{
-    max-width: clamp(190px, 70vw, 320px);
-    margin: 24px auto 40px;
-    width: 100%;
+    max-width:clamp(190px, 70vw, 320px);
+    margin:24px auto 40px;
+    width:100%;
   }
-  .about-photo img{ width: 100%; height: auto; }
-
-  /* keep UTD title unchanged (wrap handled by default small rules elsewhere) */
+  .about-photo img{ width:100%; height:auto; }
 }
 
 
@@ -476,33 +461,33 @@
     --avatar-y: -50px;
   }
 
-  /* PHOTO — smaller for small landscape */
+  /* Smaller photo */
   .about-photo{
-    max-width: clamp(170px, 50vw, 320px);
-    margin: 12px auto 18px;
-    width: 100%;
+    max-width:clamp(170px, 50vw, 320px);
+    margin:12px auto 18px;
+    width:100%;
   }
-  .about-photo img{ width: 100%; height: auto; }
+  .about-photo img{ width:100%; height:auto; }
 
   /* Two-line title (“Useless Thought” / “of the Day”) */
   .utd-title{
-    display: block;
-    max-width: 65%;
-    white-space: normal;
-    word-break: keep-all;
-    line-height: 1.12;
-    font-size: 10px;
-    letter-spacing: .02em;
-    margin: 0;
-    padding: 6px 0;
-    text-wrap: balance;
+    display:block;
+    max-width:65%;
+    white-space:normal;
+    word-break:keep-all;
+    line-height:1.12;
+    font-size:10px;
+    letter-spacing:.02em;
+    margin:0;
+    padding:6px 0;
+    text-wrap:balance;
   }
-  .utd-title .title-br{ display: inline; }
+  .utd-title .title-br{ display:inline; }
 
   .avatar-overlay{
-    width: var(--avatar-size);
-    right: var(--avatar-x);
-    top: var(--avatar-y);
+    width:var(--avatar-size);
+    right:var(--avatar-x);
+    top:var(--avatar-y);
   }
 }
 
