@@ -333,7 +333,7 @@
   :root{
     --avatar-size: clamp(60px, 18vw, 92px);
     --avatar-x: -6px;
-    --avatar-y: -49px;
+    --avatar-y: -45px;
   }
 
   /* Order stays: bio → IG → photo → UTD */
@@ -362,7 +362,7 @@
   :root{
     --avatar-size: clamp(60px, 16vw, 84px);
     --avatar-x: -4px;
-    --avatar-y: -55px;
+    --avatar-y: -53px;
   }
 
   /* Photo */
