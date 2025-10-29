@@ -51,6 +51,7 @@ html, body { margin: 0; padding: 0; }
      - internal vertical separators at 20% steps (5 items)
      - black bar background
   */
+    /* existing .menu rules stay */
   background:
     linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
     linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
