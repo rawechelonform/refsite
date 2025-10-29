@@ -193,7 +193,7 @@
 }
 .about-photo img{
   display: block; width: 100%; height: auto;
-  border: 2px solid #000; box-sizing: border-box;
+  border: 0;
   opacity: 1 !important; visibility: visible !important;
   position: relative; z-index: 2 !important;
 }
