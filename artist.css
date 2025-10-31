@@ -524,18 +524,22 @@ html, body, body *, *::before, *::after { cursor: none !important; }
     drop-shadow(0 0 12px rgba(255,255,255,.25));
 }
 
-/* success message under the badge */
+/* success message (tighter, nudged left, fades in/out) */
 .glitch-msg{
-  margin-top: 6px;
+  margin-top: 2px;              /* closer to the image */
+  padding-left: 4px;            /* slight nudge left under the badge */
+  transform: translateX(-6px);  /* a bit more left */
   font-family: var(--ui-mono);
   font-size: 12px;
   line-height: 1.2;
   color: rgb(var(--utd-gray));
-  text-align: right;
+  text-align: left;             /* was right; now left-aligned */
   opacity: 0;
-  transition: opacity .2s ease-in-out;
+  transition: opacity .25s ease-in-out;
 }
 .glitch-msg.show{ opacity: 1; }
+.glitch-msg.hide{ opacity: 0; } /* used for auto-dismiss */
+
 
 /* small phones */
 @media (max-width: 420px){

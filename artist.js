@@ -363,14 +363,37 @@ if ($title) $title.textContent = loadTitle();
 render();
 syncFromServer();
 
+
+
 /* ======= Glitch badge success message ======= */
-/* Shows "registration complete." when redirected back to artist.html */
+/* Shows "registration complete." when redirected back to artist.html,
+   then fades it out after a short delay. */
 (() => {
-  const q = new URLSearchParams(location.search);
-  const ok = q.get('registration') === 'complete' || q.get('registered') === '1' || location.hash === '#registered';
+  const q  = new URLSearchParams(location.search);
+  const ok = q.get('registration') === 'complete' ||
+             q.get('registered') === '1' ||
+             location.hash === '#registered';
   if (!ok) return;
+
   const el = document.getElementById('glitchMsg');
   if (!el) return;
+
+  const DISPLAY_MS   = 2000;  // how long it stays visible
+  const FADE_MS      = 300;   // should match CSS transition
+
   el.hidden = false;
-  requestAnimationFrame(() => el.classList.add('show'));
+  // ensure reflow so the transition applies
+  void el.offsetWidth;
+  el.classList.add('show');
+
+  // auto-hide
+  setTimeout(() => {
+    el.classList.remove('show');
+    el.classList.add('hide');
+    // after fade, hide from layout again
+    setTimeout(() => {
+      el.hidden = true;
+      el.classList.remove('hide');
+    }, FADE_MS);
+  }, DISPLAY_MS);
 })();
