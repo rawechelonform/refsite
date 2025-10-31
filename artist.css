@@ -525,3 +525,73 @@
 
 /* (Optional belt-and-suspenders) — prevent any element from re-enabling the OS cursor */
 html, body, body *, *::before, *::after { cursor: none !important; }
+
+
+
+
+
+
+
+
+
+
+
+
+/* ===== Glitch report corner link (full block) ===== */
+.glitch-corner{
+  position: fixed;
+  /* align with the page's right gutter based on --maxw */
+  right: max(12px, calc((100vw - var(--maxw)) / 2 + 12px));
+  bottom: 18px;
+  /* bigger badge */
+  width: clamp(120px, 16vw, 200px);
+  aspect-ratio: 1 / 1;
+  display: block;
+  z-index: 9999;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.glitch-corner img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none; /* clicks go to the <a> */
+  user-select: none;
+}
+
+/* base always visible; slight dim on hover so words pop */
+.glitch-corner .gc-base{ opacity: 1; transition: opacity .18s ease-in-out; }
+.glitch-corner:hover .gc-base,
+.glitch-corner:focus-visible .gc-base{
+  opacity: 0.88;
+  filter: none;
+}
+
+/* overlay (words) — stronger, clean white glow */
+.glitch-corner .gc-hover{
+  z-index: 2;
+  opacity: 0;
+  transition: opacity .18s ease-in-out;
+  filter:
+    brightness(1.12)
+    drop-shadow(0 0 2px #fff)
+    drop-shadow(0 0 6px #fff)
+    drop-shadow(0 0 12px #fff)
+    drop-shadow(0 0 20px #fff);
+}
+.glitch-corner:hover .gc-hover,
+.glitch-corner:focus-visible .gc-hover{
+  opacity: 1;
+}
+
+/* small phones */
+@media (max-width: 420px){
+  .glitch-corner{
+    right: 10px;
+    bottom: 12px;
+    width: clamp(96px, 26vw, 132px);
+  }
+}
+
