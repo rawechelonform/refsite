@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>REF // Gate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preload" as="image" href="avatar/avatar_intro.png">
+  <link rel="stylesheet" href="glitchreport.css?v=200">
+</head>
+<body>
+  <div class="wrap">
+    <div class="stage">
+      <div class="figure" aria-hidden="true"></div>
+    </div>
+
+    <div class="terminal">
+      <div class="line">
+        <span id="static-part"></span><span id="typed-part"></span>
+      </div>
+
+      <div class="prompt" id="prompt">
+        <span class="caret">></span>
+        <span id="typed" class="typed"></span>
+        <input id="cmd" class="cmd" type="text"
+               inputmode="latin" autocomplete="off"
+               autocapitalize="off" spellcheck="false" />
+      </div>
+
+      <div id="hint" class="hint" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="glitchreport.js?v=200"></script>
+</body>
+</html>
