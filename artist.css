@@ -226,8 +226,6 @@
     --avatar-x: -6px;
     --avatar-y: -48px;
   }
-
-  /* Stack and control order */
   .about-grid{
     display:flex; flex-direction:column;
     row-gap:var(--row);
@@ -235,13 +233,11 @@
     padding-left:var(--gutter); padding-right:var(--gutter);
     width:100%; max-width:100%; box-sizing:border-box;
   }
-  /* Order: bio → IG → photo → UTD */
-  .bio{ order:1; margin-bottom: 3px !important;   /* was 14px or var(--row); tighten it */}
+  .bio{ order:1; margin-bottom: 3px !important; }
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; display:flex; justify-content:center; align-items:flex-start; width:100%; }
   .utd{ order:4; }
 
-  /* Photo: slightly smaller + more vertical space */
   .about-photo{
     display:block;
     max-width:clamp(200px, 72vw, 340px);
@@ -250,7 +246,6 @@
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* Title: force single line */
   .utd-bar{
     display:flex; align-items:center; justify-content:space-between;
     padding:0 3px 0 7px; margin:-10px -10px 4px -10px;
@@ -262,7 +257,6 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
-  /* Mobile avatar */
   .avatar-overlay{
     position:absolute; width:var(--avatar-size); height:auto;
     right:var(--avatar-x); top:var(--avatar-y);
@@ -285,12 +279,10 @@
     column-gap:3px; row-gap:10px;
     margin-top:28px; padding-inline:10px;
   }
-
   .about-blurb{
     grid-column:1; display:flex; justify-content:center; align-items:flex-start;
   }
 
-  /* Photo: a bit larger than before but not huge */
   .about-photo{
     display:block;
     max-width:clamp(220px, 52vw, 360px);
@@ -316,7 +308,7 @@
   }
   .utd-title{
     font-size:10px; line-height:1; margin:0; padding:6px 0;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; /* one line */
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
   .avatar-overlay{
@@ -335,14 +327,11 @@
     --avatar-x: -6px;
     --avatar-y: -45px;
   }
-
-  /* Order stays: bio → IG → photo → UTD */
   .bio{ order:1;  margin-bottom: 3px !important;}
   .about-grid .ext-link{ order:2; display:inline-block; }
   .about-blurb{ order:3; }
   .utd{ order:4; }
 
-  /* Photo slightly smaller than normal portrait */
   .about-photo{
     max-width:clamp(190px, 70vw, 320px);
     margin:24px auto 40px;
@@ -350,7 +339,6 @@
   }
   .about-photo img{ width:100%; height:auto; }
 
-  /* Keep title to one line */
   .utd-title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .utd-title .title-br{ display:none; }
 }
@@ -365,15 +353,12 @@
     --avatar-y: -53px;
   }
 
-  /* Photo */
   .about-photo{
     max-width:clamp(170px, 50vw, 320px);
     margin:12px auto 18px;
     width:100%;
   }
-  .about-photo img{ width:100%; height:auto; }
 
-  /* Two-line title (“Useless Thought” / “of the Day”) */
   .utd-title{
     display:block; max-width:65%;
     white-space:normal; word-break:keep-all; line-height:1.12;
@@ -407,16 +392,10 @@
   }
 }
 
-
-
 /* --- FIX ORDER: Mobile portrait (≤900px) --- */
-/* Desired order: bio → IG → photo → thought box */
 @media (max-width:900px) and (orientation:portrait){
-  /* Ensure .right-col contents can reorder properly */
   .right-col{ display: contents !important; }
-
   .bio{ order: 1 !important; }
-  /* Adjust this selector to your actual IG container */
   .about-grid .ext-link,
   .right-col a.ext-link{ order: 2 !important; }
   .about-blurb{ order: 3 !important; }
@@ -426,7 +405,6 @@
 /* --- FIX ORDER: Small mobile portrait (≤480px) --- */
 @media (max-width:480px) and (orientation:portrait){
   .right-col{ display: contents !important; }
-
   .bio{ order: 1 !important; }
   .about-grid .ext-link,
   .right-col a.ext-link{ order: 2 !important; }
@@ -434,42 +412,25 @@
   .utd{ order: 4 !important; }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ====== Cursor: invisible OS pointer + custom spinning X ====== */
 
-/* 1) Full-page mask: forces the native cursor to be invisible */
+/* 1) Full-page mask: forces native cursor invisible, BUT lets events through */
 #cursor-mask{
   position: fixed;
   inset: 0;
   z-index: 2147483646; /* just under the custom cursor */
   background: transparent;
-  /* transparent 1x1 PNG + 'none' — wins even when elements force their own cursor */
   cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgW3zY4QAAAAASUVORK5CYII=') 0 0, none !important;
+  pointer-events: none !important; /* critical so :hover/click reach the page */
 }
 
-/* 2) Custom cursor root */
+/* 2) Custom cursor root (drawn X) */
 #custom-cursor{
-  /* tweak these to taste */
-  --size: 34px;   /* overall X length */
-  --thick: 2px;   /* line thickness */
-  --gap: 18px;    /* empty space around center (total) */
-  --dot: 3px;     /* center dot size */
-  --cursor-color: #fff; /* white */
+  --size: 34px;
+  --thick: 2px;
+  --gap: 18px;
+  --dot: 3px;
+  --cursor-color: #fff;
 
   position: fixed;
   left: 0; top: 0;
@@ -477,11 +438,9 @@
   height: var(--size);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 2147483647;   /* always on top of the mask */
+  z-index: 2147483647;
   color: var(--cursor-color);
 }
-
-/* arms with a centered gap (drawn with a gradient so the middle is empty) */
 #custom-cursor .arm{
   position: absolute;
   left: 50%; top: 50%;
@@ -497,11 +456,7 @@
       currentColor calc(50% + (var(--gap) / 2)) 100%
     );
 }
-#custom-cursor .arm-b{
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
-
-/* center dot */
+#custom-cursor .arm-b{ transform: translate(-50%, -50%) rotate(-45deg); }
 #custom-cursor .dot{
   position: absolute;
   left: 50%; top: 50%;
@@ -518,35 +473,28 @@
   to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 #custom-cursor.spin{ animation: cursor-spin 360ms ease-out; }
+@media (prefers-reduced-motion: reduce){ #custom-cursor.spin{ animation: none; } }
 
-@media (prefers-reduced-motion: reduce){
-  #custom-cursor.spin{ animation: none; }
-}
-
-/* (Optional belt-and-suspenders) — prevent any element from re-enabling the OS cursor */
+/* Prevent any element from re-enabling the OS cursor */
 html, body, body *, *::before, *::after { cursor: none !important; }
 
+/* ===== Glitch report corner link (canonical) ===== */
 
-
-
-
-
-
-
-
-
-
-
-
-/* ===== Glitch report corner link — softer base-only glow ===== */
-.glitch-corner{
+/* Fixed wrapper (respects page gutter) */
+.glitch-corner-wrap{
   position: fixed;
   right: max(12px, calc((100vw - var(--maxw)) / 2 + 12px));
   bottom: 18px;
   width: clamp(120px, 16vw, 200px);
-  aspect-ratio: 1 / 1;
-  display: block;
   z-index: 9999;
+}
+
+/* Clickable badge fills the wrapper */
+.glitch-corner{
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -560,11 +508,13 @@ html, body, body *, *::before, *::after { cursor: none !important; }
   user-select: none;
 }
 
-/* stacking */
+/* overlay fades in on hover */
 .glitch-corner .gc-base  { z-index: 1; transition: filter .18s ease-in-out; }
-.glitch-corner .gc-hover { z-index: 2; }
+.glitch-corner .gc-hover { z-index: 2; opacity: 0; transition: opacity .18s ease-in-out; }
+.glitch-corner:hover .gc-hover,
+.glitch-corner:focus-visible .gc-hover{ opacity: 1; }
 
-/* BASE glow — toned down */
+/* base-only glow (subtle; tweak if needed) */
 .glitch-corner:hover .gc-base,
 .glitch-corner:focus-visible .gc-base{
   filter:
@@ -574,19 +524,22 @@ html, body, body *, *::before, *::after { cursor: none !important; }
     drop-shadow(0 0 12px rgba(255,255,255,.25));
 }
 
-/* overlay (words) stays crisp, no glow */
-.glitch-corner .gc-hover{
+/* success message under the badge */
+.glitch-msg{
+  margin-top: 6px;
+  font-family: var(--ui-mono);
+  font-size: 12px;
+  line-height: 1.2;
+  color: rgb(var(--utd-gray));
+  text-align: right;
   opacity: 0;
-  transition: opacity .18s ease-in-out;
-  filter: none !important;
-  mix-blend-mode: normal;
+  transition: opacity .2s ease-in-out;
 }
-.glitch-corner:hover .gc-hover,
-.glitch-corner:focus-visible .gc-hover{ opacity: 1; }
+.glitch-msg.show{ opacity: 1; }
 
 /* small phones */
 @media (max-width: 420px){
-  .glitch-corner{
+  .glitch-corner-wrap{
     right: 10px;
     bottom: 12px;
     width: clamp(96px, 26vw, 132px);

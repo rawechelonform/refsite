@@ -1,62 +1,22 @@
-/* artist.js — secure unlock + UTD feed + server sync + custom spinning X cursor */
+/* artist.js — UTD + custom crosshair cursor + glitch badge message */
 
-/* ========= 0) Transparent OS cursor + iframe/shadow coverage ========= */
+/* ========= 0) Transparent OS cursor + custom crosshair ========= */
 (() => {
+  // Make sure the CSS that hides the OS cursor is injected early (belt + suspenders)
   const TRANSPARENT_CURSOR = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgW3zY4QAAAAASUVORK5CYII=') 0 0, none";
   const KILL_CSS = `html,body,*,:before,:after{cursor:${TRANSPARENT_CURSOR} !important}`;
-
-  // main doc
   const s = document.createElement('style');
   s.textContent = KILL_CSS;
   document.head.appendChild(s);
 
-  // patch attachShadow so new shadow roots inherit rule
-  const origAttach = Element.prototype.attachShadow;
-  Element.prototype.attachShadow = function(init){
-    const root = origAttach.call(this, init);
-    try { const st = document.createElement('style'); st.textContent = KILL_CSS; root.appendChild(st); } catch(_){}
-    return root;
-  };
-
-  // inject into existing shadow roots + same-origin iframes; disable x-origin iframes
-  const tryInject = (node) => {
-    if (!node || node.nodeType !== 1) return;
-    if (node.shadowRoot) {
-      try { const st = document.createElement('style'); st.textContent = KILL_CSS; node.shadowRoot.appendChild(st); } catch(_){}
-    }
-    if (node.tagName === 'IFRAME') {
-      try {
-        const d = node.contentDocument;
-        if (d?.head) {
-          const st = d.createElement('style'); st.textContent = KILL_CSS; d.head.appendChild(st);
-        } else {
-          node.addEventListener('load', () => {
-            try { const d2 = node.contentDocument; if (d2?.head) { const st2 = d2.createElement('style'); st2.textContent = KILL_CSS; d2.head.appendChild(st2); } } catch(_){}
-          }, { once:true });
-        }
-      } catch(_) {
-        node.style.pointerEvents = 'none';
-      }
-    }
-  };
-
-  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
-  while (walker.nextNode()) tryInject(walker.currentNode);
-  new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(tryInject)))
-    .observe(document.documentElement, { childList:true, subtree:true });
-  document.querySelectorAll('iframe').forEach(tryInject);
-})();
-
-/* ========= 1) Cursor mask overlay + custom X cursor (single source of truth) ========= */
-(() => {
-  // 1) Mask that always wins cursor styling and forwards events underneath
+  // 1) Mask element that always wins cursor styling, but DOES NOT capture events
   const mask = document.createElement('div');
   mask.id = 'cursor-mask';
-  // If body exists now, append; else wait for DOMContentLoaded
+  mask.style.pointerEvents = 'none'; // critical to allow :hover/click on page
   const appendMask = () => document.body && document.body.appendChild(mask);
   if (document.body) appendMask(); else document.addEventListener('DOMContentLoaded', appendMask);
 
-  // 2) Ensure the custom cursor element exists (once)
+  // 2) Custom cursor element (drawn crosshair)
   let cursor = document.getElementById('custom-cursor');
   if (!cursor) {
     cursor = document.createElement('div');
@@ -82,44 +42,15 @@
   };
   const spin = () => { cursor.classList.remove('spin'); void cursor.offsetWidth; cursor.classList.add('spin'); };
 
-  // 4) Forwarding helpers
-  const forwardPointer = (e) => {
-    const target = document.elementFromPoint(e.clientX, e.clientY);
-    if (!target || target === mask || target === cursor) return;
-    const evt = new PointerEvent(e.type, {
-      bubbles:true, cancelable:true, composed:true,
-      pointerId:e.pointerId, pointerType:e.pointerType,
-      clientX:e.clientX, clientY:e.clientY, screenX:e.screenX, screenY:e.screenY,
-      button:e.button, buttons:e.buttons,
-      ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey
-    });
-    target.dispatchEvent(evt);
-  };
-  const forwardWheel = (e) => {
-    const target = document.elementFromPoint(e.clientX, e.clientY);
-    if (!target || target === mask || target === cursor) return;
-    const evt = new WheelEvent('wheel', {
-      bubbles:true, cancelable:true, composed:true,
-      deltaX:e.deltaX, deltaY:e.deltaY, deltaZ:e.deltaZ, deltaMode:e.deltaMode,
-      clientX:e.clientX, clientY:e.clientY
-    });
-    target.dispatchEvent(evt);
-  };
-
-  // 5) Hook on the mask so its cursor always wins
-  mask.addEventListener('pointermove', (e) => { move(e.clientX, e.clientY); forwardPointer(e); }, { passive:true });
-  mask.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); forwardPointer(e); }, { passive:true });
-  mask.addEventListener('pointerup',   forwardPointer, { passive:true });
-  mask.addEventListener('click',       forwardPointer, { passive:true });
-  mask.addEventListener('dblclick',    forwardPointer, { passive:true });
-  mask.addEventListener('contextmenu', forwardPointer);
-  mask.addEventListener('wheel',       forwardWheel, { passive:false });
+  // 4) Global listeners on the document (mask is visual-only)
+  document.addEventListener('pointermove', (e) => move(e.clientX, e.clientY), { passive: true });
+  document.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); }, { passive: true });
 
   document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
   document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
 })();
 
-/* ========= 2) UTD + server sync (unchanged) ========= */
+/* ========= 1) UTD + server sync ========= */
 
 /* ======= CONFIG ======= */
 const API = 'https://script.google.com/macros/s/AKfycbzExL0U0srFXrAkkjJHNT0oCamBSjEUk4F1Dc7MyNwxi9mvleuwd9vdtnJoJlMHCKpl6A/exec';
@@ -128,7 +59,7 @@ const API = 'https://script.google.com/macros/s/AKfycbzExL0U0srFXrAkkjJHNT0oCamB
 const KEY_ENTRIES = 'utd_entries_v7';
 const KEY_TITLE   = 'utd_title_v2';
 
-const $ = sel => document.querySelector(sel);
+const $  = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const pad = n => String(n).padStart(2, '0');
 
@@ -297,15 +228,6 @@ function render(){
 }
 
 /* ======= Posting ======= */
-const $utd   = document.querySelector('.utd');
-const $feed  = document.getElementById('utdFeed');
-const $form  = document.getElementById('utdForm');
-const $text  = document.getElementById('utdText');
-const $unlock= document.getElementById('utdUnlock');
-const $title = document.getElementById('utdTitle');
-const $avatar= document.querySelector('.avatar-overlay');
-if ($avatar) $avatar.style.pointerEvents = 'none';
-
 if ($form) {
   $form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -440,3 +362,15 @@ window.addEventListener('utd:refresh', render);
 if ($title) $title.textContent = loadTitle();
 render();
 syncFromServer();
+
+/* ======= Glitch badge success message ======= */
+/* Shows "registration complete." when redirected back to artist.html */
+(() => {
+  const q = new URLSearchParams(location.search);
+  const ok = q.get('registration') === 'complete' || q.get('registered') === '1' || location.hash === '#registered';
+  if (!ok) return;
+  const el = document.getElementById('glitchMsg');
+  if (!el) return;
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('show'));
+})();

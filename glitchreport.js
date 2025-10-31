@@ -1,5 +1,6 @@
 // ===== CONFIG =====
-const NEXT_URL    = "artist.html";          // optional redirect after success
+const NEXT_URL = "artist.html?registration=complete";   // or: "artist.html#registered"
+
 const GO_HOLD_MS  = 600;                  // delay before redirect
 const SPRITE_PATH = "avatar/avatar_intro.png";
 
@@ -162,3 +163,4 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
 });
+
