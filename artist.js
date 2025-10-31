@@ -1,4 +1,4 @@
-/* aboutme.js — secure unlock + UTD feed + server sync + custom spinning X cursor */
+/* artist.js — secure unlock + UTD feed + server sync + custom spinning X cursor */
 
 /* ========= 0) Transparent OS cursor + iframe/shadow coverage ========= */
 (() => {

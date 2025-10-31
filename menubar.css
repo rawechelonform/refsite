@@ -166,13 +166,13 @@ html, body { margin: 0; padding: 0; }
   .brand-link { font-size: clamp(11px, 2.1vw, 12.2px) !important; padding: 0 8px !important; letter-spacing: 0; }
 }
 
-/* Phones — PORTRAIT: flatter bar + tiny gap in PRINCIPAL’S<br>OFFICE */
+/* Phones — PORTRAIT: flatter bar + tiny gap in ARTIST */
 @media (max-width: 480px) and (orientation: portrait) {
   :root { --barh: 26px; --linew: 1px; }  /* make the bar flatter here */
   .menu-link  { font-size: clamp(5.6px, 2.6vw, 6.8px); padding: 0 4px; }
   .brand-link { font-size: clamp(9.6px, 3.4vw, 11px) !important; padding: 0 6px !important; }
 
-  .menu a[href$="aboutme.html"] {
+  .menu a[href$="artist.html"] {
     white-space: normal !important;
     text-align: center;
     justify-items: center;      /* works because .menu-link is display:grid */
@@ -206,7 +206,7 @@ html, body { margin: 0; padding: 0; }
   .menu-link:not(.brand-link) { font-size: clamp(5.8px, 2.2vw, 7.4px); padding: 0 4px; }
   .brand-link { font-size: clamp(10.2px, 2.6vw, 12.2px) !important; padding: 0 6px !important; }
 
-  .menu a[href$="aboutme.html"] {
+  .menu a[href$="artist.html"] {
     white-space: normal !important;
     text-align: center;
     justify-items: center;
