@@ -14,8 +14,8 @@ const figureEl = document.querySelector(".figure");
 const promptEl = document.getElementById("prompt");
 
 // ===== COPY =====
-const STATIC_TEXT = "ACCESS GATE //";
-const TYPE_TEXT   = ' TYPE "REF CORP" + PRESS ENTER';
+const STATIC_TEXT = "REGISTRATION TERMINAL //";
+const TYPE_TEXT   = ' ENTER EMAIL FOR QUARTERLY GLITCH REPORT';
 
 // ===== STATE =====
 let terminalStarted = false;
