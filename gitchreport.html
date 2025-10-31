@@ -5,18 +5,14 @@
   <title>REF // Gate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preload" as="image" href="avatar/avatar_intro.png">
-  <link rel="stylesheet" href="glitchreport.css?v=201">
-
-  <!-- Hard-hide the hidden iframe even if external CSS doesn't load -->
-  <style>
-    .hidden { display: none !important; }
-    #ml_iframe{
-      width:0 !important; height:0 !important; border:0 !important;
-      position:absolute !important; left:-9999px !important; top:-9999px !important;
-    }
-  </style>
+  <link rel="stylesheet" href="glitchreport.css?v=204">
 </head>
 <body>
+  <!-- Fixed top-right back link -->
+  <a href="artist.html" class="back-fixed" aria-label="Back to artist">
+    &lt; <span class="back-label">back</span> &gt;
+  </a>
+
   <div class="wrap">
     <div class="stage">
       <div class="figure" aria-hidden="true"></div>
@@ -30,7 +26,7 @@
       <div class="prompt" id="prompt">
         <span class="caret">></span>
         <span id="typed" class="typed"></span>
-        <!-- Visible CRT input (text type to discourage password managers) -->
+        <!-- Offscreen real input; CRT line mirrors it -->
         <input id="cmd" class="cmd" type="text"
                inputmode="email" autocomplete="off"
                autocapitalize="off" spellcheck="false"
@@ -40,7 +36,7 @@
 
       <div id="hint" class="hint" aria-live="polite"></div>
 
-      <!-- Hidden MailerLite form (posts in background) -->
+      <!-- Hidden MailerLite form -->
       <form id="ml-form"
             action="https://assets.mailerlite.com/jsonp/1876316/forms/169740892998993529/subscribe"
             method="post"
@@ -49,14 +45,11 @@
         <input type="email" name="fields[email]" id="ml-email" />
         <input type="hidden" name="ml-submit" value="1" />
         <input type="hidden" name="anticsrf" value="true" />
-        <!-- Optional tagging
-        <input type="hidden" name="fields[source]" value="glitchreport" />
-        -->
       </form>
       <iframe name="ml_iframe" id="ml_iframe" class="hidden" title="ml-response"></iframe>
     </div>
   </div>
 
-  <script src="glitchreport.js?v=201"></script>
+  <script src="glitchreport.js?v=204"></script>
 </body>
 </html>

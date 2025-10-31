@@ -1,8 +1,7 @@
 // ===== CONFIG =====
-const TARGET     = "REF CORP";
-const NEXT_URL   = "main.html";     // change later to your newsletter page if you want
-const GO_HOLD_MS = 300;
-const SPRITE_PATH= "avatar/avatar_intro.png";
+const NEXT_URL    = "artist.html";          // optional redirect after success
+const GO_HOLD_MS  = 600;                  // delay before redirect
+const SPRITE_PATH = "avatar/avatar_intro.png";
 
 // ===== ELEMENTS =====
 const staticEl = document.getElementById("static-part");
@@ -13,9 +12,12 @@ const hintEl   = document.getElementById("hint");
 const figureEl = document.querySelector(".figure");
 const promptEl = document.getElementById("prompt");
 
+const mlForm  = document.getElementById("ml-form");
+const mlEmail = document.getElementById("ml-email");
+
 // ===== COPY =====
 const STATIC_TEXT = "REGISTRATION TERMINAL //";
-const TYPE_TEXT   = ' ENTER EMAIL FOR QUARTERLY GLITCH REPORT';
+const TYPE_TEXT   = " ENTER EMAIL FOR QUARTERLY GLITCH REPORT";
 
 // ===== STATE =====
 let terminalStarted = false;
@@ -41,6 +43,9 @@ function escapeHTML(s){
     c === '\"' ? '&quot;' : '&#39;'
   );
 }
+function isValidEmail(e){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
@@ -57,29 +62,30 @@ function startTerminalSequence(){
     });
   }, 300);
 }
+
 function renderMirror(){
   if(lockedOutput) return;
   if(!typedEl || !inputEl) return;
 
   const raw = inputEl.value || "";
-  const v   = raw.toUpperCase();
-  let start = inputEl.selectionStart ?? v.length;
-  let end   = inputEl.selectionEnd   ?? v.length;
+  let start = inputEl.selectionStart ?? raw.length;
+  let end   = inputEl.selectionEnd   ?? raw.length;
 
-  if (v.length > 0 && start === 0 && end === v.length){
-    typedEl.innerHTML = v.split("").map(ch =>
-      `<span class="cursor-sel" style="color:#000;-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
+  if (raw.length > 0 && start === 0 && end === raw.length){
+    typedEl.innerHTML = raw.split("").map(ch =>
+      `<span class="cursor-sel" style="-webkit-text-fill-color:#000">${escapeHTML(ch)}</span>`
     ).join("");
     return;
   }
 
-  const idx = Math.min(Math.max(0, start), v.length);
-  const ch  = v.slice(idx, idx + 1);
-  const before = escapeHTML(v.slice(0, idx));
+  const idx = Math.min(Math.max(0, start), raw.length);
+  const ch  = raw.slice(idx, idx + 1);
+  const before = escapeHTML(raw.slice(0, idx));
   const at     = ch ? escapeHTML(ch) : "&nbsp;";
-  const after  = escapeHTML(v.slice(idx + (ch ? 1 : 0)));
+  const after  = escapeHTML(raw.slice(idx + (ch ? 1 : 0)));
   typedEl.innerHTML = before + `<span class="cursor-block">${at}</span>` + after;
 }
+
 function bindPrompt(){
   if(!inputEl || !typedEl) return;
 
@@ -92,6 +98,7 @@ function bindPrompt(){
     if(document.activeElement === inputEl) renderMirror();
   });
 
+  // Cmd/Ctrl+A → select all in input so CRT mirror shows selection block
   document.addEventListener("keydown", (e) => {
     const isA = (e.key === 'a' || e.key === 'A');
     const withMeta = (e.metaKey || e.ctrlKey);
@@ -103,16 +110,31 @@ function bindPrompt(){
     renderMirror();
   }, true);
 
+  // Submit on Enter
   inputEl.addEventListener("keydown", (e) => {
     if(e.key !== "Enter") return;
-    const value = (inputEl.value || "").trim().toUpperCase();
-    if(value === TARGET){
-      lockedOutput = true;
-      typedEl.innerHTML = `REF CORP <span class="go-pill">&lt;GO&gt;</span>`;
-      hintEl && (hintEl.textContent = "");
-      setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
-    } else {
+
+    const email = (inputEl.value || "").trim();
+
+    // INVALID → show "denied."
+    if(!isValidEmail(email)){
       hintEl && (hintEl.innerHTML = "<em>denied.</em>");
+      return;
+    }
+
+    // VALID → lock UI, mirror OK, submit hidden form, redirect
+    lockedOutput = true;
+    inputEl.setAttribute("disabled", "disabled");
+    typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
+    hintEl && (hintEl.textContent = "");
+
+    if (mlForm && mlEmail){
+      mlEmail.value = email.toLowerCase();
+      try { mlForm.submit(); } catch(_) {}
+    }
+
+    if (NEXT_URL){
+      setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
     }
   });
 }
