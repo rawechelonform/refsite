@@ -5,7 +5,7 @@
   <title>REF // Gate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preload" as="image" href="avatar/avatar_intro.png">
-  <link rel="stylesheet" href="glitchreport.css?v=204">
+  <link rel="stylesheet" href="glitchreport.css?v=205">
 </head>
 <body>
   <!-- Fixed top-right back link -->
@@ -27,8 +27,8 @@
         <span class="caret">></span>
         <span id="typed" class="typed"></span>
         <!-- Offscreen real input; CRT line mirrors it -->
-        <input id="cmd" class="cmd" type="text"
-               inputmode="email" autocomplete="off"
+        <input id="cmd" class="cmd" type="email"
+               inputmode="email" autocomplete="email"
                autocapitalize="off" spellcheck="false"
                name="newsletter_email"
                data-lpignore="true" data-form-type="other" />
@@ -36,7 +36,7 @@
 
       <div id="hint" class="hint" aria-live="polite"></div>
 
-      <!-- Hidden MailerLite form -->
+      <!-- Hidden MailerLite form (matches your HTML embed) -->
       <form id="ml-form"
             action="https://assets.mailerlite.com/jsonp/1876316/forms/169740892998993529/subscribe"
             method="post"
@@ -45,11 +45,13 @@
         <input type="email" name="fields[email]" id="ml-email" />
         <input type="hidden" name="ml-submit" value="1" />
         <input type="hidden" name="anticsrf" value="true" />
+        <!-- simple honeypot -->
+        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" />
       </form>
       <iframe name="ml_iframe" id="ml_iframe" class="hidden" title="ml-response"></iframe>
     </div>
   </div>
 
-  <script src="glitchreport.js?v=204"></script>
+  <script src="glitchreport.js?v=205"></script>
 </body>
 </html>
