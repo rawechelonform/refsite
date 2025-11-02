@@ -412,19 +412,8 @@
   .utd{ order: 4 !important; }
 }
 
-/* ====== Cursor: invisible OS pointer + custom spinning X ====== */
-
-/* 1) Full-page mask: forces native cursor invisible, BUT lets events through */
-#cursor-mask{
-  position: fixed;
-  inset: 0;
-  z-index: 2147483646; /* just under the custom cursor */
-  background: transparent;
-  cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgW3zY4QAAAAASUVORK5CYII=') 0 0, none !important;
-  pointer-events: none !important; /* critical so :hover/click reach the page */
-}
-
-/* 2) Custom cursor root (drawn X) */
+/* ====== Custom crosshair cursor visuals ====== */
+/* Root */
 #custom-cursor{
   --size: 34px;
   --thick: 2px;
@@ -474,9 +463,6 @@
 }
 #custom-cursor.spin{ animation: cursor-spin 360ms ease-out; }
 @media (prefers-reduced-motion: reduce){ #custom-cursor.spin{ animation: none; } }
-
-/* Prevent any element from re-enabling the OS cursor */
-html, body, body *, *::before, *::after { cursor: none !important; }
 
 /* ===== Glitch report corner link (canonical) ===== */
 
@@ -540,7 +526,6 @@ html, body, body *, *::before, *::after { cursor: none !important; }
 .glitch-msg.show{ opacity: 1; }
 .glitch-msg.hide{ opacity: 0; } /* used for auto-dismiss */
 
-
 /* small phones */
 @media (max-width: 420px){
   .glitch-corner-wrap{
@@ -548,4 +533,33 @@ html, body, body *, *::before, *::after { cursor: none !important; }
     bottom: 12px;
     width: clamp(96px, 26vw, 132px);
   }
+}
+
+/* ====== Cursor gate: hide OS cursor only when enabled (LAST) ====== */
+/* Toggle by adding/removing data-cursor="off" on <html> */
+html[data-cursor="off"] body,
+html[data-cursor="off"] body *,
+html[data-cursor="off"] body *::before,
+html[data-cursor="off"] body *::after{
+  cursor: none !important;
+}
+
+/* Reinforce common elements that set their own cursor */
+html[data-cursor="off"] a,
+html[data-cursor="off"] button,
+html[data-cursor="off"] input,
+html[data-cursor="off"] textarea,
+html[data-cursor="off"] select,
+html[data-cursor="off"] summary,
+html[data-cursor="off"] label,
+html[data-cursor="off"] [role="button"],
+html[data-cursor="off"] [contenteditable]{
+  cursor: none !important;
+}
+
+/* Optional: also hide text caret if desired */
+html[data-cursor="off"] input,
+html[data-cursor="off"] textarea,
+html[data-cursor="off"] [contenteditable]{
+  caret-color: transparent;
 }

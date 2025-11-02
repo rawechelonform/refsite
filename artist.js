@@ -1,22 +1,11 @@
 /* artist.js — UTD + custom crosshair cursor + glitch badge message */
 
-/* ========= 0) Transparent OS cursor + custom crosshair ========= */
+/* ========= 0) Custom crosshair + hide OS cursor via attribute gate ========= */
 (() => {
-  // Make sure the CSS that hides the OS cursor is injected early (belt + suspenders)
-  const TRANSPARENT_CURSOR = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgW3zY4QAAAAASUVORK5CYII=') 0 0, none";
-  const KILL_CSS = `html,body,*,:before,:after{cursor:${TRANSPARENT_CURSOR} !important}`;
-  const s = document.createElement('style');
-  s.textContent = KILL_CSS;
-  document.head.appendChild(s);
+  // Enable the CSS gate that hides the OS cursor
+  document.documentElement.setAttribute('data-cursor', 'off');
 
-  // 1) Mask element that always wins cursor styling, but DOES NOT capture events
-  const mask = document.createElement('div');
-  mask.id = 'cursor-mask';
-  mask.style.pointerEvents = 'none'; // critical to allow :hover/click on page
-  const appendMask = () => document.body && document.body.appendChild(mask);
-  if (document.body) appendMask(); else document.addEventListener('DOMContentLoaded', appendMask);
-
-  // 2) Custom cursor element (drawn crosshair)
+  // Ensure custom cursor element exists
   let cursor = document.getElementById('custom-cursor');
   if (!cursor) {
     cursor = document.createElement('div');
@@ -31,7 +20,7 @@
     if (document.body) appendCursor(); else document.addEventListener('DOMContentLoaded', appendCursor);
   }
 
-  // 3) Move + spin
+  // Move + spin
   let rafId = null;
   const move = (x, y) => {
     if (rafId) cancelAnimationFrame(rafId);
@@ -42,7 +31,6 @@
   };
   const spin = () => { cursor.classList.remove('spin'); void cursor.offsetWidth; cursor.classList.add('spin'); };
 
-  // 4) Global listeners on the document (mask is visual-only)
   document.addEventListener('pointermove', (e) => move(e.clientX, e.clientY), { passive: true });
   document.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); }, { passive: true });
 
@@ -363,11 +351,7 @@ if ($title) $title.textContent = loadTitle();
 render();
 syncFromServer();
 
-
-
 /* ======= Glitch badge success message ======= */
-/* Shows "registration complete." when redirected back to artist.html,
-   then fades it out after a short delay. */
 (() => {
   const q  = new URLSearchParams(location.search);
   const ok = q.get('registration') === 'complete' ||
@@ -378,19 +362,16 @@ syncFromServer();
   const el = document.getElementById('glitchMsg');
   if (!el) return;
 
-  const DISPLAY_MS   = 2000;  // how long it stays visible
-  const FADE_MS      = 300;   // should match CSS transition
+  const DISPLAY_MS   = 2000;
+  const FADE_MS      = 300;
 
   el.hidden = false;
-  // ensure reflow so the transition applies
   void el.offsetWidth;
   el.classList.add('show');
 
-  // auto-hide
   setTimeout(() => {
     el.classList.remove('show');
     el.classList.add('hide');
-    // after fade, hide from layout again
     setTimeout(() => {
       el.hidden = true;
       el.classList.remove('hide');
