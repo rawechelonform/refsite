@@ -5,7 +5,7 @@
   <title>REF // Gate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preload" as="image" href="avatar/avatar_intro.png">
-  <link rel="stylesheet" href="glitchreport.css?v=205">
+  <link rel="stylesheet" href="glitchreport.css?v=204">
 </head>
 <body>
   <!-- Fixed top-right back link -->
@@ -36,7 +36,7 @@
 
       <div id="hint" class="hint" aria-live="polite"></div>
 
-      <!-- Hidden MailerLite form (matches your HTML embed) -->
+      <!-- Hidden MailerLite form -->
       <form id="ml-form"
             action="https://assets.mailerlite.com/jsonp/1876316/forms/169740892998993529/subscribe"
             method="post"
@@ -45,9 +45,10 @@
         <input type="email" name="fields[email]" id="ml-email" />
         <input type="hidden" name="ml-submit" value="1" />
         <input type="hidden" name="anticsrf" value="true" />
-        <!-- simple honeypot -->
+        <!-- honeypot -->
         <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" />
       </form>
+
       <iframe name="ml_iframe" id="ml_iframe" class="hidden" title="ml-response"></iframe>
     </div>
   </div>

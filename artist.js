@@ -1,11 +1,98 @@
-/* artist.js — UTD + custom crosshair cursor + glitch badge message */
+/* artist.js — UTD + custom crosshair cursor + glitch badge message
+   • Aggressively hides the native cursor (CSS + runtime enforcement)
+   • Custom crosshair follows pointer; spins on click with random direction
+   • Rest of page logic preserved (UTD, server sync, title edit, glitch badge)
+*/
 
-/* ========= 0) Custom crosshair + hide OS cursor via attribute gate ========= */
+/* ========= 0) Custom crosshair + aggressive OS-cursor killer ========= */
 (() => {
-  // Enable the CSS gate that hides the OS cursor
+  // Enable CSS gate for any stylesheet rules you added
   document.documentElement.setAttribute('data-cursor', 'off');
 
-  // Ensure custom cursor element exists
+  // Inject a LAST <style> tag with high-specificity rules, keep it last
+  function installCursorKiller(){
+    const css = `
+/* global hide (high specificity, no :where) */
+html[data-cursor="off"] body,
+html[data-cursor="off"] body *,
+html[data-cursor="off"] body *::before,
+html[data-cursor="off"] body *::after{
+  cursor: none !important;
+}
+/* common interactive elements */
+html[data-cursor="off"] a,
+html[data-cursor="off"] button,
+html[data-cursor="off"] input,
+html[data-cursor="off"] textarea,
+html[data-cursor="off"] select,
+html[data-cursor="off"] summary,
+html[data-cursor="off"] label,
+html[data-cursor="off"] [role="button"],
+html[data-cursor="off"] [contenteditable]{
+  cursor: none !important;
+}
+/* optional: hide caret, too */
+html[data-cursor="off"] input,
+html[data-cursor="off"] textarea,
+html[data-cursor="off"] [contenteditable]{ caret-color: transparent !important; }
+`;
+    let tag = document.getElementById('cursor-killer-style');
+    if (!tag){
+      tag = document.createElement('style');
+      tag.id = 'cursor-killer-style';
+      tag.textContent = css;
+      (document.head || document.body || document.documentElement).appendChild(tag);
+    }else{
+      tag.textContent = css;
+      tag.parentNode.appendChild(tag); // move to end again
+    }
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', installCursorKiller);
+  } else {
+    installCursorKiller();
+  }
+
+  // Inline overrides beat most CSS. Ensure inline becomes none!important.
+  function forceInlineNone(el){
+    try { el.style && el.style.setProperty('cursor','none','important'); } catch(_) {}
+  }
+
+  // Remove/override inline cursor styles across the DOM (initial pass)
+  function stripInlineCursorStyles(root=document){
+    root.querySelectorAll('[style*="cursor"]').forEach(forceInlineNone);
+  }
+  stripInlineCursorStyles();
+
+  // Watch for late-loaded styles/nodes and re-assert our style as last
+  const mo = new MutationObserver((muts) => {
+    let needReassert = false;
+    for (const m of muts){
+      if (m.type === 'childList'){
+        m.addedNodes && m.addedNodes.forEach(n => {
+          if (n.nodeType === 1){
+            if (n.tagName === 'STYLE' || n.tagName === 'LINK') needReassert = true;
+            if (n.hasAttribute && n.hasAttribute('style') && /cursor/i.test(n.getAttribute('style')||'')){
+              forceInlineNone(n);
+            }
+            stripInlineCursorStyles(n);
+          }
+        });
+      } else if (m.type === 'attributes' && m.attributeName === 'style'){
+        const el = m.target;
+        if (el && el.style && el.style.cursor) forceInlineNone(el);
+      }
+    }
+    if (needReassert) installCursorKiller();
+  });
+  mo.observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['style']
+  });
+
+  // Ensure the custom cursor element exists
   let cursor = document.getElementById('custom-cursor');
   if (!cursor) {
     cursor = document.createElement('div');
@@ -20,7 +107,7 @@
     if (document.body) appendCursor(); else document.addEventListener('DOMContentLoaded', appendCursor);
   }
 
-  // Move + spin
+  // Follow pointer
   let rafId = null;
   const move = (x, y) => {
     if (rafId) cancelAnimationFrame(rafId);
@@ -29,11 +116,19 @@
       cursor.style.top  = y + 'px';
     });
   };
-  const spin = () => { cursor.classList.remove('spin'); void cursor.offsetWidth; cursor.classList.add('spin'); };
+
+  // Random spin direction on click (respects reduced motion)
+  const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const spin = () => {
+    if (prefersReduce) return;
+    const reverse = Math.random() < 0.5; // true => CCW
+    cursor.style.animation = 'none';
+    void cursor.offsetWidth; // reflow to restart
+    cursor.style.animation = `cursor-spin 360ms ease-out ${reverse ? 'reverse' : 'normal'}`;
+  };
 
   document.addEventListener('pointermove', (e) => move(e.clientX, e.clientY), { passive: true });
   document.addEventListener('pointerdown', (e) => { move(e.clientX, e.clientY); spin(); }, { passive: true });
-
   document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
   document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
 })();
@@ -350,6 +445,77 @@ window.addEventListener('utd:refresh', render);
 if ($title) $title.textContent = loadTitle();
 render();
 syncFromServer();
+
+/* ======= Cursor auditor & enforcer (logs & kills any element showing a cursor) ======= */
+(() => {
+  const isEditable = (el) =>
+    el.matches?.('input, textarea, [contenteditable], select') ||
+    el.closest?.('[contenteditable="true"]');
+
+  const forceNone = (el) => {
+    try { el.style.setProperty('cursor', 'none', 'important'); } catch(_) {}
+  };
+
+  // Initial sweep
+  document.querySelectorAll('[style*="cursor"]').forEach(forceNone);
+
+  const seen = new WeakSet();
+  const audit = (el) => {
+    if (!el || el.nodeType !== 1) return;
+    const cur = getComputedStyle(el).cursor;
+    if (cur && cur !== 'none') {
+      forceNone(el);
+      if (!seen.has(el)) {
+        seen.add(el);
+        console.warn('[cursor-audit] forcing none on:', el, 'computed:', cur);
+      }
+    }
+  };
+
+  document.addEventListener('pointermove', (e) => {
+    const path = (e.composedPath && e.composedPath()) || [];
+    for (let i = 0; i < Math.min(8, path.length); i++) {
+      const el = path[i];
+      if (el && el.nodeType === 1) audit(el);
+    }
+  }, { capture: true, passive: true });
+
+  document.addEventListener('pointerover', (e) => {
+    const t = e.target;
+    if (t && t.nodeType === 1 && isEditable(t)) {
+      forceNone(t);
+      t.style.setProperty('caret-color', 'transparent', 'important');
+    }
+    if (t && t.nodeType === 1 && t.matches?.('a,button,[role="button"],summary,label')) {
+      forceNone(t);
+    }
+  }, { capture: true, passive: true });
+
+  const reinstall = () => {
+    document.querySelectorAll('[style*="cursor"]').forEach(forceNone);
+  };
+  const mo2 = new MutationObserver((muts) => {
+    let need = false;
+    for (const m of muts) {
+      if (m.type === 'childList') {
+        m.addedNodes && m.addedNodes.forEach(n => {
+          if (n.nodeType !== 1) return;
+          if (n.tagName === 'STYLE' || n.tagName === 'LINK') need = true;
+          if (n.hasAttribute?.('style') && /cursor/i.test(n.getAttribute('style')||'')) forceNone(n);
+          n.querySelectorAll?.('[style*="cursor"]').forEach(forceNone);
+        });
+      } else if (m.type === 'attributes' && m.attributeName === 'style') {
+        const el = m.target;
+        if (el && /cursor/i.test(el.getAttribute('style') || '')) forceNone(el);
+      }
+    }
+    if (need) reinstall();
+  });
+  mo2.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+
+  forceNone(document.body);
+  forceNone(document.documentElement);
+})();
 
 /* ======= Glitch badge success message ======= */
 (() => {

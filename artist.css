@@ -563,3 +563,21 @@ html[data-cursor="off"] textarea,
 html[data-cursor="off"] [contenteditable]{
   caret-color: transparent;
 }
+
+
+/* ===== FORCE HIDE NATIVE CURSOR (must be last) ===== */
+/* Strong selectors + !important, scoped to [data-cursor="off"] */
+
+:where(html[data-cursor="off"]) :is(html, body, body *, body *::before, body *::after){
+  cursor: none !important;
+}
+
+/* common interactive elements that often set their own cursor */
+:where(html[data-cursor="off"]) :is(a, button, input, textarea, select, summary, label, [role="button"], [contenteditable]){
+  cursor: none !important;
+}
+
+/* optional: hide text caret too */
+:where(html[data-cursor="off"]) :is(input, textarea, [contenteditable]){
+  caret-color: transparent !important;
+}
