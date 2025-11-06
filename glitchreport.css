@@ -44,6 +44,15 @@ html, body {
 
 .hidden { display: none !important; }
 
+/* better honeypot: not display:none; still “visible” to bots */
+.hp-field {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
 /* Hide background iframe */
 #ml_iframe {
   width: 0 !important;
@@ -66,9 +75,7 @@ html, body {
   opacity: .9;
 }
 
-.back-fixed .back-label {
-  text-decoration: none;
-}
+.back-fixed .back-label { text-decoration: none; }
 
 /* underline only “back” on hover/focus */
 .back-fixed:hover .back-label,

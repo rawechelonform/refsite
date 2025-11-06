@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-cursor="off">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cursor Sandbox</title>
+  <link rel="stylesheet" href="cursor.css" />
+</head>
+<body>
+  <!-- Custom cursor -->
+  <div id="custom-cursor" aria-hidden="true">
+    <span class="arm arm-a"></span>
+    <span class="arm arm-b"></span>
+    <span class="dot"></span>
+  </div>
+
+  <!-- Minimal content so you can see behavior -->
+  <main class="demo">
+    <h1>Cursor Debug Sandbox</h1>
+    <p>Move the mouse; click to spin. Remove <code>data-cursor="off"</code> on <code>&lt;html&gt;</code> to show the OS cursor again.</p>
+
+    <div class="row">
+      <button>Focusable button</button>
+      <a href="#">A link</a>
+      <input placeholder="Type here" />
+    </div>
+  </main>
+
+  <script src="cursor.js" defer></script>
+</body>
+</html>

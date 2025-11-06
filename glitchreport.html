@@ -5,7 +5,7 @@
   <title>REF // Gate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preload" as="image" href="avatar/avatar_intro.png">
-  <link rel="stylesheet" href="glitchreport.css?v=204">
+  <link rel="stylesheet" href="glitchreport.css?v=301">
 </head>
 <body>
   <!-- Fixed top-right back link -->
@@ -27,32 +27,50 @@
         <span class="caret">></span>
         <span id="typed" class="typed"></span>
         <!-- Offscreen real input; CRT line mirrors it -->
-        <input id="cmd" class="cmd" type="email"
-               inputmode="email" autocomplete="email"
-               autocapitalize="off" spellcheck="false"
-               name="newsletter_email"
-               data-lpignore="true" data-form-type="other" />
+        <input
+          id="cmd"
+          class="cmd"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          name="newsletter_email"
+          data-lpignore="true"
+          data-form-type="other"
+        />
       </div>
 
       <div id="hint" class="hint" aria-live="polite"></div>
 
-      <!-- Hidden MailerLite form -->
-      <form id="ml-form"
-            action="https://assets.mailerlite.com/jsonp/1876316/forms/169740892998993529/subscribe"
-            method="post"
-            target="ml_iframe"
-            class="hidden">
-        <input type="email" name="fields[email]" id="ml-email" />
+      <!-- Hidden MailerLite form (posts to hidden iframe; we wait for iframe load) -->
+      <form
+        id="ml-form"
+        action="https://assets.mailerlite.com/jsonp/1876316/forms/169740892998993529/subscribe"
+        method="post"
+        target="ml_iframe"
+        class="hidden"
+      >
+        <input type="email" name="fields[email]" id="ml-email" required />
         <input type="hidden" name="ml-submit" value="1" />
-        <input type="hidden" name="anticsrf" value="true" />
-        <!-- honeypot -->
-        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" />
+        <!-- honeypot (keep “visible” to bots but offscreen to humans) -->
+        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp-field" />
       </form>
 
+      <!-- Hidden iframe receives ML response; we listen for its load event -->
       <iframe name="ml_iframe" id="ml_iframe" class="hidden" title="ml-response"></iframe>
+
+      <!-- Inline success UI (stays on your site) -->
+      <div id="success-ui" class="hidden" aria-live="polite">
+        <div class="line">registration accepted.</div>
+        <div class="line">if double opt-in is enabled, check your inbox to confirm.</div>
+        <div class="line">
+          <a id="continue-link" href="artist.html?registration=complete" class="go-pill">continue »</a>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="glitchreport.js?v=205"></script>
+  <script src="glitchreport.js?v=301"></script>
 </body>
 </html>

@@ -1,0 +1,108 @@
+/* ===== cursor.css — page + crosshair visible on any background ===== */
+
+/* Page: force dark so you're not staring at white */
+html, body{
+  height: 100%;
+  margin: 0;
+  background: #000 !important; /* ← your page is black now */
+  color: #ddd;
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Demo layout (optional) */
+.demo{
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  padding: 32px 16px;
+  text-align: center;
+}
+.demo .row{ display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+button{
+  background:#111; color:#ddd; border:1px solid #333; padding:6px 10px; border-radius:6px;
+}
+button:hover{ background:#1a1a1a; }
+a{ color:#9ad; }
+input{
+  background:#0b0b0b; color:#ddd; border:1px solid #333; padding:6px 10px; border-radius:6px;
+}
+
+/* ===== Custom crosshair ===== */
+:root{
+  --cursor-size: 34px;
+  --cursor-thick: 2px;
+  --cursor-gap: 18px;  /* empty space in each arm */
+  --cursor-dot: 3px;   /* center dot size */
+}
+
+/* Hide the native OS cursor ONLY when <html data-cursor="off"> is present */
+html[data-cursor="off"],
+html[data-cursor="off"] *{
+  cursor: none !important;
+}
+
+/* Crosshair container */
+#custom-cursor{
+  position: fixed;
+  left: 0; top: 0;
+  width: var(--cursor-size);
+  height: var(--cursor-size);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2147483647;
+
+  /* Auto-contrast: white + difference = readable on light or dark */
+  color: #fff;
+  mix-blend-mode: difference;
+
+  /* Tiny halo helps against noisy images / blend quirks */
+  filter:
+    drop-shadow(0 0 0.5px rgba(0,0,0,.6))
+    drop-shadow(0 0 1px rgba(0,0,0,.5));
+
+  /* Ensure blending works even if ancestors isolate */
+  isolation: auto;
+}
+
+/* Arms — forms an X with a gap */
+#custom-cursor .arm{
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--cursor-size);
+  height: var(--cursor-thick);
+  transform-origin: 50% 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background:
+    linear-gradient(
+      90deg,
+      currentColor 0 calc(50% - (var(--cursor-gap) / 2)),
+      transparent  calc(50% - (var(--cursor-gap) / 2)) calc(50% + (var(--cursor-gap) / 2)),
+      currentColor calc(50% + (var(--cursor-gap) / 2)) 100%
+    );
+}
+#custom-cursor .arm-b{
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Center dot */
+#custom-cursor .dot{
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--cursor-dot);
+  height: var(--cursor-dot);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Click spin animation (triggered by JS) */
+@keyframes cursor-spin{
+  from { transform: translate(-50%, -50%) rotate(0); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  #custom-cursor{ animation: none !important; }
+}

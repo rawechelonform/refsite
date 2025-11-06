@@ -1,7 +1,6 @@
 // ===== CONFIG =====
-const NEXT_URL = "artist.html?registration=complete";   // or: "artist.html#registered"
-
-const GO_HOLD_MS  = 600;                  // delay before redirect
+const NEXT_URL = "artist.html?registration=complete";   // internal continue page
+const GO_HOLD_MS  = 600;                                 // delay before auto-continue
 const SPRITE_PATH = "avatar/avatar_intro.png";
 
 // ===== ELEMENTS =====
@@ -13,8 +12,11 @@ const hintEl   = document.getElementById("hint");
 const figureEl = document.querySelector(".figure");
 const promptEl = document.getElementById("prompt");
 
-const mlForm  = document.getElementById("ml-form");
-const mlEmail = document.getElementById("ml-email");
+const mlForm    = document.getElementById("ml-form");
+const mlEmail   = document.getElementById("ml-email");
+const mlIframe  = document.getElementById("ml_iframe");
+const successUI = document.getElementById("success-ui");
+const continueLink = document.getElementById("continue-link");
 
 // ===== COPY =====
 const STATIC_TEXT = "REGISTRATION TERMINAL //";
@@ -111,7 +113,7 @@ function bindPrompt(){
     renderMirror();
   }, true);
 
-  // Submit on Enter
+  // Submit on Enter (stay on page; rely on hidden iframe load)
   inputEl.addEventListener("keydown", (e) => {
     if(e.key !== "Enter") return;
 
@@ -123,7 +125,7 @@ function bindPrompt(){
       return;
     }
 
-    // VALID → lock UI, mirror OK, submit hidden form, redirect
+    // VALID → lock UI, mirror OK, submit hidden form
     lockedOutput = true;
     inputEl.setAttribute("disabled", "disabled");
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
@@ -131,11 +133,54 @@ function bindPrompt(){
 
     if (mlForm && mlEmail){
       mlEmail.value = email.toLowerCase();
-      try { mlForm.submit(); } catch(_) {}
-    }
 
-    if (NEXT_URL){
-      setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+      // --- stay on page: detect result via hidden iframe load/timeout ---
+      let done = false;
+
+      const CLEANUP = () => {
+        if (!mlIframe) return;
+        mlIframe.removeEventListener("load", onLoad);
+      };
+
+      const onLoad = () => {
+        if (done) return;
+        done = true;
+        CLEANUP();
+
+        // show in-page success UI
+        if (successUI) successUI.classList.remove("hidden");
+
+        // Optional: auto-continue internally after a short beat
+        if (NEXT_URL) {
+          setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+        }
+      };
+
+      const onTimeout = () => {
+        if (done) return;
+        done = true;
+        CLEANUP();
+
+        // treat as failure; restore input and show a hint
+        inputEl.removeAttribute("disabled");
+        lockedOutput = false;
+        hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
+        renderMirror();
+      };
+
+      if (mlIframe) {
+        mlIframe.addEventListener("load", onLoad, { once: true });
+        // give MailerLite a reasonable window to respond
+        setTimeout(onTimeout, 8000);
+      } else {
+        // no iframe? consider this a failure path
+        setTimeout(onTimeout, 0);
+      }
+
+      try { mlForm.submit(); } catch(_) {
+        // submit blew up synchronously – fail fast
+        onTimeout();
+      }
     }
   });
 }
@@ -163,4 +208,3 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
 });
-
