@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crosshair — bulletproof (Chrome + Safari)</title>
+<style>
+  /* Baseline */
+  html,body{height:100%;margin:0;background:#000!important;color:#ddd;font:14px/1.5 system-ui}
+  body::before{content:"";position:fixed;inset:0;background:#000;z-index:-1}
+
+  .ui{max-width:760px;margin:40px auto;padding:0 16px}
+  h1{color:#fff;margin:0 0 8px;font-size:22px}
+  button{background:#111;color:#ddd;border:1px solid #333;padding:8px 12px;border-radius:6px}
+  button:hover{background:#1a1a1a}
+
+  /* While "inside", kill the OS cursor everywhere, including pseudo elements */
+  html[data-cursor="off"],
+  html[data-cursor="off"] *, 
+  html[data-cursor="off"] *::before,
+  html[data-cursor="off"] *::after{
+    cursor:none !important;
+  }
+  html[data-cursor="off"] input,
+  html[data-cursor="off"] textarea,
+  html[data-cursor="off"] [contenteditable]{ caret-color: transparent !important; }
+
+  /* Always-on shield while inside */
+  #cursor-shield{
+    position:fixed; inset:0; background:transparent;
+    z-index:2147483646; cursor:none !important; display:none;
+  }
+
+  /* Crosshair visuals */
+  :root{ --s:34px; --t:2px; --g:18px; --d:3px; }
+  #custom-cursor{
+    position:fixed; left:0; top:0; width:var(--s); height:var(--s);
+    transform:translate(-50%,-50%); pointer-events:none; z-index:2147483647;
+    color:#fff; mix-blend-mode:difference;
+    filter:drop-shadow(0 0 .5px rgba(0,0,0,.6)) drop-shadow(0 0 1px rgba(0,0,0,.5));
+    display:none;
+  }
+  #custom-cursor .arm{
+    position:absolute; left:50%; top:50%; width:var(--s); height:var(--t);
+    transform-origin:50% 50%;
+    background:linear-gradient(90deg,
+      currentColor 0 calc(50% - (var(--g)/2)),
+      transparent calc(50% - (var(--g)/2)) calc(50% + (var(--g)/2)),
+      currentColor calc(50% + (var(--g)/2)) 100%);
+  }
+  #custom-cursor .arm-a{ transform:translate(-50%,-50%) rotate(45deg); }
+  #custom-cursor .arm-b{ transform:translate(-50%,-50%) rotate(-45deg); }
+  #custom-cursor .dot{
+    position:absolute; left:50%; top:50%; width:var(--d); height:var(--d);
+    transform:translate(-50%,-50%); border-radius:50%; background:currentColor;
+  }
+
+  /* Spin + click implode */
+  @keyframes spin{ from{transform:translate(-50%,-50%) rotate(0)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+  #custom-cursor.implode .arm-a,
+  #custom-cursor.implode .arm-b{ animation: arm-implode 220ms ease-out forwards; }
+  @keyframes arm-implode{
+    0%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(1)}
+    60%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(.25)}
+    100%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(0)}
+  }
+  #custom-cursor.implode .arm-a{ --deg:45deg; }
+  #custom-cursor.implode .arm-b{ --deg:-45deg; }
+
+  @media (prefers-reduced-motion: reduce){
+    #custom-cursor{ animation:none !important; }
+    #custom-cursor.implode .arm-a, #custom-cursor.implode .arm-b{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <!-- Crosshair -->
+  <div id="custom-cursor" aria-hidden="true">
+    <span class="arm arm-a"></span>
+    <span class="arm arm-b"></span>
+    <span class="dot"></span>
+  </div>
+  <!-- Shield -->
+  <div id="cursor-shield" aria-hidden="true"></div>
+
+  <main class="ui">
+    <h1>Crosshair (bulletproof v2)</h1>
+    <p>Inside: crosshair only. Leave: OS cursor only. Random idle spins. Click = implode.</p>
+    <button>Button</button>
+    <a href="#" style="color:#9cf">Link</a>
+    <input placeholder="Input" style="background:#111;border:1px solid #333;color:#ddd;padding:6px 8px;border-radius:6px" />
+  </main>
+
+<script>
+(() => {
+  const cursor = document.getElementById('custom-cursor');
+  const shield = document.getElementById('cursor-shield');
+  const root   = document.documentElement;
+  const prefersReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Inline kill (in addition to CSS) — re-assert periodically */
+  const REASSERT_MS = 80;
+  let reassertTimer = null;
+  function startReassert(){
+    stopReassert();
+    reassertTimer = setInterval(() => {
+      root.style.setProperty('cursor','none','important');
+      document.body?.style?.setProperty('cursor','none','important');
+    }, REASSERT_MS);
+  }
+  function stopReassert(){
+    if (reassertTimer){ clearInterval(reassertTimer); reassertTimer = null; }
+    root.style.removeProperty('cursor');
+    document.body?.style?.removeProperty('cursor');
+  }
+
+  let inside = false, raf = 0, spinTimer = null, lastMoveTs = 0;
+
+  const inBounds = (x,y)=> x>=0 && y>=0 && x<innerWidth && y<innerHeight;
+  const now  = ()=> performance.now();
+  const rand = (a,b)=> Math.random()*(b-a)+a;
+
+  function place(x,y){
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=>{ cursor.style.left = x+'px'; cursor.style.top = y+'px'; });
+  }
+
+  function showInside(){
+    if (inside) return;
+    inside = true;
+    root.setAttribute('data-cursor','off');
+    shield.style.display = 'block';
+    startReassert();
+    place(innerWidth/2, innerHeight/2);
+    cursor.style.display = 'block';
+  }
+  function hideInside(){
+    if (!inside) return;
+    inside = false;
+    root.removeAttribute('data-cursor');
+    shield.style.display = 'none';
+    stopReassert();
+    cursor.style.display = 'none';
+  }
+
+  /* Forward events underneath shield so page stays interactive */
+  function forward(type, ev){
+    const prev = shield.style.display;
+    shield.style.display = 'none';
+    const target = document.elementFromPoint(ev.clientX, ev.clientY);
+    shield.style.display = prev;
+    if (!target) return;
+
+    const opts = {
+      bubbles:true, cancelable:true, composed:true, view:window,
+      clientX:ev.clientX, clientY:ev.clientY, screenX:ev.screenX, screenY:ev.screenY,
+      button:ev.button, buttons:ev.buttons,
+      ctrlKey:ev.ctrlKey, shiftKey:ev.shiftKey, altKey:ev.altKey, metaKey:ev.metaKey,
+      pointerId:ev.pointerId, pointerType:ev.pointerType, width:ev.width, height:ev.height, pressure:ev.pressure
+    };
+    target.dispatchEvent(new PointerEvent(type, opts));
+    const map = {pointermove:'mousemove', pointerdown:'mousedown', pointerup:'mouseup'};
+    if (map[type]) target.dispatchEvent(new MouseEvent(map[type], opts));
+    if (type === 'pointerup') target.dispatchEvent(new MouseEvent('click', opts));
+  }
+
+  /* Random idle spins — simpler & reliable */
+  function scheduleSpin(){
+    clearTimeout(spinTimer);
+    const delay = Math.round(rand(1200, 4200));
+    spinTimer = setTimeout(() => {
+      const recent = now() - lastMoveTs < 220; // don’t spin while you just moved
+      if (!prefersReduce && inside && !recent){
+        const reverse = Math.random() < 0.5;
+        const dur = Math.round(rand(260, 680));
+        cursor.style.animation = 'none'; void cursor.offsetWidth;
+        cursor.style.animation = `spin ${dur}ms ease-out ${reverse ? 'reverse' : 'normal'}`;
+      }
+      scheduleSpin();
+    }, delay);
+  }
+
+  /* Pointer handlers */
+  function onMove(e){
+    if (inBounds(e.clientX, e.clientY)){
+      if (!inside) showInside();
+      lastMoveTs = now();
+      place(e.clientX, e.clientY);
+      forward('pointermove', e);
+    } else {
+      hideInside();
+    }
+  }
+  function onDown(e){
+    if (!inside) return;
+    forward('pointerdown', e);
+    cursor.classList.remove('implode'); void cursor.offsetWidth;
+    cursor.classList.add('implode');
+    setTimeout(()=>cursor.classList.remove('implode'), 240);
+  }
+  function onUp(e){
+    if (!inside) return;
+    forward('pointerup', e);
+  }
+
+  /* Leave → hide crosshair immediately */
+  document.addEventListener('mouseout', (e)=>{ if (e.relatedTarget === null) hideInside(); }, {passive:true});
+  window.addEventListener('blur', hideInside);
+  document.addEventListener('visibilitychange', ()=>{ if (document.hidden) hideInside(); });
+
+  /* Attach events */
+  document.addEventListener('pointermove', onMove, {passive:true});
+  document.addEventListener('pointerdown', onDown, {passive:true});
+  document.addEventListener('pointerup',   onUp,   {passive:true});
+
+  /* Boot */
+  document.addEventListener('DOMContentLoaded', () => {
+    showInside();               // visible immediately
+    lastMoveTs = now();
+    scheduleSpin();             // start irregular spin loop
+  });
+})();
+</script>
+</body>
+</html>

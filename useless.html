@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- CSP trimmed for this isolated page -->
+  <!-- allow calls to Apps Script -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self' 'unsafe-inline';
@@ -13,7 +13,7 @@
                  font-src   'self' data:;
                  connect-src 'self' https://script.google.com https://*.googleusercontent.com;">
 
-  <title>Useless Thought Debug</title>
+  <title>useless thought debug</title>
 
   <link rel="stylesheet" href="useless.css">
   <style>html,body{margin:0;padding:0;background:#000}</style>
@@ -21,7 +21,8 @@
 <body>
   <main class="wrap">
     <section class="utd">
-      <img src="/artist/artistavatar.png" alt="site avatar" class="avatar-overlay">
+      <!-- optional avatar; remove if not in this path -->
+      <img src="/artist/artistavatar.png" alt="" class="avatar-overlay">
 
       <div class="utd-bar">
         <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
@@ -40,7 +41,6 @@
     </section>
   </main>
 
-  <!-- Your full JS from earlier -->
   <script src="useless.js" defer></script>
 </body>
 </html>
