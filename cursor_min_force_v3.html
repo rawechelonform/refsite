@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crosshair — no flicker, hide on leave, auto-return</title>
+<style>
+  /* Black page */
+  html,body{height:100%;margin:0;background:#000!important;color:#ddd;font:14px/1.5 system-ui}
+  body::before{content:"";position:fixed;inset:0;background:#000;z-index:-1}
+
+  .ui{max-width:760px;margin:40px auto;padding:0 16px}
+  h1{color:#fff;margin:0 0 8px;font-size:22px}
+  button{background:#111;color:#ddd;border:1px solid #333;padding:8px 12px;border-radius:6px}
+  button:hover{background:#1a1a1a}
+
+  /* Hide OS cursor while “inside” */
+  html[data-cursor="off"], html[data-cursor="off"] *{
+    cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>") 0 0, none !important;
+  }
+  html[data-cursor="off"] input, html[data-cursor="off"] textarea, html[data-cursor="off"] [contenteditable]{ caret-color: transparent !important; }
+
+  /* Micro-shield: shown briefly during movement to suppress flicker */
+  #cursor-shield{
+    position:fixed; inset:0; background:transparent;
+    z-index:2147483646; cursor:none !important; display:none;
+  }
+
+  /* Crosshair visuals */
+  :root{ --s:34px; --t:2px; --g:18px; --d:3px; }
+  #c{
+    position:fixed; left:0; top:0; width:var(--s); height:var(--s);
+    transform:translate(-50%,-50%); pointer-events:none; z-index:2147483647;
+    color:#fff; mix-blend-mode:difference;
+    filter:drop-shadow(0 0 .5px rgba(0,0,0,.6)) drop-shadow(0 0 1px rgba(0,0,0,.5));
+    display:none; /* only while inside */
+  }
+  #c .arm{
+    position:absolute; left:50%; top:50%; width:var(--s); height:var(--t);
+    transform-origin:50% 50%; transform:translate(-50%,-50%) rotate(45deg);
+    background:linear-gradient(90deg,
+      currentColor 0 calc(50% - (var(--g)/2)),
+      transparent calc(50% - (var(--g)/2)) calc(50% + (var(--g)/2)),
+      currentColor calc(50% + (var(--g)/2)) 100%);
+  }
+  #c .arm.b{ transform:translate(-50%,-50%) rotate(-45deg); }
+  #c .dot{ position:absolute; left:50%; top:50%; width:var(--d); height:var(--d);
+           transform:translate(-50%,-50%); border-radius:50%; background:currentColor; }
+
+  /* Spin + click implode */
+  @keyframes spin{ from{transform:translate(-50%,-50%) rotate(0)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+  #c.implode .arm{ animation: imp 220ms ease-out forwards; }
+  #c.implode .arm.b{ animation-name: impb; }
+  @keyframes imp{ 0%{transform:translate(-50%,-50%) rotate(45deg) scaleX(1)}
+                  60%{transform:translate(-50%,-50%) rotate(45deg) scaleX(.25)}
+                  100%{transform:translate(-50%,-50%) rotate(45deg) scaleX(0)} }
+  @keyframes impb{ 0%{transform:translate(-50%,-50%) rotate(-45deg) scaleX(1)}
+                   60%{transform:translate(-50%,-50%) rotate(-45deg) scaleX(.25)}
+                   100%{transform:translate(-50%,-50%) rotate(-45deg) scaleX(0)} }
+
+  @media (prefers-reduced-motion: reduce){
+    #c{ animation:none !important; }
+    #c.implode .arm, #c.implode .arm.b{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="c" aria-hidden="true">
+    <span class="arm"></span><span class="arm b"></span><span class="dot"></span>
+  </div>
+  <div id="cursor-shield" aria-hidden="true"></div>
+
+  <main class="ui">
+    <h1>Crosshair sandbox</h1>
+    <p>No flicker while moving or at start/stop, hides on leave, auto-returns on re-entry. Click = implode. Spins are irregular & sometimes skipped.</p>
+    <button>Focusable thing</button>
+    <a href="#" style="color:#9cf">Link</a>
+    <input placeholder="Input" style="background:#111;border:1px solid #333;color:#ddd;padding:6px 8px;border-radius:6px" />
+  </main>
+
+<script>
+(() => {
+  const cursor = document.getElementById('c');
+  const shield = document.getElementById('cursor-shield');
+  const root   = document.documentElement;
+  const prefersReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const TRANSPARENT_SVG = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>\") 0 0, none";
+  const SHIELD_IDLE_MS  = 150;    // dwell after last move
+  const SUPPRESS_MS     = 200;    // rAF suppression window around start/stop
+
+  let raf = 0, idleTimer = null, inside = false, lastMoveTs = 0, shieldTimer = null;
+  let suppressUntil = 0, suppressRAF = 0;
+
+  const now  = () => performance.now();
+  const rand = (min, max) => Math.random() * (max - min) + min;
+  const inBounds = (x, y) => x >= 0 && y >= 0 && x < innerWidth && y < innerHeight;
+
+  function place(x, y){
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => { cursor.style.left = x + 'px'; cursor.style.top = y + 'px'; });
+  }
+  function applyRootKill(){
+    root.style.setProperty('cursor', TRANSPARENT_SVG, 'important');
+    document.body?.style?.setProperty('cursor', TRANSPARENT_SVG, 'important');
+  }
+  function clearRootKill(){
+    root.style.removeProperty('cursor');
+    document.body?.style?.removeProperty('cursor');
+  }
+
+  function showInside(){
+    if (inside) return;
+    inside = true;
+    root.setAttribute('data-cursor', 'off');
+    applyRootKill();
+    place(innerWidth/2, innerHeight/2);
+    cursor.style.display = 'block';
+  }
+  function hideInside(){
+    if (!inside) return;
+    inside = false;
+    root.removeAttribute('data-cursor');
+    clearRootKill();
+    cursor.style.display = 'none';
+    hideShield();
+    stopSuppress();
+  }
+
+  /* micro-shield control */
+  function showShield(){
+    if (shield.style.display !== 'block') shield.style.display = 'block';
+    if (shieldTimer) clearTimeout(shieldTimer);
+    shieldTimer = setTimeout(hideShield, SHIELD_IDLE_MS);
+  }
+  function hideShield(){
+    shieldTimer && clearTimeout(shieldTimer);
+    shieldTimer = null;
+    shield.style.display = 'none';
+  }
+
+  /* suppression window (reassert kill + keep shield during start/stop) */
+  function startSuppress(ms = SUPPRESS_MS){
+    suppressUntil = now() + ms;
+    if (!suppressRAF) tickSuppress();
+  }
+  function stopSuppress(){
+    suppressUntil = 0;
+    if (suppressRAF){ cancelAnimationFrame(suppressRAF); suppressRAF = 0; }
+  }
+  function tickSuppress(){
+    const t = now();
+    if (t >= suppressUntil){ suppressRAF = 0; hideShield(); return; }
+    applyRootKill();
+    showShield();
+    suppressRAF = requestAnimationFrame(tickSuppress);
+  }
+
+  /* forward events under the shield */
+  function forward(type, ev){
+    const was = shield.style.display;
+    shield.style.display = 'none';
+    const target = document.elementFromPoint(ev.clientX, ev.clientY);
+    shield.style.display = was;
+    if (!target) return;
+
+    const opts = {
+      bubbles:true, cancelable:true, composed:true, view:window,
+      clientX:ev.clientX, clientY:ev.clientY, screenX:ev.screenX, screenY:ev.screenY,
+      button:ev.button, buttons:ev.buttons,
+      ctrlKey:ev.ctrlKey, shiftKey:ev.shiftKey, altKey:ev.altKey, metaKey:ev.metaKey,
+      pointerId:ev.pointerId, pointerType:ev.pointerType, width:ev.width, height:ev.height, pressure:ev.pressure
+    };
+    target.dispatchEvent(new PointerEvent(type, opts));
+    const mouseMap = {pointermove:'mousemove', pointerdown:'mousedown', pointerup:'mouseup'};
+    if (mouseMap[type]) target.dispatchEvent(new MouseEvent(mouseMap[type], opts));
+    if (type === 'pointerup') target.dispatchEvent(new MouseEvent('click', opts));
+  }
+
+  /* unified move */
+  function onPointerMove(e){
+    if (inBounds(e.clientX, e.clientY)){
+      if (!inside) showInside();
+      lastMoveTs = now();
+      place(e.clientX, e.clientY);
+
+      // movement → strong suppression window
+      startSuppress(SUPPRESS_MS);
+      forward('pointermove', e);
+    } else {
+      hideInside();
+    }
+  }
+
+  function onPointerDown(e){
+    if (!inside) return;
+    startSuppress(SUPPRESS_MS);
+    forward('pointerdown', e);
+    cursor.classList.remove('implode'); void cursor.offsetWidth;
+    cursor.classList.add('implode');
+    setTimeout(() => cursor.classList.remove('implode'), 240);
+  }
+  function onPointerUp(e){
+    if (!inside) return;
+    startSuppress(SUPPRESS_MS * 0.75);
+    forward('pointerup', e);
+  }
+
+  /* irregular idle spins */
+  function scheduleSpin(){
+    clearTimeout(idleTimer);
+    const delay = Math.max(300, rand(900, 4200) + rand(-350, 350));
+    idleTimer = setTimeout(() => {
+      const skip = Math.random() < 0.4;
+      const recentMove = now() - lastMoveTs < 250;
+      if (!prefersReduce && inside && !recentMove && !skip){
+        const reverse = Math.random() < 0.5;
+        const dur = Math.round(rand(220, 680));
+        cursor.style.animation = 'none'; void cursor.offsetWidth;
+        cursor.style.animation = `spin ${dur}ms ease-out ${reverse ? 'reverse' : 'normal'}`;
+      }
+      scheduleSpin();
+    }, delay);
+  }
+
+  /* leave detection */
+  document.addEventListener('mouseout', (e)=>{ if (e.relatedTarget === null) hideInside(); }, {passive:true});
+  window.addEventListener('blur', hideInside);
+  document.addEventListener('visibilitychange', ()=>{ if (document.hidden) hideInside(); });
+
+  /* pointer events */
+  document.addEventListener('pointermove', onPointerMove, {passive:true});
+  document.addEventListener('pointerdown', onPointerDown, {passive:true});
+  document.addEventListener('pointerup',   onPointerUp,   {passive:true});
+
+  /* boot */
+  document.addEventListener('DOMContentLoaded', () => {
+    showInside();                 // visible immediately
+    lastMoveTs = now();
+    scheduleSpin();
+    startSuppress(300);           // brief suppression at load
+  });
+})();
+</script>
+</body>
+</html>
