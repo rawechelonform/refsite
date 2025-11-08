@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- CSP trimmed to what's needed for this isolated debug page -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline';
+                 style-src  'self' 'unsafe-inline';
+                 img-src    'self' data: blob:;
+                 font-src   'self' data:;
+                 connect-src 'self' https://script.google.com https://*.googleusercontent.com;">
+
+  <title>UTD Debug</title>
+
+  <link rel="stylesheet" href="useless.css">
+  <style>html,body{margin:0;padding:0;background:#000}</style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="utd">
+      <img src="/artist/artistavatar.png" alt="site avatar" class="avatar-overlay">
+
+      <div class="utd-bar">
+        <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
+        <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
+      </div>
+
+      <form id="utdForm" class="utd-form" hidden>
+        <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
+                  placeholder="type a thought…"></textarea>
+        <div class="utd-actions">
+          <button type="submit">post</button>
+        </div>
+      </form>
+
+      <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="useless.js" defer></script>
+</body>
+</html>

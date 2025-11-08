@@ -17,11 +17,10 @@
   <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Page CSS first -->
+  <!-- Page CSS -->
   <link rel="stylesheet" href="sadgirls.css" />
-   <link rel="stylesheet" href="menubar.css?v=mb9">
-   <link rel="stylesheet" href="artist.css?v=27"><!-- make sure cursor block is at the END of this file -->
- 
+  <link rel="stylesheet" href="menubar.css?v=mb9">
+  <link rel="stylesheet" href="artist.css?v=27">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
@@ -82,29 +81,85 @@
     </div>
   </div>
 
-  
-<div id="custom-cursor" aria-hidden="true">
-  <span class="arm arm-a"></span>
-  <span class="arm arm-b"></span>
-  <span class="dot"></span>
-</div>
-
+  <div id="custom-cursor" aria-hidden="true">
+    <span class="arm arm-a"></span>
+    <span class="arm arm-b"></span>
+    <span class="dot"></span>
+  </div>
 
   <script src="menubar.js?v=mb23" defer></script>
-  <script src="artist.js?v=17" defer></script> <!-- ↑ bump this after uploading the new JS -->
+  <script src="artist.js?v=17" defer></script>
 
+  <!-- Bottom-right "glitch report" corner block -->
+  <div class="glitch-corner-wrap">
+    <a class="glitch-corner" href="glitchreport.html" aria-label="glitch report">
+      <img class="gc-base"  src="/artist/glitchreport.png"          alt="" decoding="async" loading="lazy">
+      <img class="gc-hover" src="/artist/glitchreportwordsonly.png" alt="" decoding="async" loading="lazy">
+    </a>
+  </div>
 
+  <!-- Centered fade-away toast for registration complete -->
+  <script>
+  (function () {
+    const params = new URLSearchParams(location.search);
+    if (params.get('registration') !== 'complete') return;
 
+    // Create full-screen overlay
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      display: 'grid',
+      placeItems: 'center',
+      zIndex: '9999',
+      pointerEvents: 'none',
+      background: 'transparent',
+      opacity: '0',
+      transition: 'opacity 400ms ease'
+    });
 
-<!-- Bottom-right "glitch report" corner block -->
-<div class="glitch-corner-wrap">
-  <a class="glitch-corner" href="glitchreport.html" aria-label="glitch report">
-    <img class="gc-base"  src="/artist/glitchreport.png"          alt="" decoding="async" loading="lazy">
-    <img class="gc-hover" src="/artist/glitchreportwordsonly.png" alt="" decoding="async" loading="lazy">
-  </a>
-  <div id="glitchMsg" class="glitch-msg" hidden>registration complete.</div>
-</div>
+    // Message
+    const msg = document.createElement('div');
+    msg.textContent = 'registration complete.';
+    // Get same font as bio
+    const bio = document.querySelector('.bio');
+    const cs = bio ? getComputedStyle(bio) : {};
+    Object.assign(msg.style, {
+      color: '#fff',
+      background: 'transparent',
+      border: 'none',
+      fontFamily: cs.fontFamily || 'inherit',
+      fontSize: cs.fontSize || '18px',
+      fontStyle: 'italic',
+      letterSpacing: cs.letterSpacing || '0.02em',
+      transform: 'translateY(10px)',
+      transition: 'transform 400ms ease',
+    });
 
+    overlay.appendChild(msg);
+    document.body.appendChild(overlay);
 
+    // Fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      msg.style.transform = 'translateY(0)';
+    });
+
+    // Hold for ~1.5s, then fade out
+    setTimeout(() => {
+      overlay.style.opacity = '0';
+      msg.style.transform = 'translateY(10px)';
+    }, 1600);
+
+    // Remove + clean URL
+    setTimeout(() => {
+      overlay.remove();
+      params.delete('registration');
+      const qs = params.toString();
+      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+      history.replaceState(null, '', newUrl);
+    }, 2100);
+  })();
+  </script>
 </body>
 </html>

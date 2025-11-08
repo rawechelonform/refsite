@@ -1,108 +1,101 @@
-/* ===== cursor.css — page + crosshair visible on any background ===== */
-
-/* Page: force dark so you're not staring at white */
+/* ===== Force black page + base UI ===== */
 html, body{
-  height: 100%;
-  margin: 0;
-  background: #000 !important; /* ← your page is black now */
-  color: #ddd;
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  height:100%; margin:0;
+  background:#000 !important;
+  color:#ddd;
+  font:14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+body::before{ content:""; position:fixed; inset:0; background:#000; z-index:-1; }
 
-/* Demo layout (optional) */
-.demo{
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  gap: 18px;
-  padding: 32px 16px;
-  text-align: center;
-}
-.demo .row{ display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.ui{ max-width:760px; margin:40px auto; padding:0 16px; }
+h1{ color:#fff; margin:0 0 8px; font-size:22px; }
 button{
-  background:#111; color:#ddd; border:1px solid #333; padding:6px 10px; border-radius:6px;
+  background:#111; color:#ddd; border:1px solid #333;
+  padding:8px 12px; border-radius:6px; cursor:pointer;
 }
 button:hover{ background:#1a1a1a; }
-a{ color:#9ad; }
-input{
-  background:#0b0b0b; color:#ddd; border:1px solid #333; padding:6px 10px; border-radius:6px;
-}
 
-/* ===== Custom crosshair ===== */
+/* ===== ABSOLUTE KILL of native cursor (on every node) =====
+   Transparent 1×1 SVG cursor, then 'none' as fallback, with !important.
+   Works even if page CSS tries to set its own cursor. */
+*, *::before, *::after{
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>") 0 0,
+    none !important;
+}
+/* Also hide text caret */
+input, textarea, [contenteditable]{ caret-color: transparent !important; }
+
+/* ===== Crosshair visuals ===== */
 :root{
-  --cursor-size: 34px;
-  --cursor-thick: 2px;
-  --cursor-gap: 18px;  /* empty space in each arm */
-  --cursor-dot: 3px;   /* center dot size */
+  --cursor-size:34px;
+  --cursor-thick:2px;
+  --cursor-gap:18px;
+  --cursor-dot:3px;
 }
-
-/* Hide the native OS cursor ONLY when <html data-cursor="off"> is present */
-html[data-cursor="off"],
-html[data-cursor="off"] *{
-  cursor: none !important;
-}
-
-/* Crosshair container */
 #custom-cursor{
-  position: fixed;
-  left: 0; top: 0;
-  width: var(--cursor-size);
-  height: var(--cursor-size);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 2147483647;
-
-  /* Auto-contrast: white + difference = readable on light or dark */
-  color: #fff;
-  mix-blend-mode: difference;
-
-  /* Tiny halo helps against noisy images / blend quirks */
-  filter:
-    drop-shadow(0 0 0.5px rgba(0,0,0,.6))
-    drop-shadow(0 0 1px rgba(0,0,0,.5));
-
-  /* Ensure blending works even if ancestors isolate */
-  isolation: auto;
+  position:fixed; left:0; top:0;
+  width:var(--cursor-size); height:var(--cursor-size);
+  transform:translate(-50%, -50%);
+  pointer-events:none;
+  z-index:2147483647;
+  color:#fff;
+  mix-blend-mode:difference; /* visible on light or dark */
+  filter: drop-shadow(0 0 .5px rgba(0,0,0,.6)) drop-shadow(0 0 1px rgba(0,0,0,.5));
+  isolation:auto;
+  display:block;  /* always on-page */
+  animation:none;
 }
-
-/* Arms — forms an X with a gap */
 #custom-cursor .arm{
-  position: absolute;
-  left: 50%; top: 50%;
-  width: var(--cursor-size);
-  height: var(--cursor-thick);
-  transform-origin: 50% 50%;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background:
-    linear-gradient(
-      90deg,
-      currentColor 0 calc(50% - (var(--cursor-gap) / 2)),
-      transparent  calc(50% - (var(--cursor-gap) / 2)) calc(50% + (var(--cursor-gap) / 2)),
-      currentColor calc(50% + (var(--cursor-gap) / 2)) 100%
-    );
+  position:absolute; left:50%; top:50%;
+  width:var(--cursor-size); height:var(--cursor-thick);
+  transform-origin:50% 50%;
+  transform:translate(-50%, -50%) rotate(45deg);
+  background:linear-gradient(
+    90deg,
+    currentColor 0 calc(50% - (var(--cursor-gap)/2)),
+    transparent  calc(50% - (var(--cursor-gap)/2)) calc(50% + (var(--cursor-gap)/2)),
+    currentColor calc(50% + (var(--cursor-gap)/2)) 100%
+  );
 }
-#custom-cursor .arm-b{
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
-
-/* Center dot */
+#custom-cursor .arm-b{ transform:translate(-50%, -50%) rotate(-45deg); }
 #custom-cursor .dot{
-  position: absolute;
-  left: 50%; top: 50%;
-  width: var(--cursor-dot);
-  height: var(--cursor-dot);
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: currentColor;
+  position:absolute; left:50%; top:50%;
+  width:var(--cursor-dot); height:var(--cursor-dot);
+  transform:translate(-50%, -50%); border-radius:50%; background:currentColor;
 }
 
-/* Click spin animation (triggered by JS) */
+/* Spin (JS sets timing/direction) */
 @keyframes cursor-spin{
   from { transform: translate(-50%, -50%) rotate(0); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* Respect reduced motion */
+/* Click implode */
+#custom-cursor.implode .arm,
+#custom-cursor.implode .arm-b{ animation: arm-implode 220ms ease-out forwards; }
+@keyframes arm-implode{
+  0%   { transform: translate(-50%, -50%) rotate(45deg) scaleX(1); }
+  60%  { transform: translate(-50%, -50%) rotate(45deg) scaleX(0.25); }
+  100% { transform: translate(-50%, -50%) rotate(45deg) scaleX(0); }
+}
+#custom-cursor.implode .arm-b{ animation-name: arm-implode-b; }
+@keyframes arm-implode-b{
+  0%   { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1); }
+  60%  { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.25); }
+  100% { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0); }
+}
+#custom-cursor.implode .dot{ animation: dot-pop 220ms ease-out; }
+@keyframes dot-pop{
+  0% { transform: translate(-50%, -50%) scale(1); }
+  60%{ transform: translate(-50%, -50%) scale(1.25); }
+  100%{ transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce){
-  #custom-cursor{ animation: none !important; }
+  #custom-cursor{ animation:none !important; }
+  #custom-cursor.implode .arm,
+  #custom-cursor.implode .arm-b,
+  #custom-cursor.implode .dot{ animation:none !important; }
 }

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" data-cursor="off">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cursor Sandbox</title>
+  <title>Crosshair — native cursor fully suppressed</title>
   <link rel="stylesheet" href="cursor.css" />
 </head>
 <body>
@@ -14,16 +14,12 @@
     <span class="dot"></span>
   </div>
 
-  <!-- Minimal content so you can see behavior -->
-  <main class="demo">
-    <h1>Cursor Debug Sandbox</h1>
-    <p>Move the mouse; click to spin. Remove <code>data-cursor="off"</code> on <code>&lt;html&gt;</code> to show the OS cursor again.</p>
-
-    <div class="row">
-      <button>Focusable button</button>
-      <a href="#">A link</a>
-      <input placeholder="Type here" />
-    </div>
+  <main class="ui">
+    <h1>Custom Crosshair</h1>
+    <p>On-page: crosshair only. Off-page: normal cursor returns. Click = implode; idle random spins.</p>
+    <button>Focusable thing</button>
+    <a href="#">Link thing</a>
+    <input placeholder="Text input" />
   </main>
 
   <script src="cursor.js" defer></script>
