@@ -189,3 +189,73 @@
     scheduleSpin();
   });
 })();
+
+
+// ===== Chrome-only Pointer Lock fallback (click to arm) =====
+(() => {
+  const ua = navigator.userAgent;
+  const IS_CHROME = /\bChrome\//.test(ua) && !/\bEdg\//.test(ua) && !/\bOPR\//.test(ua);
+
+  if (!IS_CHROME) return; // Safari path already good for you
+
+  const root   = document.documentElement;
+  const cursor = document.getElementById('custom-cursor');
+  const shield = document.getElementById('cursor-shield');
+
+  let locked = false;
+  let x = innerWidth  / 2;
+  let y = innerHeight / 2;
+
+  function clamp(v, min, max){ return v < min ? min : (v > max ? max : v); }
+  function place(){ cursor.style.left = x + 'px'; cursor.style.top = y + 'px'; }
+
+  function onLockChange(){
+    locked = (document.pointerLockElement === document.body);
+    if (!locked){
+      // When unlocked, allow OS cursor outside and hide crosshair until re-entered
+      shield.style.display = 'none';
+      root.removeAttribute('data-cursor');
+      cursor.style.display = 'none';
+      document.removeEventListener('mousemove', onLockedMove, true);
+    } else {
+      // While locked, we fully control position and cursor is hidden by Chrome
+      shield.style.display = 'block';              // keep events routed under
+      root.setAttribute('data-cursor', 'off');     // just in case
+      cursor.style.display = 'block';
+      document.addEventListener('mousemove', onLockedMove, true);
+      place();
+    }
+  }
+
+  function onLockedMove(e){
+    // movementX/Y are deltas while locked
+    x = clamp(x + e.movementX, 0, innerWidth  - 1);
+    y = clamp(y + e.movementY, 0, innerHeight - 1);
+    place();
+  }
+
+  // Arm pointer lock on first click inside
+  function armLockOnce(e){
+    // only if we’re actually inside the viewport
+    if (e.clientX >= 0 && e.clientY >= 0 && e.clientX < innerWidth && e.clientY < innerHeight){
+      document.body.requestPointerLock?.();
+      window.removeEventListener('pointerdown', armLockOnce, true);
+    }
+  }
+  window.addEventListener('pointerdown', armLockOnce, true);
+
+  // Exit conditions: Esc, blur, or real leave
+  document.addEventListener('pointerlockchange', onLockChange, false);
+  document.addEventListener('pointerlockerror',  onLockChange, false);
+  window.addEventListener('blur', () => { document.exitPointerLock?.(); }, false);
+  document.addEventListener('mouseout', (e) => {
+    if (e.relatedTarget === null) document.exitPointerLock?.();
+  }, { passive:true });
+
+  // Keep crosshair centered when layout changes
+  window.addEventListener('resize', () => {
+    x = clamp(x, 0, innerWidth  - 1);
+    y = clamp(y, 0, innerHeight - 1);
+    place();
+  });
+})();

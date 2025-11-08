@@ -3,7 +3,7 @@ const NEXT_PAGE    = "main.html";
 const FRAMES_DIR   = "assets/landing/";  // moved assets
 const FRAME_PREFIX = "zoom";   // zoom0.png ... zoom10.png
 const FRAME_START  = 0;
-const FRAME_END    = 8;       // inclusive
+const FRAME_END    = 10;       // inclusive
 const FPS          = 12;
 
 // ===== ELEMENTS =====
