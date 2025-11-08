@@ -1,10 +1,11 @@
 // ===== CONFIG =====
 const NEXT_PAGE    = "main.html";
 const FRAMES_DIR   = "assets/landing/";  // moved assets
-const FRAME_PREFIX = "zoom";   // zoom0.png ... zoom10.png
+const FRAME_PREFIX = "zoom";             // zoom0.png ... zoom10.png
 const FRAME_START  = 0;
-const FRAME_END    = 10;       // inclusive
+const FRAME_END    = 10;                 // inclusive
 const FPS          = 12;
+const FRAME_VER    = "v=200";            // bump when you change frames
 
 // ===== ELEMENTS =====
 const enterBtn = document.getElementById('enter-computer');
@@ -39,17 +40,24 @@ function startRoomBlinkers(){
 // ===== ZOOM SEQUENCE =====
 const frameList = [];
 for(let i=FRAME_START;i<=FRAME_END;i++){
-  frameList.push(`${FRAMES_DIR}${FRAME_PREFIX}${i}.png`);
+  frameList.push(`${FRAMES_DIR}${FRAME_PREFIX}${i}.png?${FRAME_VER}`);
 }
+
+// Preload and DECODE frames so swaps don't “skip”
 function preload(srcs, cb){
-  let loaded = 0;
   if (!srcs.length) { cb && cb(); return; }
-  srcs.forEach(src => {
+  Promise.all(srcs.map(src => {
     const im = new Image();
-    im.onload = im.onerror = () => { if(++loaded >= srcs.length) cb && cb(); };
+    im.decoding = 'sync';
+    im.loading = 'eager';
     im.src = src;
-  });
+    if (im.decode) {
+      return im.decode().catch(()=>{}); // fall through on decode error
+    }
+    return new Promise(res => { im.onload = res; im.onerror = res; });
+  })).finally(() => cb && cb());
 }
+
 function playZoomSequence(after){
   if (zoomPlaying) return;
   zoomPlaying = true;
@@ -58,6 +66,8 @@ function playZoomSequence(after){
 
   let i = FRAME_START;
   zoomImg.src = frameList[i];
+  // console.log('show frame', i, frameList[i]); // uncomment to debug order
+
   const interval = Math.max(1, Math.round(1000 / FPS));
   const timer = setInterval(() => {
     i++;
@@ -67,6 +77,7 @@ function playZoomSequence(after){
       return;
     }
     zoomImg.src = frameList[i];
+    // console.log('show frame', i, frameList[i]); // uncomment to debug order
   }, interval);
 }
 
@@ -154,7 +165,7 @@ function refreshHitMask(){
     const img = new Image();
     img.onload  = ()=>buildScreenMask(img);
     img.onerror = ()=>{ hit.screenMaskReady = false; };
-    img.src = FRAMES_DIR + "screenmask.png";
+    img.src = FRAMES_DIR + "screenmask.png?" + FRAME_VER;
     hit.screenImg = img;
   } else if (hit.screenImg.complete && hit.screenImg.naturalWidth){
     buildScreenMask(hit.screenImg);
