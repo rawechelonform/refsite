@@ -3,25 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Crosshair — native cursor fully suppressed</title>
-  <link rel="stylesheet" href="cursor.css" />
+  <title>Cursor Sandbox</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="cursor.css?v=1" />
 </head>
 <body>
-  <!-- Custom cursor -->
+  <!-- Custom crosshair cursor (two diagonals + center dot) -->
   <div id="custom-cursor" aria-hidden="true">
     <span class="arm arm-a"></span>
     <span class="arm arm-b"></span>
     <span class="dot"></span>
   </div>
 
+  <!-- Shield layer: JS toggles this to suppress native-cursor flicker -->
+  <div id="cursor-shield" aria-hidden="true"></div>
+
+  <!-- Minimal demo UI so you can tab/click things -->
   <main class="ui">
-    <h1>Custom Crosshair</h1>
-    <p>On-page: crosshair only. Off-page: normal cursor returns. Click = implode; idle random spins.</p>
-    <button>Focusable thing</button>
-    <a href="#">Link thing</a>
-    <input placeholder="Text input" />
+    <h1>Crosshair Cursor</h1>
+    <p>Move inside → crosshair replaces OS cursor. Leave window → OS cursor shows. Click = implode.</p>
+    <p>
+      <button>Button</button>
+      <a href="#">Link</a>
+      <input placeholder="Input field" />
+    </p>
   </main>
 
-  <script src="cursor.js" defer></script>
+  <!-- Your JS (movement/enter-leave/spin). Keep as a separate file. -->
+  <script src="cursor.js?v=1" defer></script>
 </body>
 </html>
