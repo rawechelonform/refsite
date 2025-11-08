@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pointer-Lock Crosshair (Chrome fix)</title>
+<style>
+  /* Page baseline */
+  html,body{height:100%;margin:0;background:#000;color:#ddd;font:14px/1.5 system-ui}
+  .ui{position:fixed;left:0;right:0;top:0;padding:14px;text-align:center;color:#aaa}
+  .hint{opacity:.85}
+
+  /* Crosshair visuals */
+  :root{ --s:34px; --t:2px; --g:18px; --d:3px; }
+  #c{
+    position:fixed; left:0; top:0; width:var(--s); height:var(--s);
+    transform:translate(-50%,-50%); pointer-events:none; z-index:2147483647;
+    color:#fff; mix-blend-mode:difference;
+    filter:drop-shadow(0 0 .5px rgba(0,0,0,.6)) drop-shadow(0 0 1px rgba(0,0,0,.5));
+    display:none; /* only while locked */
+  }
+  #c .arm{
+    position:absolute; left:50%; top:50%; width:var(--s); height:var(--t);
+    transform-origin:50% 50%;
+    background:linear-gradient(90deg,
+      currentColor 0 calc(50% - (var(--g)/2)),
+      transparent calc(50% - (var(--g)/2)) calc(50% + (var(--g)/2)),
+      currentColor calc(50% + (var(--g)/2)) 100%);
+  }
+  #c .arm-a{ transform:translate(-50%,-50%) rotate(45deg); }
+  #c .arm-b{ transform:translate(-50%,-50%) rotate(-45deg); }
+  #c .dot{ position:absolute; left:50%; top:50%; width:var(--d); height:var(--d);
+           transform:translate(-50%,-50%); border-radius:50%; background:currentColor; }
+
+  /* Spin on click (optional) */
+  @keyframes spin{ from{transform:translate(-50%,-50%) rotate(0)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+  .spin{ animation:spin 360ms ease-out; }
+</style>
+</head>
+<body>
+  <div class="ui">
+    <div class="hint">Click anywhere to <strong>lock</strong> (hide OS cursor). Press <strong>Esc</strong> or leave the tab to unlock</div>
+  </div>
+
+  <!-- Crosshair -->
+  <div id="c" aria-hidden="true">
+    <span class="arm arm-a"></span>
+    <span class="arm arm-b"></span>
+    <span class="dot"></span>
+  </div>
+
+<script>
+(() => {
+  const cursor = document.getElementById('c');
+  let locked = false;
+  let x = innerWidth  / 2;
+  let y = innerHeight / 2;
+  const clamp = (v,min,max)=> v<min?min : v>max?max : v;
+
+  function place(){
+    cursor.style.left = x + 'px';
+    cursor.style.top  = y + 'px';
+  }
+
+  function onLockedMove(e){
+    // movementX/Y are deltas while pointer is locked
+    x = clamp(x + e.movementX, 0, innerWidth  - 1);
+    y = clamp(y + e.movementY, 0, innerHeight - 1);
+    place();
+  }
+
+  function onLockChange(){
+    locked = (document.pointerLockElement === document.body);
+    if (locked){
+      // Crosshair visible; Chrome hides OS cursor automatically while locked
+      cursor.style.display = 'block';
+      place();
+      // use capture:true so we get deltas even if shielded elements exist
+      document.addEventListener('mousemove', onLockedMove, true);
+    }else{
+      // Show OS cursor again; hide crosshair; stop delta handling
+      cursor.style.display = 'none';
+      document.removeEventListener('mousemove', onLockedMove, true);
+    }
+  }
+
+  // Click to request lock; spin once on click when locked
+  window.addEventListener('pointerdown', (e) => {
+    // Only if inside viewport
+    if (e.clientX >= 0 && e.clientY >= 0 && e.clientX < innerWidth && e.clientY < innerHeight){
+      // If not locked, request; if already locked, do a spin pulse
+      if (!locked){
+        document.body.requestPointerLock?.();
+      } else {
+        cursor.classList.remove('spin'); void cursor.offsetWidth; cursor.classList.add('spin');
+      }
+    }
+  }, true);
+
+  // Clean unlocks
+  document.addEventListener('pointerlockchange', onLockChange, false);
+  document.addEventListener('pointerlockerror',  onLockChange, false);
+  window.addEventListener('blur', () => document.exitPointerLock?.(), false);
+  document.addEventListener('mouseout', (e)=>{ if (e.relatedTarget === null) document.exitPointerLock?.(); }, {passive:true});
+
+  // Keep position valid on resize
+  window.addEventListener('resize', () => {
+    x = clamp(x, 0, innerWidth  - 1);
+    y = clamp(y, 0, innerHeight - 1);
+    if (locked) place();
+  });
+})();
+</script>
+</body>
+</html>
