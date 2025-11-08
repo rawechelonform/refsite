@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crosshair — bulletproof (no native cursor)</title>
+<style>
+  /* Page baseline */
+  html,body{height:100%;margin:0;background:#000!important;color:#ddd;font:14px/1.5 system-ui}
+  body::before{content:"";position:fixed;inset:0;background:#000;z-index:-1}
+
+  .ui{max-width:760px;margin:40px auto;padding:0 16px}
+  h1{color:#fff;margin:0 0 8px;font-size:22px}
+  button{background:#111;color:#ddd;border:1px solid #333;padding:8px 12px;border-radius:6px}
+  button:hover{background:#1a1a1a}
+
+  /* Gate: while inside, hide OS cursor on everything */
+  html[data-cursor="off"], html[data-cursor="off"] *{
+    cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>") 0 0, none !important;
+  }
+  html[data-cursor="off"] input, html[data-cursor="off"] textarea, html[data-cursor="off"] [contenteditable]{
+    caret-color: transparent !important;
+  }
+
+  /* Always-on shield while inside (owns cursor:none, sits under crosshair) */
+  #cursor-shield{
+    position:fixed; inset:0; background:transparent;
+    z-index:2147483646; cursor:none !important; display:none;
+  }
+
+  /* Crosshair */
+  :root{ --s:34px; --t:2px; --g:18px; --d:3px; }
+  #custom-cursor{
+    position:fixed; left:0; top:0; width:var(--s); height:var(--s);
+    transform:translate(-50%,-50%); pointer-events:none; z-index:2147483647;
+    color:#fff; mix-blend-mode:difference;
+    filter:drop-shadow(0 0 .5px rgba(0,0,0,.6)) drop-shadow(0 0 1px rgba(0,0,0,.5));
+    display:none;
+  }
+  #custom-cursor .arm{
+    position:absolute; left:50%; top:50%; width:var(--s); height:var(--t);
+    transform-origin:50% 50%;
+    background:linear-gradient(90deg,
+      currentColor 0 calc(50% - (var(--g)/2)),
+      transparent calc(50% - (var(--g)/2)) calc(50% + (var(--g)/2)),
+      currentColor calc(50% + (var(--g)/2)) 100%);
+  }
+  #custom-cursor .arm-a{ transform:translate(-50%,-50%) rotate(45deg); }
+  #custom-cursor .arm-b{ transform:translate(-50%,-50%) rotate(-45deg); }
+  #custom-cursor .dot{
+    position:absolute; left:50%; top:50%; width:var(--d); height:var(--d);
+    transform:translate(-50%,-50%); border-radius:50%; background:currentColor;
+  }
+
+  /* Spin + click implode */
+  @keyframes spin{ from{transform:translate(-50%,-50%) rotate(0)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+  #custom-cursor.implode .arm-a,
+  #custom-cursor.implode .arm-b{ animation: arm-implode 220ms ease-out forwards; }
+  @keyframes arm-implode{
+    0%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(1)}
+    60%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(.25)}
+    100%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(0)}
+  }
+  #custom-cursor.implode .arm-a{ --deg:45deg; }
+  #custom-cursor.implode .arm-b{ --deg:-45deg; }
+  @media (prefers-reduced-motion: reduce){
+    #custom-cursor{ animation:none !important; }
+    #custom-cursor.implode .arm-a, #custom-cursor.implode .arm-b{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <!-- Crosshair -->
+  <div id="custom-cursor" aria-hidden="true">
+    <span class="arm arm-a"></span>
+    <span class="arm arm-b"></span>
+    <span class="dot"></span>
+  </div>
+  <!-- Always-on shield (while inside) -->
+  <div id="cursor-shield" aria-hidden="true"></div>
+
+  <main class="ui">
+    <h1>Crosshair (bulletproof)</h1>
+    <p>Inside: only crosshair. Outside: only OS cursor. Click = implode. Random idle spins.</p>
+    <button>Button</button>
+    <a href="#" style="color:#9cf">Link</a>
+    <input placeholder="Input" style="background:#111;border:1px solid #333;color:#ddd;padding:6px 8px;border-radius:6px" />
+  </main>
+
+<script>
+(() => {
+  const cursor = document.getElementById('custom-cursor');
+  const shield = document.getElementById('cursor-shield');
+  const root   = document.documentElement;
+  const prefersReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Re-assert transparent cursor inline to beat UA flashes */
+  const TRANSPARENT_SVG = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>\") 0 0, none";
+  const REASSERT_MS     = 80; // keep light but frequent
+  let reassertTimer = null;
+  function applyRootKill(){
+    root.style.setProperty('cursor', TRANSPARENT_SVG, 'important');
+    document.body?.style?.setProperty('cursor', TRANSPARENT_SVG, 'important');
+  }
+  function startReassert(){
+    stopReassert();
+    reassertTimer = setInterval(applyRootKill, REASSERT_MS);
+  }
+  function stopReassert(){
+    if (reassertTimer){ clearInterval(reassertTimer); reassertTimer = null; }
+  }
+
+  let inside = false, raf = 0, idleTimer = null, lastMoveTs = 0;
+  const now = () => performance.now();
+  const rand = (a,b)=>Math.random()*(b-a)+a;
+  const inBounds = (x,y)=> x>=0 && y>=0 && x<innerWidth && y<innerHeight;
+
+  function place(x,y){
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=>{ cursor.style.left = x+'px'; cursor.style.top = y+'px'; });
+  }
+
+  function showInside(){
+    if (inside) return;
+    inside = true;
+    root.setAttribute('data-cursor','off');
+    shield.style.display = 'block';         // ALWAYS ON while inside (Chrome/Safari safe)
+    applyRootKill(); startReassert();
+    place(innerWidth/2, innerHeight/2);
+    cursor.style.display = 'block';
+  }
+  function hideInside(){
+    if (!inside) return;
+    inside = false;
+    root.removeAttribute('data-cursor');
+    shield.style.display = 'none';
+    stopReassert();
+    root.style.removeProperty('cursor');
+    document.body?.style?.removeProperty('cursor');
+    cursor.style.display = 'none';
+  }
+
+  /* Forward events under shield so page remains interactive */
+  function forward(type, ev){
+    const prev = shield.style.display;
+    shield.style.display = 'none';
+    const target = document.elementFromPoint(ev.clientX, ev.clientY);
+    shield.style.display = prev;
+    if (!target) return;
+
+    const opts = {
+      bubbles:true, cancelable:true, composed:true, view:window,
+      clientX:ev.clientX, clientY:ev.clientY, screenX:ev.screenX, screenY:ev.screenY,
+      button:ev.button, buttons:ev.buttons,
+      ctrlKey:ev.ctrlKey, shiftKey:ev.shiftKey, altKey:ev.altKey, metaKey:ev.metaKey,
+      pointerId:ev.pointerId, pointerType:ev.pointerType, width:ev.width, height:ev.height, pressure:ev.pressure
+    };
+    target.dispatchEvent(new PointerEvent(type, opts));
+    const map = {pointermove:'mousemove', pointerdown:'mousedown', pointerup:'mouseup'};
+    if (map[type]) target.dispatchEvent(new MouseEvent(map[type], opts));
+    if (type === 'pointerup') target.dispatchEvent(new MouseEvent('click', opts));
+  }
+
+  /* Unified move */
+  function onMove(e){
+    if (inBounds(e.clientX, e.clientY)){
+      if (!inside) showInside();
+      lastMoveTs = now();
+      applyRootKill(); // immediate reassert
+      place(e.clientX, e.clientY);
+      forward('pointermove', e);
+    } else {
+      hideInside();
+    }
+  }
+  function onDown(e){
+    if (!inside) return;
+    applyRootKill();
+    forward('pointerdown', e);
+    cursor.classList.remove('implode'); void cursor.offsetWidth;
+    cursor.classList.add('implode');
+    setTimeout(()=>cursor.classList.remove('implode'), 240);
+  }
+  function onUp(e){
+    if (!inside) return;
+    forward('pointerup', e);
+  }
+  function onWheel(e){
+    if (!inside) return;
+    forward('pointermove', e); // keep hover continuity during wheel
+  }
+
+  /* Random idle spins */
+  function scheduleSpin(){
+    clearTimeout(idleTimer);
+    const delay = Math.max(300, rand(900,4200) + rand(-350,350));
+    idleTimer = setTimeout(()=>{
+      const recentMove = now() - lastMoveTs < 250;
+      const skip = Math.random() < 0.4;
+      if (!prefersReduce && inside && !recentMove && !skip){
+        const reverse = Math.random() < 0.5;
+        const dur = Math.round(rand(220,680));
+        cursor.style.animation = 'none'; void cursor.offsetWidth;
+        cursor.style.animation = `spin ${dur}ms ease-out ${reverse?'reverse':'normal'}`;
+      }
+      scheduleSpin();
+    }, delay);
+  }
+
+  /* Leave/blur: hide crosshair immediately so you never see it stuck at edges */
+  document.addEventListener('mouseout', (e)=>{ if (e.relatedTarget === null) hideInside(); }, {passive:true});
+  window.addEventListener('blur', hideInside);
+  document.addEventListener('visibilitychange', ()=>{ if (document.hidden) hideInside(); });
+
+  /* Pointer events */
+  document.addEventListener('pointermove', onMove, {passive:true});
+  document.addEventListener('pointerdown', onDown, {passive:true});
+  document.addEventListener('pointerup',   onUp,   {passive:true});
+  document.addEventListener('wheel',       onWheel,{passive:true});
+
+  /* Boot */
+  document.addEventListener('DOMContentLoaded', ()=>{
+    showInside();             // visible immediately
+    lastMoveTs = now();
+    scheduleSpin();
+  });
+})();
+</script>
+</body>
+</html>

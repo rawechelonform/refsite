@@ -1,3 +1,35 @@
+/* ---- DIAG PROBE (top of useless.js) ---- */
+(() => {
+  const API = 'https://script.google.com/macros/s/AKfycbwiGt_jbEsCugoEL7i5ysxPSISiCcnnM3HptgSp0mv9Hb90aIyIJE9QHdRdQf9P_gbiSQ/exec';
+
+  async function go(){
+    try {
+      // 1) GET should always return ok:true
+      const g = await fetch(API + '?limit=1');
+      const gtxt = await g.text();
+      console.log('[probe] GET:', g.status, gtxt);
+
+      // 2) POST verify using temp password
+      const fd = new FormData();
+      fd.append('action','verify');
+      fd.append('password','temporary123');
+      const p = await fetch(API, { method:'POST', body: fd });
+      const ptxt = await p.text();
+      console.log('[probe] POST:', p.status, ptxt);
+
+      alert(`GET ${g.status}\n${gtxt.slice(0,120)}...\n\nPOST ${p.status}\n${ptxt.slice(0,120)}...`);
+    } catch (err) {
+      console.error('[probe] fetch failed:', err);
+      alert('probe failed: ' + (err && err.message || err));
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+  else go();
+})();
+
+
+
+
 /* useless.js — UTD box (unlock-first, FormData fetches, robust wiring)
    - Wires the unlock button first (so the prompt always appears)
    - Uses FormData for ALL fetch() calls (no JSON headers → avoids CORS preflight)
