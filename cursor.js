@@ -1,47 +1,49 @@
-/* Hard-lock crosshair
-   • Random idle spins
-   • Click to lock at click point (Chrome hides OS cursor)
-   • While locked: click = squeeze/implode
-   • No edge unlocks, no blur/mouseout unlocks, no recenter
-   • Esc is the only unlock
-*/
+/* Chrome pointer-lock: listen to mousemove + pointermove + pointerrawupdate */
 (() => {
-  const cursor = document.getElementById('custom-cursor');
+  const c = document.getElementById('custom-cursor');
 
-  // State
   let locked = false;
-  let x = window.innerWidth / 2;
-  let y = window.innerHeight / 2;
+  let x = innerWidth / 2, y = innerHeight / 2;
 
-  const clamp = (v, min, max) => v < min ? min : (v > max ? max : v);
-  const now   = () => performance.now();
-  const rand  = (a, b) => Math.random() * (b - a) + a;
+  const clamp = (v,min,max)=> v<min?min : v>max?max : v;
+  const now   = ()=> performance.now();
+  const rand  = (a,b)=> Math.random()*(b-a)+a;
   const prefersReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function paint(){
-    cursor.style.left = x + 'px';
-    cursor.style.top  = y + 'px';
-  }
+  function place(){ c.style.left = x+'px'; c.style.top = y+'px'; }
 
-  // PRE-LOCK: follow OS cursor so crosshair is always visible before locking
-  function preMove(e){
-    if (locked) return;
-    x = e.clientX;
-    y = e.clientY;
-    paint();
-  }
-  document.addEventListener('pointermove', preMove, { passive: true });
+  // --- Pre-lock: follow OS cursor so crosshair is visible and aligned ---
+  function preMove(e){ if (!locked){ x = e.clientX; y = e.clientY; place(); } }
+  addEventListener('pointermove', preMove, { passive:true });
 
-  // POST-LOCK: integrate movement deltas; clamp to viewport; do NOT unlock at edges
+  // --- Locked deltas: handle ALL possible sources robustly ---
   let lastMoveTs = 0;
-  function onLockedMove(e){
-    x = clamp(x + e.movementX, 0, window.innerWidth  - 1);
-    y = clamp(y + e.movementY, 0, window.innerHeight - 1);
-    paint();
+
+  function applyDelta(ev){
+    // movementX/Y exist on MouseEvent and PointerEvent; webkitMovementX/Y on some builds
+    const dx = (ev.movementX ?? ev.webkitMovementX ?? 0);
+    const dy = (ev.movementY ?? ev.webkitMovementY ?? 0);
+    if (!dx && !dy) return; // ignore zero-noise frames
+
+    x = clamp(x + dx, 0, innerWidth  - 1);
+    y = clamp(y + dy, 0, innerHeight - 1);
+    place();
     lastMoveTs = now();
   }
 
-  // Random idle spins (not on click)
+  function addLockedListeners(){
+    // Use capture to get events even if something else stops propagation
+    addEventListener('mousemove',        applyDelta, true);
+    addEventListener('pointermove',      applyDelta, true);
+    addEventListener('pointerrawupdate', applyDelta, true); // high-freq on Chrome
+  }
+  function removeLockedListeners(){
+    removeEventListener('mousemove',        applyDelta, true);
+    removeEventListener('pointermove',      applyDelta, true);
+    removeEventListener('pointerrawupdate', applyDelta, true);
+  }
+
+  // --- Random idle spins (not on click) ---
   let spinTimer = null;
   function scheduleSpin(){
     clearTimeout(spinTimer);
@@ -49,61 +51,59 @@
     spinTimer = setTimeout(() => {
       const quiet = now() - lastMoveTs > 220;
       if (!prefersReduce && locked && quiet){
-        const reverse = Math.random() < 0.5;
+        const rev = Math.random() < 0.5;
         const dur = Math.round(rand(260, 680));
-        cursor.style.animation = 'none'; void cursor.offsetWidth;
-        cursor.style.animation = `cursor-spin ${dur}ms ease-out ${reverse ? 'reverse':'normal'}`;
+        c.style.animation = 'none'; void c.offsetWidth;
+        c.style.animation = `cursor-spin ${dur}ms ease-out ${rev ? 'reverse':'normal'}`;
       }
       scheduleSpin();
     }, delay);
   }
 
-  // Lock lifecycle — no edge/blur/mouseout unlocks; no recenter
+  // --- Pointer-lock lifecycle (no edge auto-unlock, no recenter) ---
   function onLockChange(){
     locked = (document.pointerLockElement === document.body);
     if (locked){
-      // Stop pre-lock follower; start delta handling
-      document.removeEventListener('pointermove', preMove, true);
-      document.addEventListener('mousemove', onLockedMove, true);
+      // Stop pre-lock follower; start delta listeners
+      removeEventListener('pointermove', preMove, true);
+      addLockedListeners();
+      // Crosshair stays visible; positioned at last click (we set x/y on click below)
+      place();
     } else {
-      // Back to pre-lock follower
-      document.removeEventListener('mousemove', onLockedMove, true);
-      document.addEventListener('pointermove', preMove, { passive: true });
+      // Stop delta listeners; resume pre-lock follower
+      removeLockedListeners();
+      addEventListener('pointermove', preMove, { passive:true });
     }
-    paint();
   }
-  document.addEventListener('pointerlockchange', onLockChange, false);
-  document.addEventListener('pointerlockerror',  onLockChange, false);
+  addEventListener('pointerlockchange', onLockChange);
+  addEventListener('pointerlockerror',  onLockChange);
 
-  // Click:
-  //  • If unlocked: set x/y to click point (prevents any jump) and request lock
-  //  • If locked: play the squeeze/implode animation
-  window.addEventListener('pointerdown', (e) => {
+  // --- Click: lock at click point; while locked, click = squeeze ---
+  addEventListener('pointerdown', (e) => {
     if (!locked){
-      x = clamp(e.clientX, 0, window.innerWidth  - 1);
-      y = clamp(e.clientY, 0, window.innerHeight - 1);
-      paint();
-      document.body.requestPointerLock?.(); // Chrome hides OS cursor when lock succeeds
+      x = clamp(e.clientX, 0, innerWidth-1);
+      y = clamp(e.clientY, 0, innerHeight-1);
+      place();
+      // Request lock on body; Chrome hides OS cursor on success
+      document.body.requestPointerLock?.();
     } else {
-      cursor.classList.remove('implode'); void cursor.offsetWidth;
-      cursor.classList.add('implode');
-      setTimeout(() => cursor.classList.remove('implode'), 240);
+      c.classList.remove('implode'); void c.offsetWidth;
+      c.classList.add('implode');
+      setTimeout(() => c.classList.remove('implode'), 240);
     }
   }, true);
 
-  // ONLY Esc unlocks (no edge/blur/mouseout unlocks)
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') document.exitPointerLock?.();
-  });
+  // Only Esc unlocks (no edge unlocks)
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') document.exitPointerLock?.(); });
 
-  // Keep position valid on resize; never recenter
-  window.addEventListener('resize', () => {
-    x = clamp(x, 0, window.innerWidth  - 1);
-    y = clamp(y, 0, window.innerHeight - 1);
-    paint();
+  // Keep inside bounds on resize
+  addEventListener('resize', () => {
+    x = clamp(x, 0, innerWidth-1);
+    y = clamp(y, 0, innerHeight-1);
+    place();
   });
 
   // Boot
-  paint();
+  place();
   scheduleSpin();
 })();

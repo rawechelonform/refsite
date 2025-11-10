@@ -1,4 +1,4 @@
-/* artist.js — UTD + custom cursor + glitch button sizing (robust, never disappears) */
+/* artist.js — UTD + custom cursor + glitch positioning (grid overlay removed) */
 
 /* ========= 0) Custom crosshair + aggressive OS-cursor killer ========= */
 (() => {
@@ -78,7 +78,7 @@ html[data-cursor="off"] input, html[data-cursor="off"] textarea, html[data-curso
   document.addEventListener('mouseenter', () => { cursor.style.display = 'block'; });
 })();
 
-/* ========= 1) UTD logic (unchanged except for refs used by glitch sizing) ========= */
+/* ========= 1) UTD logic (same as your version) ========= */
 const API = 'https://script.google.com/macros/s/AKfycbzExL0U0srFXrAkkjJHNT0oCamBSjEUk4F1Dc7MyNwxi9mvleuwd9vdtnJoJlMHCKpl6A/exec';
 
 const KEY_ENTRIES = 'utd_entries_v7';
@@ -231,43 +231,58 @@ async function syncFromServer(){
 window.addEventListener('utd:refresh', render);
 if ($title) $title.textContent = loadTitle(); render(); syncFromServer();
 
-/* ========= 2) Glitch button sizing — match UTD width, never disappear ========= */
-(function syncGlitchToUTD(){
-  const wrap = document.getElementById('glitchWrap');
-  const media = wrap ? wrap.querySelector('.gc-single') : null;
-  if (!wrap || !media) return;
+/* ========= 2) Glitch positioning — bottom of photo, left edge = UTD left,
+               width = UTD width; plus keep-alive so the GIF never disappears ========= */
+(function positionGlitch(){
+  const wrap  = document.getElementById('glitchWrap');
+  const img   = wrap ? wrap.querySelector('.gc-single') : null;
+  const photo = document.getElementById('aboutPhoto') || document.querySelector('.about-photo');
+  const utd   = document.getElementById('utdBox')     || document.querySelector('.utd');
+  if (!wrap || !img || !photo || !utd) return;
 
-  let lastW = 360; // fallback
+  // Keep visible even if something toggles display
+  const forceShow = () => { wrap.style.display = 'block'; img.style.display = 'block'; };
+  img.addEventListener('load', forceShow);
 
-  function setAspect(){
-    const w = media.videoWidth || media.naturalWidth || 0;
-    const h = media.videoHeight || media.naturalHeight || 0;
-    if (w && h) wrap.style.setProperty('--glitch-ar', (w / h));
+  function apply() {
+    const pr = photo.getBoundingClientRect();
+    const ur = utd.getBoundingClientRect();
+
+    // Exact width = UTD width
+    const desiredW = ur.width;
+    wrap.style.width = Math.max(200, Math.round(desiredW)) + 'px';
+
+    // Left edge: align to UTD's left within the photo’s coordinate space
+    const offsetLeft = Math.max(0, ur.left - pr.left);
+    wrap.style.left = Math.round(offsetLeft) + 'px';
+
+    // Bottom alignment via CSS
+    wrap.style.right = 'auto';
+    wrap.style.bottom = '0';
   }
 
-  function applySize(){
-    const utd = document.querySelector('.utd');
-    if (!utd) return;
-    const r = utd.getBoundingClientRect();
-    const w = Math.max(Math.round(r.width), 200);   // guard against 0
-    lastW = w || lastW;
-    wrap.style.setProperty('--glitch-w', lastW + 'px');
-  }
-
-  const init = () => { setAspect(); applySize(); };
+  const init = () => { apply(); forceShow(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true });
   else init();
 
-  // Update AR when media metadata is ready
-  media.addEventListener('loadedmetadata', setAspect, { once:true });
-  media.addEventListener('load', setAspect, { once:true }); // for <img> fallback
+  // Recompute on resize and when UTD/photo change
+  window.addEventListener('resize', apply);
+  new ResizeObserver(apply).observe(utd);
+  new ResizeObserver(apply).observe(photo);
+  window.addEventListener('utd:refresh', apply);
 
-  window.addEventListener('resize', applySize);
-  window.addEventListener('utd:refresh', applySize);
+  /* === Keep-alive: restart single-shot GIF so it looks like it loops forever ===
+     Set RESTART_MS ≈ your GIF’s duration (ms). */
+  const RESTART_MS = 8000; // tweak to your asset length
+  const baseSrc = (img.getAttribute('data-base') || img.src.split('?')[0]);
+  img.setAttribute('data-base', baseSrc);
 
-  const utdEl = document.querySelector('.utd');
-  if (utdEl){
-    new ResizeObserver(applySize).observe(utdEl);
-    new MutationObserver(applySize).observe(utdEl, { childList:true, subtree:true, characterData:true });
+  function restartGif(){
+    forceShow();
+    img.src = baseSrc + '?t=' + Date.now(); // cache-bust to restart animation
   }
+
+  // Kick and keep restarting
+  restartGif();
+  setInterval(restartGif, RESTART_MS);
 })();
