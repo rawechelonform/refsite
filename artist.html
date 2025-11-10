@@ -20,12 +20,12 @@
   <!-- Page CSS -->
   <link rel="stylesheet" href="sadgirls.css" />
   <link rel="stylesheet" href="menubar.css?v=mb9">
-  <link rel="stylesheet" href="artist.css?v=27">
+  <link rel="stylesheet" href="artist.css?v=33">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
-<body>
+<body class="menu-transparent">
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
@@ -33,14 +33,29 @@
   </script>
 
   <div class="page">
+    <!-- shared header + reserved space -->
     <div data-menubar class="menubar-slot"></div>
 
     <div class="about-grid">
       <!-- LEFT: portrait -->
       <section class="about-blurb">
         <figure class="about-photo">
-          <img src="/artist/artistphoto_cropped.png?v=5" alt="artist portrait" decoding="async">
+          <img src="assets/artist/artistphoto_cropped.png?v=5" alt="artist portrait" decoding="async">
         </figure>
+
+        <!-- Glitch button pinned to the photo (bottom-right) -->
+        <div class="glitch-corner-wrap" id="glitchWrap">
+          <a class="glitch-corner" href="glitchreport.html" aria-label="glitch report">
+            <!-- Prefer video: smaller + reliable looping -->
+            <video class="gc-single"
+                   src="assets/artist/glitchreportbutton.webm?v=2"
+                   autoplay muted loop playsinline
+                   poster="assets/artist/glitchreportbutton_firstframe.jpg"></video>
+
+            <!-- If you only want the GIF, comment the <video> above and use this: -->
+            <!-- <img class="gc-single" src="assets/artist/glitchreportbutton.gif?v=3" alt="" decoding="async"> -->
+          </a>
+        </div>
       </section>
 
       <!-- RIGHT: bio + IG + UTD -->
@@ -51,16 +66,13 @@
 
         <p class="bio">
           IG:
-          <a class="ext-link"
-             href="https://www.instagram.com/rawechelonform"
-             target="_blank"
-             rel="noopener noreferrer">
+          <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">
             @rawechelonform
           </a>
         </p>
 
         <section class="utd">
-          <img src="/artist/artistavatar.png" alt="site avatar" class="avatar-overlay">
+          <img src="assets/artist/artistavatar.png" alt="site avatar" class="avatar-overlay">
 
           <div class="utd-bar">
             <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
@@ -68,11 +80,8 @@
           </div>
 
           <form id="utdForm" class="utd-form" hidden>
-            <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000"
-                      placeholder="type a thought…"></textarea>
-            <div class="utd-actions">
-              <button type="submit">post</button>
-            </div>
+            <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000" placeholder="type a thought…"></textarea>
+            <div class="utd-actions"><button type="submit">post</button></div>
           </form>
 
           <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
@@ -81,6 +90,7 @@
     </div>
   </div>
 
+  <!-- Custom crosshair cursor -->
   <div id="custom-cursor" aria-hidden="true">
     <span class="arm arm-a"></span>
     <span class="arm arm-b"></span>
@@ -88,77 +98,22 @@
   </div>
 
   <script src="menubar.js?v=mb23" defer></script>
-  <script src="artist.js?v=17" defer></script>
+  <script src="artist.js?v=22" defer></script>
 
-  <!-- Bottom-right "glitch report" corner block -->
-  <div class="glitch-corner-wrap">
-    <a class="glitch-corner" href="glitchreport.html" aria-label="glitch report">
-      <img class="gc-base"  src="/artist/glitchreport.png"          alt="" decoding="async" loading="lazy">
-      <img class="gc-hover" src="/artist/glitchreportwordsonly.png" alt="" decoding="async" loading="lazy">
-    </a>
-  </div>
-
-  <!-- Centered fade-away toast for registration complete -->
+  <!-- Registration toast -->
   <script>
   (function () {
     const params = new URLSearchParams(location.search);
     if (params.get('registration') !== 'complete') return;
-
-    // Create full-screen overlay
     const overlay = document.createElement('div');
-    Object.assign(overlay.style, {
-      position: 'fixed',
-      inset: '0',
-      display: 'grid',
-      placeItems: 'center',
-      zIndex: '9999',
-      pointerEvents: 'none',
-      background: 'transparent',
-      opacity: '0',
-      transition: 'opacity 400ms ease'
-    });
-
-    // Message
-    const msg = document.createElement('div');
-    msg.textContent = 'registration complete.';
-    // Get same font as bio
-    const bio = document.querySelector('.bio');
-    const cs = bio ? getComputedStyle(bio) : {};
-    Object.assign(msg.style, {
-      color: '#fff',
-      background: 'transparent',
-      border: 'none',
-      fontFamily: cs.fontFamily || 'inherit',
-      fontSize: cs.fontSize || '18px',
-      fontStyle: 'italic',
-      letterSpacing: cs.letterSpacing || '0.02em',
-      transform: 'translateY(10px)',
-      transition: 'transform 400ms ease',
-    });
-
-    overlay.appendChild(msg);
-    document.body.appendChild(overlay);
-
-    // Fade in
-    requestAnimationFrame(() => {
-      overlay.style.opacity = '1';
-      msg.style.transform = 'translateY(0)';
-    });
-
-    // Hold for ~1.5s, then fade out
-    setTimeout(() => {
-      overlay.style.opacity = '0';
-      msg.style.transform = 'translateY(10px)';
-    }, 1600);
-
-    // Remove + clean URL
-    setTimeout(() => {
-      overlay.remove();
-      params.delete('registration');
-      const qs = params.toString();
-      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
-      history.replaceState(null, '', newUrl);
-    }, 2100);
+    Object.assign(overlay.style, {position:'fixed',inset:0,display:'grid',placeItems:'center',zIndex:9999,pointerEvents:'none',background:'transparent',opacity:0,transition:'opacity 400ms ease'});
+    const bio = document.querySelector('.bio'); const cs = bio ? getComputedStyle(bio) : {};
+    const msg = Object.assign(document.createElement('div'), {textContent:'registration complete.'});
+    Object.assign(msg.style, {color:'#fff',background:'transparent',border:'none',fontFamily:cs.fontFamily||'inherit',fontSize:cs.fontSize||'18px',fontStyle:'italic',letterSpacing:cs.letterSpacing||'0.02em',transform:'translateY(10px)',transition:'transform 400ms ease'});
+    overlay.appendChild(msg); document.body.appendChild(overlay);
+    requestAnimationFrame(() => { overlay.style.opacity = 1; msg.style.transform = 'translateY(0)'; });
+    setTimeout(() => { overlay.style.opacity = 0; msg.style.transform = 'translateY(10px)'; }, 1600);
+    setTimeout(() => { overlay.remove(); params.delete('registration'); const qs=params.toString(); history.replaceState(null,'',location.pathname+(qs?('?'+qs):'')+location.hash); }, 2100);
   })();
   </script>
 </body>

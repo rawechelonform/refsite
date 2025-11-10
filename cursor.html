@@ -3,34 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cursor Sandbox</title>
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="cursor.css?v=1" />
+  <title>Cursor — hard lock (Esc to leave)</title>
+  <link rel="stylesheet" href="cursor.css">
 </head>
 <body>
-  <!-- Custom crosshair cursor (two diagonals + center dot) -->
+  <!-- Crosshair -->
   <div id="custom-cursor" aria-hidden="true">
     <span class="arm arm-a"></span>
     <span class="arm arm-b"></span>
     <span class="dot"></span>
   </div>
 
-  <!-- Shield layer: JS toggles this to suppress native-cursor flicker -->
-  <div id="cursor-shield" aria-hidden="true"></div>
-
-  <!-- Minimal demo UI so you can tab/click things -->
   <main class="ui">
-    <h1>Crosshair Cursor</h1>
-    <p>Move inside → crosshair replaces OS cursor. Leave window → OS cursor shows. Click = implode.</p>
+    <h1>Crosshair (hard lock)</h1>
     <p>
-      <button>Button</button>
-      <a href="#">Link</a>
-      <input placeholder="Input field" />
+      • Move mouse: crosshair follows<br>
+      • Click: lock pointer (Chrome hides OS cursor)<br>
+      • While locked: click = squeeze/implode<br>
+      • <strong>Esc</strong> to unlock and leave page
     </p>
   </main>
 
-  <!-- Your JS (movement/enter-leave/spin). Keep as a separate file. -->
-  <script src="cursor.js?v=1" defer></script>
+  <script src="cursor.js" defer></script>
 </body>
 </html>
