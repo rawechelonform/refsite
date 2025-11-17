@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Archive | REF</title>
+  <link rel="stylesheet" href="artist.css">
+  <style>
+    body{ background:#000; color:#bbb; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding:24px; }
+    h1{ color:#fff; font-size:16px; margin:0 0 16px; }
+    .note{ font-size:12px; color:#888; margin:0 0 20px; }
+    pre{ white-space:pre-wrap; word-break:break-word; background:#111; padding:12px; border:1px solid #333; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <h1>Archive (non-rendered components)</h1>
+  <p class="note">These blocks are stored for later reuse. Copy back into the live page when needed.</p>
+
+  <!-- Glitch corner button (archived) -->
+  <template id="arch-glitch-button">
+    <div class="glitch-corner-wrap" id="glitchWrap">
+      <a class="glitch-corner" href="refsite/glitchreport.html" aria-label="glitch report">
+        <img class="gc-single" src="assets/artist/glitchreportbutton.gif?v=3" alt="" decoding="async">
+      </a>
+    </div>
+  </template>
+  <pre>&lt;div class="glitch-corner-wrap" id="glitchWrap"&gt;…&lt;/div&gt;</pre>
+
+  <!-- UTD box (archived) -->
+  <template id="arch-utd">
+    <section class="utd" id="utdBox">
+      <img src="assets/artist/artistavatar.png" alt="site avatar" class="avatar-overlay">
+      <div class="utd-bar">
+        <div class="utd-title" id="utdTitle">USELESS THOUGHT OF THE DAY</div>
+        <button type="button" class="utd-unlock" id="utdUnlock">CREATOR UNLOCK</button>
+      </div>
+      <form id="utdForm" class="utd-form" hidden>
+        <textarea id="utdText" class="utd-textarea" rows="8" maxlength="1000" placeholder="type a thought…"></textarea>
+        <div class="utd-actions"><button type="submit">post</button></div>
+      </form>
+      <div id="utdFeed" class="utd-feed" aria-live="polite"></div>
+    </section>
+  </template>
+  <pre>&lt;section class="utd" id="utdBox"&gt;…&lt;/section&gt;</pre>
+</body>
+</html>

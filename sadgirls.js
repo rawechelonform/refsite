@@ -1,8 +1,8 @@
 (() => {
   // ==== CONFIG ==============================================================
-  const SHEET_CSV_URL = "homeroom/REFsiteartdescriptions.csv";
+  const SHEET_CSV_URL = "artdescriptions/REFsiteartdescriptions.csv";
   const PAGE_SLUG = "sadgirls";
-  const IMG_ROOT = "homeroom";
+  const IMG_ROOT = "assets";
   const DEFAULT_EXT = "png";
 
   // ==== DOM ================================================================
@@ -55,7 +55,7 @@
     } catch (e) {
       console.error("Failed to load sheet:", e);
       IMAGES = [
-        { src: "homeroom/sadgirls/girl1.png", thumb: null, title: "Girl 1",
+        { src: "assets/sadgirls/girl1.png", thumb: null, title: "Girl 1",
           meta: { title: "Girl 1", year: "", medium: "", size: "" } }
       ];
       if (isPortraitMobile()) {

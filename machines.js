@@ -1,13 +1,13 @@
 (() => {
   // ===== Thumbnails on the grid =====
   const IMAGES = [
-    { src: "homeroom/machines/bbgterminal.png", title: "The Terminal" },
-    { src: "homeroom/machines/tonic.png",       title: "Tonic Operator" },
-    { src: "homeroom/machines/commodore.png",   title: "How to Produce Sound Effects" }
+    { src: "assets/machines/bbgterminal.png", title: "The Terminal" },
+    { src: "assets/machines/tonic.png",       title: "Tonic Operator" },
+    { src: "assets/machines/commodore.png",   title: "How to Produce Sound Effects" }
   ];
 
   // ===== CSV config (same format as Sad Girls) =====
-  const SHEET_CSV_URL = "homeroom/REFsiteartdescriptions.csv";
+  const SHEET_CSV_URL = "artdescriptions/REFsiteartdescriptions.csv";
   const PAGE_SLUG     = "machines";
   const DEFAULT_EXT   = "png";
 
