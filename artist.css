@@ -7,16 +7,19 @@
   --photo-nudge: -2px;
 }
 
-/* === Background === */
+/* === Global === */
 html, body { height: 100%; }
 body{ background: #000 !important; }
+html, body { overflow-x: hidden; }        /* prevent sideways scroll */
+
+/* Underlay */
 body::before{
   content:""; position:fixed; inset:0;
   background:rgba(0,0,0,.15); pointer-events:none; z-index:0;
 }
 .page{ position:relative; z-index:1; }
 
-/* === Menubar === */
+/* Menubar */
 .menubar-slot { display:block; height: var(--barh, 32px); }
 
 /* === Layout === */
@@ -30,6 +33,7 @@ body::before{
   display:grid; grid-template-columns:1fr 0.9fr;
   column-gap:5px; row-gap:10px;
   align-items:start;
+  box-sizing: border-box;               /* contain padding */
 }
 .about-grid > * { min-width:0; }
 .about-blurb, .right-col{ align-self:start; }
@@ -47,6 +51,8 @@ body::before{
   color: rgb(var(--bio-gray));
   margin: 4px 0 1.05rem;
   text-align:left;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;               /* avoid overflow from long tokens */
 }
 .bio:first-child{ margin-top:0; }
 .bio-compact{ margin-bottom:.5rem; }
@@ -77,61 +83,58 @@ figure{ margin-block-start:0; }
   display:block; width:100%; height:auto; border:0;
 }
 
-/* === Mobile Shared === */
+/* === Mobile shared === */
 @media (max-width:900px){
-  body{ background-attachment:scroll; }
+  body{ background-attachment: scroll; }
 }
 
-/* === Mobile Portrait: photo on top === */
+/* === Mobile Portrait: photo first, centered, no overflow === */
 @media (max-width:900px) and (orientation:portrait){
-  :root{ --row:18px; }
-
   .about-grid{
     display:flex; flex-direction:column;
-    row-gap:var(--row);
+    row-gap:18px;                        /* same rhythm as desktop */
     margin-top:20px;
     padding:0 24px;
+    box-sizing:border-box;               /* << prevents padding overflow */
     align-items:stretch;
+    max-width:100%;
   }
 
-  /* Center photo */
-  .about-blurb{ order:1; display:flex; justify-content:center; }
+  /* photo centered */
+  .about-blurb{ order:1; justify-content:center; }
   .about-photo{
-    margin: 16px auto 24px;
+    margin:16px auto 24px;
     max-width:clamp(240px,70vw,380px);
     width:100%;
   }
 
-  /* Text full width + justified */
-  .right-col{
-    order:2;
-    width:100%;
-  }
+  /* text width = inner width; justify to make rectangular blocks */
+  .right-col{ order:2; width:100%; box-sizing:border-box; }
   .right-col .bio{
-    text-align:justify;
-    text-justify:inter-word;
-    hyphens:auto;
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
     margin:4px 0 1.05rem;
   }
 }
 
-/* === Mobile Landscape: side-by-side, top-aligned === */
+/* === Mobile Landscape: side-by-side, top-aligned, no overflow === */
 @media (max-width:900px) and (orientation:landscape){
   .about-grid{
     display:grid;
     grid-template-columns:1fr 0.9fr;
     column-gap:6px; row-gap:10px;
     margin-top:28px; padding-inline:10px;
+    box-sizing:border-box;               /* << contain padding */
     align-items:start;
+    max-width:100%;
   }
   .about-blurb{ grid-column:1; align-self:start; justify-content:center; }
   .right-col{
-    grid-column:2;
-    display:flex; flex-direction:column; gap:14px;
-    padding-right:8px; min-width:0; align-self:start;
+    grid-column:2; display:flex; flex-direction:column; gap:14px;
+    padding-right:8px; min-width:0; align-self:start; box-sizing:border-box;
   }
   .about-photo{
-    display:block;
     max-width:clamp(240px,50vw,360px);
     margin:0 0 8px 0;
   }

@@ -20,14 +20,13 @@
   <!-- Page CSS -->
   <link rel="stylesheet" href="sadgirls.css" />
   <link rel="stylesheet" href="menubar.css?v=mb9">
-  <link rel="stylesheet" href="artist.css?v=42">
+  <link rel="stylesheet" href="artist.css?v=43">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
 <body>
   <script>
-    // Font loading
     document.documentElement.classList.add('fonts-loading');
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
@@ -75,10 +74,9 @@
     </div>
   </div>
 
-  <!-- Menubar JS -->
   <script src="menubar.js?v=mb23" defer></script>
 
-  <!-- Bottom toast -->
+  <!-- Bottom-of-page fade-away toast for registration complete -->
   <script>
   (function () {
     const params = new URLSearchParams(location.search);
@@ -86,8 +84,7 @@
 
     const holder = document.createElement('div');
     Object.assign(holder.style, {
-      position: 'fixed',
-      left: 0, right: 0, bottom: '16px',
+      position: 'fixed', left: 0, right: 0, bottom: '16px',
       display: 'grid', placeItems: 'center',
       zIndex: '9999', pointerEvents: 'none',
       background: 'transparent', opacity: '0',
@@ -99,15 +96,10 @@
     const bio = document.querySelector('.bio');
     const cs = bio ? getComputedStyle(bio) : {};
     Object.assign(msg.style, {
-      color: '#fff',
-      background: 'transparent',
-      border: 'none',
-      fontFamily: cs.fontFamily || 'inherit',
-      fontSize: cs.fontSize || '18px',
-      fontStyle: 'italic',
-      letterSpacing: cs.letterSpacing || '0.02em',
-      transform: 'translateY(10px)',
-      transition: 'transform 400ms ease'
+      color: '#fff', background: 'transparent', border: 'none',
+      fontFamily: cs.fontFamily || 'inherit', fontSize: cs.fontSize || '18px',
+      fontStyle: 'italic', letterSpacing: cs.letterSpacing || '0.02em',
+      transform: 'translateY(10px)', transition: 'transform 400ms ease'
     });
 
     holder.appendChild(msg);
