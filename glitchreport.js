@@ -131,51 +131,93 @@ function caretRAF(){
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
-  if(terminalStarted) return;
+  if (terminalStarted) return;
   terminalStarted = true;
   staticEl && (staticEl.textContent = STATIC_TEXT);
   setTimeout(() => {
     typeWriter(TYPE_TEXT, typeEl, 50, () => {
       if (promptEl) {
         promptEl.classList.add("show");
-        inputEl && inputEl.focus();
+        // Desktop: keep original autofocus behavior
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (!isTouch) { inputEl && inputEl.focus(); }
+        // Mobile: do NOT autofocus (user tap will trigger IME)
         renderMirror();
       }
     });
   }, 300);
 }
 
+
 function bindPrompt(){
-  if(!inputEl || !typedEl) return;
+  if (!inputEl || !typedEl) return;
 
-  // ---- CLICK → select nearest letter (never snap to end) ----
-  typedEl.addEventListener("mousedown", (e) => {
-    const i = indexFromPoint(e.clientX);
-    dragAnchorIdx = i;
-    try {
-      if (document.activeElement !== inputEl) inputEl.focus();
-      // start with single-letter selection at anchor
-      inputEl.setSelectionRange(i, Math.min(i+1, (inputEl.value||"").length));
-    } catch(_) {}
-    renderMirror();
-    e.preventDefault(); // we control selection visuals
-  });
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-  // ---- DRAG → stable green selection ----
-  window.addEventListener("mousemove", (e) => {
-    if (dragAnchorIdx == null) return;
-    const j = indexFromPoint(e.clientX);
-    const a = Math.min(dragAnchorIdx, j);
-    const b = Math.max(dragAnchorIdx, j) + 1; // include the letter under cursor
-    try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value||"").length)); } catch(_) {}
-    renderMirror();
-  });
+  if (!isTouch) {
+    // ===== DESKTOP (unchanged behavior) =====
 
-  window.addEventListener("mouseup", () => {
-    dragAnchorIdx = null;
-  });
+    // CLICK → select nearest letter (never snap to end)
+    typedEl.addEventListener("mousedown", (e) => {
+      const i = indexFromPoint(e.clientX);
+      dragAnchorIdx = i;
+      try {
+        if (document.activeElement !== inputEl) inputEl.focus();
+        // start with single-letter selection at anchor
+        inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
+      } catch (_) {}
+      renderMirror();
+      e.preventDefault(); // we control selection visuals
+    });
 
-  // ---- Keyboard-driven updates ----
+    // DRAG → stable green selection
+    window.addEventListener("mousemove", (e) => {
+      if (dragAnchorIdx == null) return;
+      const j = indexFromPoint(e.clientX);
+      const a = Math.min(dragAnchorIdx, j);
+      const b = Math.max(dragAnchorIdx, j) + 1; // include the letter under cursor
+      try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch (_) {}
+      renderMirror();
+    });
+
+    window.addEventListener("mouseup", () => {
+      dragAnchorIdx = null;
+    });
+
+  } else {
+    // ===== MOBILE-ONLY (new; desktop never runs this) =====
+
+    // Tap to focus + place caret, then drag to select
+    typedEl.addEventListener("touchstart", (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      const i = indexFromPoint(t.clientX);
+      dragAnchorIdx = i;
+      try {
+        if (document.activeElement !== inputEl) inputEl.focus();
+        inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
+      } catch (_) {}
+      renderMirror();
+      e.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener("touchmove", (e) => {
+      if (dragAnchorIdx == null) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      const j = indexFromPoint(t.clientX);
+      const a = Math.min(dragAnchorIdx, j);
+      const b = Math.max(dragAnchorIdx, j) + 1;
+      try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch (_) {}
+      renderMirror();
+    }, { passive: false });
+
+    window.addEventListener("touchend", () => {
+      dragAnchorIdx = null;
+    });
+  }
+
+  // ===== Shared bindings (safe on both) =====
   ["input","focus","blur","keyup","select","click"].forEach(evt =>
     inputEl.addEventListener(evt, renderMirror)
   );
@@ -188,24 +230,23 @@ function bindPrompt(){
     if (!isA || !withMeta) return;
     e.preventDefault();
     const len = (inputEl.value || "").length;
-    try { inputEl.setSelectionRange(0, len); } catch(_) {}
+    try { inputEl.setSelectionRange(0, len); } catch (_) {}
     renderMirror();
   }, true);
 
-  // Submit on Enter → MailerLite → redirect
+  // Submit on Enter → MailerLite → redirect (unchanged)
   inputEl.addEventListener("keydown", (e) => {
-    if(e.key !== "Enter") return;
-    if(submitInFlight) { e.preventDefault(); return; }
+    if (e.key !== "Enter") return;
+    if (submitInFlight) { e.preventDefault(); return; }
 
     const email = (inputEl.value || "").trim();
 
-    if(!isValidEmail(email)){
+    if (!isValidEmail(email)){
       hintEl && (hintEl.textContent = "invalid email.");
       log("invalid email");
       return;
     }
 
-    // Honeypot
     const honeypot = mlForm?.querySelector('input[name="website"]');
     if (honeypot && honeypot.value) {
       log("honeypot filled; dropping");
@@ -213,7 +254,6 @@ function bindPrompt(){
       return;
     }
 
-    // Lock and submit
     lockedOutput = true;
     submitInFlight = true;
     inputEl.setAttribute("disabled", "disabled");
@@ -261,6 +301,7 @@ function bindPrompt(){
     }
   });
 }
+
 
 // ===== AVATAR =====
 function startAvatar(){
