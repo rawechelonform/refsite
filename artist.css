@@ -59,7 +59,7 @@ body::before{
   font-size: 13px;
   line-height: 1.6;
   color: rgb(var(--bio-gray));
-  margin: 4px 0 1.05rem;
+  margin: 4px 0 1.05rem;  /* consistent spacing desktop + mobile */
   text-align: left;
 }
 .bio:first-child{ margin-top: 0; }
@@ -95,35 +95,53 @@ figure{ margin-block-start: 0; } /* kill UA default figure top margin */
 /* Optional 1–3px optical nudge: add class "align-nudge" to .about-photo if needed */
 .about-photo.align-nudge{ transform: translateY(var(--photo-nudge)); }
 
-/* === Mobile variants === */
+/* === Mobile: shared === */
 @media (max-width:900px){
   body{ background-attachment: scroll; }
 }
+
+/* === Mobile PORTRAIT: photo first, centered, same spacing === */
 @media (max-width:900px) and (orientation:portrait){
   :root{ --row:14px; --gutter:35px; }
+
+  /* Stack, with photo first */
   .about-grid{
     display:flex; flex-direction:column; row-gap:var(--row);
     margin-top:20px; padding-left:var(--gutter); padding-right:var(--gutter);
     width:100%; max-width:100%; box-sizing:border-box;
+    align-items: stretch;
   }
-  .bio{ order:1; margin-bottom:3px !important; }
-  .about-blurb{ order:3; }
+
+  /* Photo on top, centered */
+  .about-blurb{ order:1; }
   .about-photo{
-    display:block; max-width:clamp(220px, 66vw, 340px);
-    margin:28px auto 40px; width:100%;
+    display:block;
+    max-width:clamp(220px, 66vw, 360px);
+    margin:16px auto 24px;  /* center horizontally; good vertical rhythm */
+    width:100%;
   }
+
+  /* Bio below photo; keep desktop paragraph spacing (no cramped override) */
+  .right-col{ order:2; }
+  /* No .bio margin overrides here → uses 1.05rem from desktop */
 }
+
+/* === Mobile LANDSCAPE: side-by-side, top-aligned === */
 @media (max-width:900px) and (orientation:landscape){
   .about-grid{
     display:grid; grid-template-columns:1fr 0.9fr;
-    column-gap:3px; row-gap:10px; margin-top:28px; padding-inline:10px;
+    column-gap:6px; row-gap:10px; margin-top:28px; padding-inline:10px;
+    align-items:start;
   }
-  .about-blurb{ grid-column:1; }
+  .about-blurb{ grid-column:1; align-self:start; }
+  .right-col{ grid-column:2; display:flex; flex-direction:column; gap:14px; padding-right:8px; min-width:0; align-self:start; }
+
   .about-photo{
     display:block; max-width:clamp(240px, 50vw, 360px);
-    margin:16px auto 22px; width:100%;
+    margin:0 0 8px 0;  /* hug the top so it aligns with text */
+    width:100%;
+    transform:none;    /* remove any prior nudges on landscape */
   }
-  .right-col{ grid-column:2; display:flex; flex-direction:column; gap:12px; padding-right:8px; min-width:0; }
 }
 
 /* === Desktop re-assert === */
@@ -132,13 +150,14 @@ figure{ margin-block-start: 0; } /* kill UA default figure top margin */
     display:grid !important; grid-template-columns:1fr 0.9fr !important;
     column-gap:5px !important; row-gap:10px !important;
     margin-top:48px !important; padding:0 !important;
+    align-items:start !important;
   }
   .right-col{ display:flex !important; flex-direction:column !important; gap:14px !important; }
   .about-blurb{ display:flex !important; justify-content:center !important; align-items:flex-start !important; }
-  .about-photo{ max-width:clamp(340px, 32vw, 420px) !important; margin:0 0 8px 0 !important; }
+  .about-photo{ max-width:clamp(340px, 32vw, 420px) !important; margin:0 0 8px 0 !important; transform:none !important; }
 }
 
-/* ===== DEBUG BORDERS — REMOVE WHEN DONE ===== */
+/* ===== DEBUG BORDERS — OPTIONAL: ?debug ===== */
 body.debug .about-grid{ outline:2px dashed #00ffff; }
 body.debug .about-blurb{ outline:2px dashed #ff00ff; }
 body.debug .about-photo{ outline:2px solid #ff8800; }

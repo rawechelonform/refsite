@@ -63,7 +63,7 @@
           </p>
 
           <p class="bio">
-            In parallel, I started developing the Machines project. I grew up in a small town in Los Angeles. My father was a watchsmith / mechanic / craftsman, always tinkering with his latest obsession. His office was more akin to an inventor’s workshop. His table was filled with tiny screws, gears, pins, and miniature tools. I am my father’s daughter, taking from his love of repair and creation. I’m drawn to the visual language of outdated devices and, in many cases, their obsolescence—the ugly sister of progress. Technological relics, while no longer useful, are not without utility. They hold stories, provide us with context, and gift us with nostalgia.
+            In parallel, I started developing the Machines project. I grew up in a small town in Los Angeles. My father was a watchsmith / mechanic / craftsman, always tinkering with his latest curiosity. His office was more akin to an inventor’s workshop. His desk was filled with tiny screws, gears, pins, and miniature tools. I am my father’s daughter, taking from his love of repair and creation. I’m drawn to the visual language of outdated devices and, in many cases, their obsolescence—-the ugly sister of progress. Technological relics, while no longer useful, are not without utility. They hold stories, provide us with context, and gift us with nostalgia.
           </p>
 
           <p class="bio">
@@ -71,8 +71,8 @@
           </p>
 
           <p class="bio bio-compact">
-            IG: <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">@rawechelonform</a><br>
-            Glitch Report: <a class="ext-link" href="/glitchreport.html" target="_blank" rel="noopener noreferrer">registration</a>
+            Glitch Report: <a class="ext-link" href="/glitchreport.html" target="_blank" rel="noopener noreferrer">registration</a><br>
+            IG: <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">@rawechelonform</a>
           </p>
         </section>
       </div>
@@ -82,42 +82,61 @@
   <!-- Scripts (shared menubar first, then page-specific) -->
   <script src="menubar.js?v=mb23" defer></script>
 
-  <!-- Centered fade-away toast for registration complete -->
-  <script>
-  (function () {
-    const params = new URLSearchParams(location.search);
-    if (params.get('registration') !== 'complete') return;
+  
+<!-- Bottom-of-page fade-away toast for registration complete -->
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  if (params.get('registration') !== 'complete') return;
 
-    const overlay = document.createElement('div');
-    Object.assign(overlay.style, {
-      position: 'fixed', inset: '0', display: 'grid', placeItems: 'center',
-      zIndex: '9999', pointerEvents: 'none', background: 'transparent',
-      opacity: '0', transition: 'opacity 400ms ease'
-    });
+  // Fixed holder at bottom center
+  const holder = document.createElement('div');
+  Object.assign(holder.style, {
+    position: 'fixed',
+    left: 0, right: 0, bottom: '16px',
+    display: 'grid', placeItems: 'center',
+    zIndex: '9999',
+    pointerEvents: 'none',
+    background: 'transparent',
+    opacity: '0',
+    transition: 'opacity 400ms ease'
+  });
 
-    const msg = document.createElement('div');
-    msg.textContent = 'registration complete.';
-    const bio = document.querySelector('.bio');
-    const cs = bio ? getComputedStyle(bio) : {};
-    Object.assign(msg.style, {
-      color: '#fff', background: 'transparent', border: 'none',
-      fontFamily: cs.fontFamily || 'inherit', fontSize: cs.fontSize || '18px',
-      fontStyle: 'italic', letterSpacing: cs.letterSpacing || '0.02em',
-      transform: 'translateY(10px)', transition: 'transform 400ms ease',
-    });
+  // Message styles copied from your original (font pulled from .bio)
+  const msg = document.createElement('div');
+  msg.textContent = 'registration complete.';
+  const bio = document.querySelector('.bio');
+  const cs = bio ? getComputedStyle(bio) : {};
+  Object.assign(msg.style, {
+    color: '#fff',
+    background: 'transparent',
+    border: 'none',
+    fontFamily: cs.fontFamily || 'inherit',
+    fontSize: cs.fontSize || '18px',
+    fontStyle: 'italic',
+    letterSpacing: cs.letterSpacing || '0.02em',
+    transform: 'translateY(10px)',            // start slightly below
+    transition: 'transform 400ms ease'
+  });
 
-    overlay.appendChild(msg);
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => { overlay.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
-    setTimeout(() => { overlay.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
-    setTimeout(() => {
-      overlay.remove();
-      params.delete('registration');
-      const qs = params.toString();
-      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
-      history.replaceState(null, '', newUrl);
-    }, 2100);
-  })();
-  </script>
+  holder.appendChild(msg);
+  document.body.appendChild(holder);
+
+  // Animate in (fade + slide up)
+  requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
+
+  // Animate out, then clean the URL
+  setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
+  setTimeout(() => {
+    holder.remove();
+    params.delete('registration');
+    const qs = params.toString();
+    const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+    history.replaceState(null, '', newUrl);
+  }, 2100);
+})();
+</script>
+
+
 </body>
 </html>
