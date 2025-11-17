@@ -115,15 +115,14 @@ figure{ margin-block-start: 0; } /* kill UA default figure top margin */
   /* Photo on top, centered */
   .about-blurb{ order:1; }
   .about-photo{
-    display:block;
-    max-width:clamp(220px, 66vw, 360px);
-    margin:16px auto 24px;  /* center horizontally; good vertical rhythm */
-    width:100%;
-  }
+  margin: 16px auto 24px;   /* centers horizontally */
+  max-width: clamp(220px, 66vw, 360px);
+  width: 100%;
+}
 
   /* Bio below photo; keep desktop paragraph spacing (no cramped override) */
-  .right-col{ order:2; }
-  /* No .bio margin overrides here → uses 1.05rem from desktop */
+  .right-col{
+  width: 100%;
 }
 
 /* === Mobile LANDSCAPE: side-by-side, top-aligned === */
