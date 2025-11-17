@@ -102,7 +102,7 @@
   }
 
   function wireTapHold() {
-    const HOLD_MS = 200; // time holding before switching to new page
+    const HOLD_MS = 150; // time holding before switching to new page
     const links = Array.from(document.querySelectorAll('a.tile'));
 
     links.forEach(link => {
