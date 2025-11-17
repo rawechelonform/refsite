@@ -20,23 +20,17 @@
   <!-- Page CSS -->
   <link rel="stylesheet" href="sadgirls.css" />
   <link rel="stylesheet" href="menubar.css?v=mb9">
-  <link rel="stylesheet" href="artist.css?v=39">
+  <link rel="stylesheet" href="artist.css?v=42">
 
-  <!-- Safety: remove default margin so menubar sits flush -->
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
 <body>
   <script>
-    // font loading helper
+    // Font loading
     document.documentElement.classList.add('fonts-loading');
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
-
-    // optional debug borders via ?debug
-    if (new URLSearchParams(location.search).has('debug')) {
-      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('debug'));
-    }
   </script>
 
   <div class="page">
@@ -44,14 +38,14 @@
     <div data-menubar class="menubar-slot"></div>
 
     <div class="about-grid">
-      <!-- LEFT: portrait -->
+      <!-- Photo -->
       <section class="about-blurb">
         <figure class="about-photo" id="aboutPhoto">
           <img src="assets/artist/photo9bw2.png" alt="artist portrait" decoding="async">
         </figure>
       </section>
 
-      <!-- RIGHT: bio only -->
+      <!-- Bio -->
       <div class="right-col">
         <section id="about">
           <p class="bio">
@@ -63,7 +57,7 @@
           </p>
 
           <p class="bio">
-            In parallel, I started developing the Machines project. I grew up in a small town in Los Angeles. My father was a watchsmith / mechanic / craftsman, always tinkering with his latest curiosity. His office was more akin to an inventor’s workshop. His desk was filled with tiny screws, gears, pins, and miniature tools. I am my father’s daughter, taking from his love of repair and creation. I’m drawn to the visual language of outdated devices and, in many cases, their obsolescence—-the ugly sister of progress. Technological relics, while no longer useful, are not without utility. They hold stories, provide us with context, and gift us with nostalgia.
+            In parallel, I started developing the Machines project. I grew up in a small town in Los Angeles. My father was a watchsmith / mechanic / craftsman, always tinkering with his latest curiosity. His office was more akin to an inventor’s workshop. His desk was filled with tiny screws, gears, pins, and miniature tools. I am my father’s daughter, taking from his love of repair and creation. I’m drawn to the visual language of outdated devices and, in many cases, their obsolescence—the ugly sister of progress. Technological relics, while no longer useful, are not without utility. They hold stories, provide us with context, and gift us with nostalgia.
           </p>
 
           <p class="bio">
@@ -71,72 +65,63 @@
           </p>
 
           <p class="bio bio-compact">
-            Glitch Report: <a class="ext-link" href="/glitchreport.html" target="_blank" rel="noopener noreferrer">registration</a><br>
-            IG: <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">@rawechelonform</a>
+            Glitch Report:
+            <a class="ext-link" href="/glitchreport.html" target="_blank" rel="noopener noreferrer">registration</a><br>
+            IG:
+            <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">@rawechelonform</a>
           </p>
         </section>
       </div>
     </div>
   </div>
 
-  <!-- Scripts (shared menubar first, then page-specific) -->
+  <!-- Menubar JS -->
   <script src="menubar.js?v=mb23" defer></script>
 
-  
-<!-- Bottom-of-page fade-away toast for registration complete -->
-<script>
-(function () {
-  const params = new URLSearchParams(location.search);
-  if (params.get('registration') !== 'complete') return;
+  <!-- Bottom toast -->
+  <script>
+  (function () {
+    const params = new URLSearchParams(location.search);
+    if (params.get('registration') !== 'complete') return;
 
-  // Fixed holder at bottom center
-  const holder = document.createElement('div');
-  Object.assign(holder.style, {
-    position: 'fixed',
-    left: 0, right: 0, bottom: '16px',
-    display: 'grid', placeItems: 'center',
-    zIndex: '9999',
-    pointerEvents: 'none',
-    background: 'transparent',
-    opacity: '0',
-    transition: 'opacity 400ms ease'
-  });
+    const holder = document.createElement('div');
+    Object.assign(holder.style, {
+      position: 'fixed',
+      left: 0, right: 0, bottom: '16px',
+      display: 'grid', placeItems: 'center',
+      zIndex: '9999', pointerEvents: 'none',
+      background: 'transparent', opacity: '0',
+      transition: 'opacity 400ms ease'
+    });
 
-  // Message styles copied from your original (font pulled from .bio)
-  const msg = document.createElement('div');
-  msg.textContent = 'registration complete.';
-  const bio = document.querySelector('.bio');
-  const cs = bio ? getComputedStyle(bio) : {};
-  Object.assign(msg.style, {
-    color: '#fff',
-    background: 'transparent',
-    border: 'none',
-    fontFamily: cs.fontFamily || 'inherit',
-    fontSize: cs.fontSize || '18px',
-    fontStyle: 'italic',
-    letterSpacing: cs.letterSpacing || '0.02em',
-    transform: 'translateY(10px)',            // start slightly below
-    transition: 'transform 400ms ease'
-  });
+    const msg = document.createElement('div');
+    msg.textContent = 'registration complete.';
+    const bio = document.querySelector('.bio');
+    const cs = bio ? getComputedStyle(bio) : {};
+    Object.assign(msg.style, {
+      color: '#fff',
+      background: 'transparent',
+      border: 'none',
+      fontFamily: cs.fontFamily || 'inherit',
+      fontSize: cs.fontSize || '18px',
+      fontStyle: 'italic',
+      letterSpacing: cs.letterSpacing || '0.02em',
+      transform: 'translateY(10px)',
+      transition: 'transform 400ms ease'
+    });
 
-  holder.appendChild(msg);
-  document.body.appendChild(holder);
-
-  // Animate in (fade + slide up)
-  requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
-
-  // Animate out, then clean the URL
-  setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
-  setTimeout(() => {
-    holder.remove();
-    params.delete('registration');
-    const qs = params.toString();
-    const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
-    history.replaceState(null, '', newUrl);
-  }, 2100);
-})();
-</script>
-
-
+    holder.appendChild(msg);
+    document.body.appendChild(holder);
+    requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
+    setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
+    setTimeout(() => {
+      holder.remove();
+      params.delete('registration');
+      const qs = params.toString();
+      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+      history.replaceState(null, '', newUrl);
+    }, 2100);
+  })();
+  </script>
 </body>
 </html>
