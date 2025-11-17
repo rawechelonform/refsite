@@ -90,33 +90,50 @@ figure{ margin-block-start:0; }
 
 /* === Mobile Portrait: photo first, centered, no overflow === */
 @media (max-width:900px) and (orientation:portrait){
-  .about-grid{
-    display:flex; flex-direction:column;
-    row-gap:18px;                        /* same rhythm as desktop */
-    margin-top:20px;
-    padding:0 24px;
-    box-sizing:border-box;               /* << prevents padding overflow */
-    align-items:stretch;
-    max-width:100%;
-  }
-
-  /* photo centered */
-  .about-blurb{ order:1; justify-content:center; }
-  .about-photo{
-    margin:16px auto 24px;
-    max-width:clamp(240px,70vw,380px);
-    width:100%;
-  }
-
-  /* text width = inner width; justify to make rectangular blocks */
-  .right-col{ order:2; width:100%; box-sizing:border-box; }
-  .right-col .bio{
-    text-align: justify;
-    text-justify: inter-word;
-    hyphens: auto;
-    margin:4px 0 1.05rem;
-  }
+/* stack + gutters stay the same */
+.about-grid{
+  display:flex; flex-direction:column;
+  row-gap:18px;
+  margin-top:20px;
+  padding:0 24px;
+  align-items:stretch;
+  box-sizing:border-box;
 }
+
+/* PHOTO: hard center */
+.about-blurb{
+  order:1;
+  display:flex;
+  justify-content:center;      /* center the child horizontally */
+  align-items:flex-start;
+  text-align:center;           /* extra safety for iOS */
+}
+.about-photo{
+  margin:16px auto 24px;       /* centers the figure itself */
+  max-width:clamp(240px,70vw,380px);
+  width:auto;                  /* shrink to content; avoids “column centering” illusion */
+}
+.about-photo img{
+  display:block;
+  width:100%;
+  height:auto;
+  margin:0 auto;               /* belt + suspenders centering */
+}
+
+/* TEXT: full width, justified blocks */
+.right-col{
+  order:2;
+  width:100%;
+}
+.right-col .bio{
+  text-align:justify;
+  text-justify:inter-word;
+  hyphens:none;                /* stop auto-hyphenation */
+  word-break:normal;           /* don’t break inside words */
+  overflow-wrap:break-word;    /* only break super-long tokens if needed */
+  margin:4px 0 1.05rem;
+}
+
 
 /* === Mobile Landscape: side-by-side, top-aligned, no overflow === */
 @media (max-width:900px) and (orientation:landscape){
