@@ -20,7 +20,7 @@
   <!-- Page CSS -->
   <link rel="stylesheet" href="sadgirls.css" />
   <link rel="stylesheet" href="menubar.css?v=mb9">
-  <link rel="stylesheet" href="artist.css?v=38">
+  <link rel="stylesheet" href="artist.css?v=39">
 
   <!-- Safety: remove default margin so menubar sits flush -->
   <style>html,body{margin:0;padding:0}</style>
@@ -28,9 +28,15 @@
 
 <body>
   <script>
+    // font loading helper
     document.documentElement.classList.add('fonts-loading');
     Promise.all([document.fonts.load('1em "Coral Pixels"')])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
+
+    // optional debug borders via ?debug
+    if (new URLSearchParams(location.search).has('debug')) {
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('debug'));
+    }
   </script>
 
   <div class="page">
@@ -41,7 +47,7 @@
       <!-- LEFT: portrait -->
       <section class="about-blurb">
         <figure class="about-photo" id="aboutPhoto">
-          <img src="assets/artist/photo9bw.png" alt="artist portrait" decoding="async">
+          <img src="assets/artist/photo9bw2.png" alt="artist portrait" decoding="async">
         </figure>
       </section>
 
@@ -57,7 +63,7 @@
           </p>
 
           <p class="bio">
-            In parallel, I started developing the Machines project. I grew up in a small town in Los Angeles. My father was a watchsmith / mechanic / craftsman, always tinkering with his latest obsession. His office was more akin to an inventor’s workshop. His table was filled with tiny screws, gears, pins, and miniature tools. I am my father’s daughter, taking from his love of repair and creation. I’m drawn to the visual language of outdated devices and, in many cases, their obsolescence—-the ugly sister of progress. Technological relics, while no longer useful, are not without utility. They hold stories, provide us with context, and gift us with nostalgia.
+            In parallel, I started developing the Machines project. I grew up in a small town in Los Angeles. My father was a watchsmith / mechanic / craftsman, always tinkering with his latest obsession. His office was more akin to an inventor’s workshop. His table was filled with tiny screws, gears, pins, and miniature tools. I am my father’s daughter, taking from his love of repair and creation. I’m drawn to the visual language of outdated devices and, in many cases, their obsolescence—the ugly sister of progress. Technological relics, while no longer useful, are not without utility. They hold stories, provide us with context, and gift us with nostalgia.
           </p>
 
           <p class="bio">
@@ -65,9 +71,8 @@
           </p>
 
           <p class="bio bio-compact">
-            Glitch Report:
-            <a class="ext-link" href="/glitchreport.html" target="_blank" rel="noopener noreferrer">registration</a><br>
-            IG: <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">@rawechelonform</a>
+            IG: <a class="ext-link" href="https://www.instagram.com/rawechelonform" target="_blank" rel="noopener noreferrer">@rawechelonform</a><br>
+            Glitch Report: <a class="ext-link" href="/glitchreport.html" target="_blank" rel="noopener noreferrer">registration</a>
           </p>
         </section>
       </div>

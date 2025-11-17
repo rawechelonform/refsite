@@ -7,8 +7,8 @@
   --bio-gray: 143,143,143;   /* body/bio text */
   --link-gray: 110,110,110;  /* links (darker than bio text) */
 
-  /* Alignment */
-  --photo-nudge: -8px;       /* negative = move photo up; tweak -6 to -12 if needed */
+  /* Optional tiny optical nudge (used only with .align-nudge) */
+  --photo-nudge: -2px;
 }
 
 /* === Background === */
@@ -28,7 +28,6 @@ body::before{
 
 /* === Menubar (standard) === */
 .menubar-slot { display:block; height: var(--barh, 32px); }
-/* No transparency overrides here so it matches other pages */
 
 /* === Layout === */
 .page{
@@ -39,9 +38,13 @@ body::before{
   width:100%; max-width:var(--maxw);
   margin:48px auto 20px;
   display:grid; grid-template-columns:1fr 0.9fr;
-  column-gap:5px; row-gap:10px; align-items:start;
+  column-gap:5px; row-gap:10px;
+
+  /* HARD TOP ALIGNMENT */
+  align-items:start !important;
 }
 .about-grid > * { min-width: 0; }
+.about-blurb, .right-col{ align-self:start !important; }
 
 .about-blurb{
   box-sizing:border-box;
@@ -53,16 +56,16 @@ body::before{
 /* Bio text */
 .bio{
   font-family: var(--ui-mono);
-  font-size: 13px;          /* smaller than default */
+  font-size: 13px;
   line-height: 1.6;
   color: rgb(var(--bio-gray));
-  margin: 4px 0 1.05rem;    /* bottom gap between paragraphs */
+  margin: 4px 0 1.05rem;
   text-align: left;
 }
 .bio:first-child{ margin-top: 0; }
-.bio-compact{ margin-bottom: .5rem; } /* IG + Glitch lines */
+.bio-compact{ margin-bottom: .5rem; }
 
-/* Links (darker than bio; stable visited; hover → white) */
+/* Links (darker than bio; hover → white; stable visited) */
 .ext-link,
 .ext-link:link,
 .ext-link:visited{
@@ -76,24 +79,26 @@ body::before{
   text-decoration-color: #fff;
 }
 
-/* Photo sizing (slightly larger) + alignment nudge */
+/* Photo sizing + reset default margins */
 .about-photo{
   position: relative;
-  margin:0 0 8px 0;
-  max-width: clamp(340px, 32vw, 420px); /* adjust here for overall size */
+  margin:0 0 8px 0;          /* ensure no extra top margin */
+  max-width: clamp(340px, 32vw, 420px);
   width:100%;
-  transform: translateY(var(--photo-nudge)); /* aligns top with first bio line */
+  /* no transform by default while we lock alignment */
 }
+figure{ margin-block-start: 0; } /* kill UA default figure top margin */
 .about-photo img{
   display:block; width:100%; height:auto; border:0;
   z-index:2; position:relative;
 }
+/* Optional 1–3px optical nudge: add class "align-nudge" to .about-photo if needed */
+.about-photo.align-nudge{ transform: translateY(var(--photo-nudge)); }
 
 /* === Mobile variants === */
 @media (max-width:900px){
   body{ background-attachment: scroll; }
 }
-
 @media (max-width:900px) and (orientation:portrait){
   :root{ --row:14px; --gutter:35px; }
   .about-grid{
@@ -106,10 +111,8 @@ body::before{
   .about-photo{
     display:block; max-width:clamp(220px, 66vw, 340px);
     margin:28px auto 40px; width:100%;
-    transform: translateY(var(--photo-nudge));
   }
 }
-
 @media (max-width:900px) and (orientation:landscape){
   .about-grid{
     display:grid; grid-template-columns:1fr 0.9fr;
@@ -119,7 +122,6 @@ body::before{
   .about-photo{
     display:block; max-width:clamp(240px, 50vw, 360px);
     margin:16px auto 22px; width:100%;
-    transform: translateY(var(--photo-nudge));
   }
   .right-col{ grid-column:2; display:flex; flex-direction:column; gap:12px; padding-right:8px; min-width:0; }
 }
@@ -133,5 +135,20 @@ body::before{
   }
   .right-col{ display:flex !important; flex-direction:column !important; gap:14px !important; }
   .about-blurb{ display:flex !important; justify-content:center !important; align-items:flex-start !important; }
-  .about-photo{ max-width:clamp(340px, 32vw, 420px) !important; margin:0 0 8px 0 !important; transform: translateY(var(--photo-nudge)) !important; }
+  .about-photo{ max-width:clamp(340px, 32vw, 420px) !important; margin:0 0 8px 0 !important; }
+}
+
+/* ===== DEBUG BORDERS — REMOVE WHEN DONE ===== */
+body.debug .about-grid{ outline:2px dashed #00ffff; }
+body.debug .about-blurb{ outline:2px dashed #ff00ff; }
+body.debug .about-photo{ outline:2px solid #ff8800; }
+body.debug .about-photo img{ outline:2px solid #ffaa00; }
+body.debug .right-col{ outline:2px dashed #00ff00; }
+body.debug .bio{ outline:1px dotted #999; }
+body.debug .about-blurb{ background:rgba(255,0,255,0.06); }
+body.debug .right-col{ background:rgba(0,255,0,0.06); }
+@media (max-width:900px){
+  body.debug .about-grid{ background: repeating-linear-gradient(
+    to bottom, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 1px, transparent 1px, transparent 8px
+  );}
 }
