@@ -48,34 +48,40 @@ function enableMobileIME(){
     setImp(inputEl, 'left', '0');
     setImp(inputEl, 'bottom', '0');
     setImp(inputEl, 'width', '1px');
-    setImp(inputEl, 'height', '1.4rem');
+    setImp(inputEl, 'height', '1.6rem');
     setImp(inputEl, 'opacity', '0.01');
     setImp(inputEl, 'color', 'transparent');
     setImp(inputEl, 'background', 'transparent');
     setImp(inputEl, 'border', '0');
     setImp(inputEl, 'padding', '0');
-    setImp(inputEl, 'z-index', '1');
+    setImp(inputEl, 'z-index', '1000');
     setImp(inputEl, 'font-size', '16px'); // avoid zoom
     setImp(inputEl, 'pointer-events', 'auto');
+    setImp(inputEl, 'caret-color', 'transparent');
   } else if (isAndroid) {
-    // Android prefers it inside the tap target; not fixed to viewport
+    // ANDROID: overlay the real input on top of the prompt so the tap hits the input itself
     const host = promptEl || document.body;
     if (host && inputEl.parentElement !== host) {
       try { host.appendChild(inputEl); } catch(_) {}
     }
+    // Make it cover the typed line (after the caret glyph). This prevents Chrome from collapsing the keyboard.
+    setImp(host,   'position', 'relative'); // ensure positioning context
     setImp(inputEl, 'position', 'absolute');
-    setImp(inputEl, 'left', '0');
+    setImp(inputEl, 'left', '1.3ch');       // after ">" caret
+    setImp(inputEl, 'right', '0');
     setImp(inputEl, 'top', '0');
-    setImp(inputEl, 'width', '2px');    // small but present
-    setImp(inputEl, 'height', '2rem');  // non-zero height helps Android
-    setImp(inputEl, 'opacity', '0.01');
+    setImp(inputEl, 'height', '1.8rem');    // decent tap target
+    setImp(inputEl, 'opacity', '0.08');     // not 0 → Chrome accepts focus
     setImp(inputEl, 'color', 'transparent');
     setImp(inputEl, 'background', 'transparent');
     setImp(inputEl, 'border', '0');
     setImp(inputEl, 'padding', '0');
-    setImp(inputEl, 'z-index', '1');
-    setImp(inputEl, 'font-size', '16px'); // avoid zoom
+    setImp(inputEl, 'z-index', '1000');     // above the mirrored spans
+    setImp(inputEl, 'font-size', '16px');   // avoid zoom
     setImp(inputEl, 'pointer-events', 'auto');
+    setImp(inputEl, 'caret-color', 'transparent'); // hide caret
+    // The overlay means we don't need to intercept taps on spans at all
+    try { typedEl.style.setProperty('pointer-events', 'none', 'important'); } catch(_) {}
   }
 
   // Common hints
@@ -261,21 +267,13 @@ function bindPrompt(){
       window.addEventListener("touchend", () => { dragAnchorIdx = null; });
 
     } else if (isAndroid) {
-      // ANDROID/CHROME: use pointerdown/click, NO preventDefault
+      // ANDROID/CHROME:
+      //  - No preventDefault on taps
+      //  - Let the overlay input receive the tap directly
       const focusInput = () => { try { inputEl.focus(); } catch(_) {} };
-
       promptEl.addEventListener('pointerdown', focusInput, { passive: true });
       promptEl.addEventListener('click',       focusInput, { passive: true });
-
-      typedEl.addEventListener('pointerdown', focusInput, { passive: true });
-      typedEl.addEventListener('click', (e) => {
-        const i = indexFromPoint(e.clientX);
-        try {
-          if (document.activeElement !== inputEl) inputEl.focus();
-          inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
-        } catch(_) {}
-        renderMirror();
-      }, { passive: true });
+      // No span hit-testing on Android — the overlay input covers the area
     }
   }
 
