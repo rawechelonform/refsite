@@ -39,11 +39,11 @@ const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
 
 // Keep the real input focusable, platform-specific
-function enableMobileIME(){
+function enableMobileIME() {
   if (!isTouch || !inputEl) return;
 
   if (isIOS) {
-    // iOS needs fixed, in-viewport tiny input or IME won't appear
+    // iOS: keep fixed, super tiny, ultra-low opacity at screen bottom
     setImp(inputEl, 'position', 'fixed');
     setImp(inputEl, 'left', '0');
     setImp(inputEl, 'bottom', '0');
@@ -55,41 +55,40 @@ function enableMobileIME(){
     setImp(inputEl, 'border', '0');
     setImp(inputEl, 'padding', '0');
     setImp(inputEl, 'z-index', '1000');
-    setImp(inputEl, 'font-size', '16px'); // avoid zoom
+    setImp(inputEl, 'font-size', '16px');
     setImp(inputEl, 'pointer-events', 'auto');
     setImp(inputEl, 'caret-color', 'transparent');
   } else if (isAndroid) {
-    // ANDROID: overlay the real input on top of the prompt so the tap hits the input itself
-    const host = promptEl || document.body;
+    // Android/Chrome: overlay input on prompt line, higher opacity (>=.1)
+    const host = promptEl;
     if (host && inputEl.parentElement !== host) {
       try { host.appendChild(inputEl); } catch(_) {}
     }
-    // Make it cover the typed line (after the caret glyph). This prevents Chrome from collapsing the keyboard.
     setImp(host,   'position', 'relative'); // ensure positioning context
     setImp(inputEl, 'position', 'absolute');
-    setImp(inputEl, 'left', '1.3ch');       // after ">" caret
+    setImp(inputEl, 'left', '1.3ch');
     setImp(inputEl, 'right', '0');
     setImp(inputEl, 'top', '0');
-    setImp(inputEl, 'height', '1.8rem');    // decent tap target
-    setImp(inputEl, 'opacity', '0.08');     // not 0 → Chrome accepts focus
+    setImp(inputEl, 'height', '1.8rem');
+    setImp(inputEl, 'opacity', '0.12');      // more visible for Chrome/Android
     setImp(inputEl, 'color', 'transparent');
     setImp(inputEl, 'background', 'transparent');
     setImp(inputEl, 'border', '0');
     setImp(inputEl, 'padding', '0');
-    setImp(inputEl, 'z-index', '1000');     // above the mirrored spans
-    setImp(inputEl, 'font-size', '16px');   // avoid zoom
+    setImp(inputEl, 'z-index', '1000');
+    setImp(inputEl, 'font-size', '16px');
     setImp(inputEl, 'pointer-events', 'auto');
-    setImp(inputEl, 'caret-color', 'transparent'); // hide caret
-    // The overlay means we don't need to intercept taps on spans at all
+    setImp(inputEl, 'caret-color', 'transparent');
     try { typedEl.style.setProperty('pointer-events', 'none', 'important'); } catch(_) {}
   }
 
-  // Common hints
+  // Shared setup
   if (inputEl.type !== 'text') { try { inputEl.type = 'text'; } catch(_) {} }
   inputEl.setAttribute('inputmode', 'email');
   inputEl.setAttribute('autocomplete', 'email');
   inputEl.setAttribute('enterkeyhint', 'go');
 }
+
 
 // ===== HELPERS =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
@@ -267,13 +266,21 @@ function bindPrompt(){
       window.addEventListener("touchend", () => { dragAnchorIdx = null; });
 
     } else if (isAndroid) {
-      // ANDROID/CHROME:
-      //  - No preventDefault on taps
-      //  - Let the overlay input receive the tap directly
+      // ANDROID/CHROME: use pointerdown/click, NO preventDefault
       const focusInput = () => { try { inputEl.focus(); } catch(_) {} };
+
       promptEl.addEventListener('pointerdown', focusInput, { passive: true });
       promptEl.addEventListener('click',       focusInput, { passive: true });
-      // No span hit-testing on Android — the overlay input covers the area
+
+      typedEl.addEventListener('pointerdown', focusInput, { passive: true });
+      typedEl.addEventListener('click', (e) => {
+        const i = indexFromPoint(e.clientX);
+        try {
+          if (document.activeElement !== inputEl) inputEl.focus();
+          inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
+        } catch(_) {}
+        renderMirror();
+      }, { passive: true });
     }
   }
 
