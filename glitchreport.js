@@ -21,15 +21,18 @@ const mlIframe = document.getElementById("ml_iframe");
 
 // ===== PLATFORM DETECTION =====
 const UA = navigator.userAgent || "";
-const isIOS = /iPhone|iPad|iPod/i.test(UA);
 const isAndroid = /Android/i.test(UA);
-const isTouch = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+const isIOS     = /iPhone|iPad|iPod/i.test(UA);
+const isTouch   = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// Mark Android early so CSS can stabilize layout before any taps
+if (isAndroid) {
+  document.documentElement.classList.add('android-stable');
+}
 
 // ===== UTIL =====
-function setImp(el, prop, value){ el && el.style.setProperty(prop, value, "important"); }
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 
-// ===== EMAIL + MIRROR HELPERS =====
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
   if (!el) { done && done(); return; }
@@ -43,10 +46,10 @@ function typeWriter(text, el, speed = 40, done){
 }
 function escapeHTML(s){
   return String(s).replace(/[&<>\"']/g, c =>
-    c === "&" ? "&amp;" :
-    c === "<" ? "&lt;" :
-    c === ">" ? "&gt;" :
-    c === '"' ? "&quot;" : "&#39;"
+    c === '&' ? '&amp;' :
+    c === '<' ? '&lt;' :
+    c === '>' ? '&gt;' :
+    c === '\"' ? '&quot;' : '&#39;'
   );
 }
 function isValidEmail(e){
@@ -55,7 +58,7 @@ function isValidEmail(e){
 
 // ===== MIRROR (desktop + iOS only) =====
 function renderMirror(){
-  if (!typedEl || !inputEl || isAndroid) return; // Android uses real input, no mirror
+  if (!typedEl || !inputEl || isAndroid) return;
   const raw = inputEl.value || "";
   const start = inputEl.selectionStart ?? raw.length;
   const end   = inputEl.selectionEnd   ?? raw.length;
@@ -88,23 +91,22 @@ function htmlAtRange(a, b, raw){
 }
 function indexFromPoint(clientX){
   if (!typedEl) return 0;
-  const boxes = typedEl.querySelectorAll(".ch");
+  const boxes = typedEl.querySelectorAll('.ch');
   if (!boxes.length) return 0;
   let bestI = 0, bestDist = Infinity;
   boxes.forEach((el) => {
     const rect = el.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
     const d = Math.abs(clientX - midX);
-    if (d < bestDist) { bestDist = d; bestI = Number(el.getAttribute("data-i")) || 0; }
+    if (d < bestDist) { bestDist = d; bestI = Number(el.getAttribute('data-i')) || 0; }
   });
   return bestI;
 }
 
-// ===== RAF safety net (desktop + iOS only) =====
+// ===== RAF (desktop + iOS) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
-  if (!inputEl) { requestAnimationFrame(caretRAF); return; }
-  if (isAndroid) { requestAnimationFrame(caretRAF); return; }
+  if (!inputEl || isAndroid) { requestAnimationFrame(caretRAF); return; }
   const v = inputEl.value || "";
   const s = inputEl.selectionStart ?? v.length;
   const e = inputEl.selectionEnd   ?? v.length;
@@ -115,74 +117,44 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== IME SETUP =====
+// ===== IME CONFIG =====
 function enableMobileIME(){
   if (!isTouch || !inputEl) return;
 
   if (isIOS) {
-    // iOS: tiny fixed input, invisible; mirror shows text
-    setImp(inputEl, "position", "fixed");
-    setImp(inputEl, "left", "0");
-    setImp(inputEl, "bottom", "0");
-    setImp(inputEl, "width", "1px");
-    setImp(inputEl, "height", "1.6rem");
-    setImp(inputEl, "opacity", "0.01");
-    setImp(inputEl, "color", "transparent");
-    setImp(inputEl, "background", "transparent");
-    setImp(inputEl, "border", "0");
-    setImp(inputEl, "padding", "0");
-    setImp(inputEl, "z-index", "1000");
-    setImp(inputEl, "font-size", "16px");
-    setImp(inputEl, "pointer-events", "auto");
-    setImp(inputEl, "caret-color", "transparent");
-    try { inputEl.type = "text"; } catch(_) {}
+    // tiny fixed, invisible input at bottom; mirror shows text
+    try { inputEl.type = 'text'; } catch(_) {}
+    inputEl.setAttribute('inputmode','email');
+    inputEl.setAttribute('autocomplete','email');
+    inputEl.setAttribute('autocapitalize','off');
+    inputEl.setAttribute('enterkeyhint','go');
   } else if (isAndroid) {
-    // ANDROID: make the REAL input visible and primary. Hide the mirror.
-    document.documentElement.classList.add("android-real-input");
-
-    const host = promptEl;
-    if (host && inputEl.parentElement !== host) host.appendChild(inputEl);
-
-    setImp(host, "position", "relative");
-    setImp(inputEl, "position", "relative");
-    setImp(inputEl, "display", "block");
-    setImp(inputEl, "margin-left", "1.3ch"); // after ">" caret
-    setImp(inputEl, "width", "100%");
-    setImp(inputEl, "height", "1.8rem");
-    setImp(inputEl, "line-height", "1.8rem");
-    setImp(inputEl, "opacity", "1");              // real, visible input
-    setImp(inputEl, "background", "transparent");
-    setImp(inputEl, "border", "0");
-    setImp(inputEl, "padding", "0");
-    setImp(inputEl, "z-index", "1001");
-    setImp(inputEl, "font-size", "var(--term-font-size)");
-    setImp(inputEl, "font-family", "'DotGothic16', system-ui, monospace");
-    setImp(inputEl, "letter-spacing", "0.08em");
-    setImp(inputEl, "color", "var(--crt)");
-    setImp(inputEl, "caret-color", "var(--crt)");
-    // ensure taps reach the input directly
-    try { typedEl && typedEl.style.setProperty("display", "none", "important"); } catch(_) {}
+    // Android: visible in-flow input (CSS handles layout)
+    try { inputEl.type = 'email'; } catch(_) {}
+    inputEl.setAttribute('inputmode','email');
+    inputEl.setAttribute('autocomplete','email');
+    inputEl.setAttribute('autocapitalize','off');
+    inputEl.setAttribute('enterkeyhint','go');
   }
-
-  // common hints
-  try { inputEl.type = "text"; } catch(_) {}
-  inputEl.setAttribute("inputmode", "email");
-  inputEl.setAttribute("autocomplete", "email");
-  inputEl.setAttribute("autocapitalize", "off");
-  inputEl.setAttribute("enterkeyhint", "go");
 }
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
+
+  // For Android: show prompt now so there is no visibility flip at first tap
+  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
+    promptEl.classList.add('show');
+  }
+
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
-      if (promptEl) {
+      if (promptEl && !isAndroid) {
         promptEl.classList.add("show");
-        if (!isTouch) { inputEl && inputEl.focus(); }
-        if (isTouch)   enableMobileIME();
-        if (!isAndroid) renderMirror(); // Android shows the real input instead
       }
+      if (!isTouch) { inputEl && inputEl.focus(); }
+      if (isTouch) enableMobileIME();
+      if (!isAndroid) renderMirror();
     });
   }, 300);
 }
@@ -192,7 +164,7 @@ function bindPrompt(){
   if (!inputEl) return;
 
   if (!isTouch) {
-    // DESKTOP: mirror UI + click-to-set-caret
+    // Desktop mirror interactions
     typedEl.addEventListener("mousedown", (e) => {
       const i = indexFromPoint(e.clientX);
       try {
@@ -210,27 +182,30 @@ function bindPrompt(){
       try { inputEl.setSelectionRange(a, b); } catch(_) {}
       renderMirror();
     });
-    window.addEventListener("mouseup", () => { /* no-op */ });
 
   } else if (isIOS) {
-    // iOS: touchstart → focus tiny input; mirror renders text
+    // iOS: tap to focus tiny offscreen input
     promptEl.addEventListener("touchstart", () => { try { inputEl.focus(); } catch(_) {} }, { passive: true });
+
   } else if (isAndroid) {
-    // ANDROID: no preventDefault; let the real input handle everything
-    const focusInput = () => { try { inputEl.focus(); } catch(_) {} };
-    promptEl.addEventListener("pointerdown", focusInput, { passive: true });
-    promptEl.addEventListener("click",       focusInput, { passive: true });
+    // Android: let the real, visible input take focus via direct tap
+    // No preventDefault; no programmatic focus needed
+    promptEl.addEventListener("click", (e) => {
+      if (e.target !== inputEl) { /* optional: inputEl.focus(); */ }
+    }, { passive: true });
   }
 
-  // Shared mirror updates (desktop + iOS)
-  ["input","focus","blur","keyup","select","click"].forEach(evt =>
-    inputEl.addEventListener(evt, () => { if (!isAndroid) renderMirror(); })
-  );
-  inputEl.addEventListener("keydown", () => { if (!isAndroid) setTimeout(renderMirror, 0); });
+  // Mirror updates only where mirror exists
+  if (!isAndroid) {
+    ["input","focus","blur","keyup","select","click"].forEach(evt =>
+      inputEl.addEventListener(evt, renderMirror)
+    );
+    inputEl.addEventListener("keydown", () => setTimeout(renderMirror, 0));
+  }
 
   // Cmd/Ctrl+A (desktop)
   document.addEventListener("keydown", (e) => {
-    const isA = (e.key === "a" || e.key === "A");
+    const isA = (e.key === 'a' || e.key === 'A');
     const withMeta = (e.metaKey || e.ctrlKey);
     if (!isA || !withMeta) return;
     e.preventDefault();
@@ -268,15 +243,13 @@ function trySubmitEmail() {
   }
 
   inputEl.setAttribute("disabled", "disabled");
-  if (!isAndroid) {
-    // show the mirror GO pill on desktop/iOS
-    typedEl && (typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`);
+  if (!isAndroid && typedEl) {
+    typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   hintEl && (hintEl.textContent = "");
   log("submitting to MailerLite…");
   mlEmail.value = email.toLowerCase();
 
-  // If iframe loads, we consider it success and continue
   const onLoad = () => {
     setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
   };
@@ -318,7 +291,7 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!isAndroid) requestAnimationFrame(caretRAF); // Android uses real input, no mirror RAF
+  if (!isAndroid) requestAnimationFrame(caretRAF); // Android: no mirror loop
   if (isTouch) enableMobileIME();
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
 });

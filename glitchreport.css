@@ -42,7 +42,7 @@ html, body {
   font-family: 'DotGothic16', system-ui, monospace;
 }
 
-/* Utility to fully hide something (do NOT use on the ML iframe) */
+/* Utility */
 .hidden { display: none !important; }
 
 /* Generic offscreen utility for elements that must still function */
@@ -54,7 +54,7 @@ html, body {
   overflow: hidden !important;
 }
 
-/* honeypot (not display:none so bots can see it) */
+/* honeypot */
 .hp-field {
   position: absolute !important;
   left: -9999px !important;
@@ -63,7 +63,7 @@ html, body {
   overflow: hidden !important;
 }
 
-/* Keep the background iframe offscreen but NOT display:none (iOS needs it “present”) */
+/* Keep the background iframe offscreen but NOT display:none */
 #ml_iframe {
   width: 0 !important;
   height: 0 !important;
@@ -131,7 +131,7 @@ html, body {
   letter-spacing: 0.08em;
   line-height: 1;
   margin: 0;
-  user-select: none;   /* system line not selectable */
+  user-select: none;
 }
 
 .prompt {
@@ -150,7 +150,7 @@ html, body {
   letter-spacing: 0.08em;
   white-space: pre-wrap;
   color: var(--crt);
-  user-select: none;   /* we render selection ourselves */
+  user-select: none;
 }
 
 /* selection treatment */
@@ -171,7 +171,7 @@ html, body {
 
 .terminal, .terminal * { -webkit-text-fill-color: unset; }
 
-/* char boxes to help hit-testing */
+/* char boxes */
 .ch { white-space: pre; }
 
 /* blinking block cursor */
@@ -193,14 +193,14 @@ html, body {
   color: var(--crt);
 }
 
-/* real input (must remain in-viewport so mobile IME opens) */
+/* real input (desktop + iOS default: tiny fixed input so iOS IME opens) */
 #cmd.cmd {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 1px;
-  height: 1.4rem;
-  opacity: 0.01;      /* effectively invisible but "present" */
+  height: 1.6rem;
+  opacity: 0.01;
   color: transparent;
   background: transparent;
   border: 0;
@@ -208,6 +208,7 @@ html, body {
   font-size: 16px;    /* prevents iOS zoom-on-focus */
   z-index: 1;
   pointer-events: auto !important;
+  caret-color: transparent;
 }
 
 /* hint row */
@@ -298,4 +299,24 @@ html, body {
     10%  { opacity: 1; }
     100% { transform: translateX(-50%); }
   }
+}
+
+/* === ANDROID-ONLY OVERRIDES (JS adds html.android-stable) === */
+html.android-stable .typed { display: none !important; }
+html.android-stable #cmd.cmd {
+  position: static !important;
+  width: 100% !important;
+  height: 1.9rem !important;
+  line-height: 1.9rem !important;
+  margin-left: 1.3ch !important;   /* after ">" caret */
+  opacity: 1 !important;
+  color: var(--crt) !important;
+  caret-color: var(--crt) !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  font-size: var(--term-font-size) !important;
+  letter-spacing: 0.08em !important;
+  z-index: 1 !important;
+  pointer-events: auto !important;
 }
