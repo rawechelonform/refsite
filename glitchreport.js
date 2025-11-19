@@ -59,28 +59,30 @@ function enableMobileIME() {
     setImp(inputEl, 'pointer-events', 'auto');
     setImp(inputEl, 'caret-color', 'transparent');
   } else if (isAndroid) {
-    // Android/Chrome: overlay input on prompt line, higher opacity (>=.1)
-    const host = promptEl;
-    if (host && inputEl.parentElement !== host) {
-      try { host.appendChild(inputEl); } catch(_) {}
-    }
-    setImp(host,   'position', 'relative'); // ensure positioning context
-    setImp(inputEl, 'position', 'absolute');
-    setImp(inputEl, 'left', '1.3ch');
-    setImp(inputEl, 'right', '0');
-    setImp(inputEl, 'top', '0');
-    setImp(inputEl, 'height', '1.8rem');
-    setImp(inputEl, 'opacity', '0.12');      // more visible for Chrome/Android
-    setImp(inputEl, 'color', 'transparent');
-    setImp(inputEl, 'background', 'transparent');
-    setImp(inputEl, 'border', '0');
-    setImp(inputEl, 'padding', '0');
-    setImp(inputEl, 'z-index', '1000');
-    setImp(inputEl, 'font-size', '16px');
-    setImp(inputEl, 'pointer-events', 'auto');
-    setImp(inputEl, 'caret-color', 'transparent');
-    try { typedEl.style.setProperty('pointer-events', 'none', 'important'); } catch(_) {}
+  // Overlay input on prompt line, make it a bit more visible
+  const host = promptEl;
+  if (host && inputEl.parentElement !== host) {
+    try { host.appendChild(inputEl); } catch(_) {}
   }
+  setImp(host, 'position', 'relative');
+  setImp(inputEl, 'position', 'absolute');
+  setImp(inputEl, 'left', '1.3ch');
+  setImp(inputEl, 'right', '0');
+  setImp(inputEl, 'top', '0');
+  setImp(inputEl, 'height', '1.8rem');
+  setImp(inputEl, 'opacity', '0.18'); // now more visible for Chrome
+  setImp(inputEl, 'color', 'transparent');
+  setImp(inputEl, 'background', 'transparent');
+  setImp(inputEl, 'border', '0');
+  setImp(inputEl, 'padding', '0');
+  setImp(inputEl, 'z-index', '1000');
+  setImp(inputEl, 'font-size', '16px');
+  setImp(inputEl, 'pointer-events', 'auto');
+  setImp(inputEl, 'caret-color', 'transparent');
+  try { typedEl.style.setProperty('pointer-events', 'none', 'important'); } catch(_) {}
+  try { inputEl.setAttribute('type', 'email'); } catch(_) {}
+}
+
 
   // Shared setup
   if (inputEl.type !== 'text') { try { inputEl.type = 'text'; } catch(_) {} }
