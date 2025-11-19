@@ -30,6 +30,32 @@ let lockedOutput    = false;
 let submitInFlight  = false;
 let dragAnchorIdx   = null;  // anchor index while dragging over .typed
 
+// ===== MOBILE FLAGS + HELPERS =====
+const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// set inline styles with !important
+function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
+
+// keep real input in-viewport on mobile so IME can open
+function enableMobileIME(){
+  if (!isTouch || !inputEl) return;
+  setImp(inputEl, 'position', 'fixed');
+  setImp(inputEl, 'left', '0');
+  setImp(inputEl, 'bottom', '0');
+  setImp(inputEl, 'width', '1px');
+  setImp(inputEl, 'height', '1.4rem');
+  setImp(inputEl, 'opacity', '0.01');
+  setImp(inputEl, 'color', 'transparent');
+  setImp(inputEl, 'background', 'transparent');
+  setImp(inputEl, 'border', '0');
+  setImp(inputEl, 'padding', '0');
+  setImp(inputEl, 'z-index', '1');
+  setImp(inputEl, 'font-size', '16px'); // avoid iOS zoom
+  if (inputEl.type !== 'email') { try { inputEl.type = 'email'; } catch(_) {} }
+  inputEl.setAttribute('inputmode', 'email');
+  inputEl.setAttribute('enterkeyhint', 'go');
+}
+
 // ===== HELPERS =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 
@@ -103,7 +129,7 @@ function indexFromPoint(clientX){
   const boxes = typedEl.querySelectorAll('.ch');
   if (!boxes.length) return 0;
 
-  // Choose the .ch whose center is closest to the mouse X
+  // Choose the .ch whose center is closest to the pointer X
   let bestI = 0;
   let bestDist = Infinity;
   boxes.forEach((el) => {
@@ -138,44 +164,37 @@ function startTerminalSequence(){
     typeWriter(TYPE_TEXT, typeEl, 50, () => {
       if (promptEl) {
         promptEl.classList.add("show");
-        // Desktop: keep original autofocus behavior
-        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        // Desktop autofocus preserved
         if (!isTouch) { inputEl && inputEl.focus(); }
-        // Mobile: do NOT autofocus (user tap will trigger IME)
+        // Mobile: prepare input, wait for user tap to focus
+        if (isTouch) enableMobileIME();
         renderMirror();
       }
     });
   }, 300);
 }
 
-
 function bindPrompt(){
   if (!inputEl || !typedEl) return;
 
-  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-
   if (!isTouch) {
-    // ===== DESKTOP (unchanged behavior) =====
-
-    // CLICK → select nearest letter (never snap to end)
+    // ===== DESKTOP (unchanged) =====
     typedEl.addEventListener("mousedown", (e) => {
       const i = indexFromPoint(e.clientX);
       dragAnchorIdx = i;
       try {
         if (document.activeElement !== inputEl) inputEl.focus();
-        // start with single-letter selection at anchor
         inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
       } catch (_) {}
       renderMirror();
-      e.preventDefault(); // we control selection visuals
+      e.preventDefault();
     });
 
-    // DRAG → stable green selection
     window.addEventListener("mousemove", (e) => {
       if (dragAnchorIdx == null) return;
       const j = indexFromPoint(e.clientX);
       const a = Math.min(dragAnchorIdx, j);
-      const b = Math.max(dragAnchorIdx, j) + 1; // include the letter under cursor
+      const b = Math.max(dragAnchorIdx, j) + 1;
       try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch (_) {}
       renderMirror();
     });
@@ -185,16 +204,16 @@ function bindPrompt(){
     });
 
   } else {
-    // ===== MOBILE-ONLY (new; desktop never runs this) =====
+    // ===== MOBILE ONLY =====
+    enableMobileIME();
 
-    // Tap to focus + place caret, then drag to select
     typedEl.addEventListener("touchstart", (e) => {
       const t = e.touches && e.touches[0];
       if (!t) return;
       const i = indexFromPoint(t.clientX);
       dragAnchorIdx = i;
       try {
-        if (document.activeElement !== inputEl) inputEl.focus();
+        if (document.activeElement !== inputEl) inputEl.focus(); // user gesture → opens IME
         inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
       } catch (_) {}
       renderMirror();
@@ -217,7 +236,7 @@ function bindPrompt(){
     });
   }
 
-  // ===== Shared bindings (safe on both) =====
+  // ===== Shared bindings =====
   ["input","focus","blur","keyup","select","click"].forEach(evt =>
     inputEl.addEventListener(evt, renderMirror)
   );
@@ -234,7 +253,7 @@ function bindPrompt(){
     renderMirror();
   }, true);
 
-  // Submit on Enter → MailerLite → redirect (unchanged)
+  // Submit on Enter → MailerLite → redirect
   inputEl.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     if (submitInFlight) { e.preventDefault(); return; }
@@ -247,6 +266,7 @@ function bindPrompt(){
       return;
     }
 
+    // Honeypot
     const honeypot = mlForm?.querySelector('input[name="website"]');
     if (honeypot && honeypot.value) {
       log("honeypot filled; dropping");
@@ -254,6 +274,7 @@ function bindPrompt(){
       return;
     }
 
+    // Lock and submit
     lockedOutput = true;
     submitInFlight = true;
     inputEl.setAttribute("disabled", "disabled");
@@ -302,7 +323,6 @@ function bindPrompt(){
   });
 }
 
-
 // ===== AVATAR =====
 function startAvatar(){
   if(!figureEl){ startTerminalSequence(); return; }
@@ -326,5 +346,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
   requestAnimationFrame(caretRAF);
+  if (isTouch) enableMobileIME(); // ensure override applied early on mobile
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
 });
