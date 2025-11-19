@@ -44,7 +44,7 @@ function enableMobileIME(){
   setImp(inputEl, 'bottom', '0');
   setImp(inputEl, 'width', '1px');
   setImp(inputEl, 'height', '1.4rem');
-  setImp(inputEl, 'opacity', '0.01'); // enough for iOS to consider it "present"
+  setImp(inputEl, 'opacity', '0.01'); // effectively invisible but "present"
   setImp(inputEl, 'color', 'transparent');
   setImp(inputEl, 'background', 'transparent');
   setImp(inputEl, 'border', '0');
@@ -260,10 +260,95 @@ function bindPrompt(){
     renderMirror();
   }, true);
 
-  // Submit on Enter → MailerLite → redirect
-  inputEl.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    if (submitInFlight) { e.preventDefault(); return; }
+  // ===== SUBMIT LOGIC (desktop=form submit; mobile=iframe GET) =====
+  function submitViaFormPOST(email){
+    mlEmail.value = email.toLowerCase();
+    let done = false;
+    const CLEANUP = () => { mlIframe.removeEventListener("load", onLoad); };
+
+    const onLoad = () => {
+      if (done) return; done = true; CLEANUP();
+      log("iframe loaded (success path)");
+      if (NEXT_URL && !DIAG) {
+        setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+      } else {
+        hintEl && (hintEl.textContent = "ok—received response from mail server.");
+      }
+    };
+
+    const onTimeout = () => {
+      if (done) return; done = true; CLEANUP();
+      log("timeout waiting for iframe (failure path, form POST)");
+      inputEl.removeAttribute("disabled");
+      submitInFlight = false;
+      lockedOutput = false;
+      renderMirror();
+      hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
+    };
+
+    mlIframe.addEventListener("load", onLoad, { once: true });
+    setTimeout(onTimeout, 8000);
+
+    try {
+      if (typeof mlForm.requestSubmit === 'function') {
+        mlForm.requestSubmit();
+      } else {
+        mlForm.submit();
+      }
+    } catch(err) {
+      log("submit threw:", err);
+      onTimeout();
+    }
+  }
+
+  // Mobile: navigate the iframe directly with GET query (avoids form semantics)
+  function submitViaIframeGET(email){
+    const base = mlForm.action; // e.g., https://assets.mailerlite.com/jsonp/.../subscribe
+    const qs = new URLSearchParams();
+    qs.set('fields[email]', email.toLowerCase());
+    qs.set('ml-submit', '1');
+    qs.set('website', '');          // honeypot empty
+    qs.set('_ts', Date.now());      // defeat caches
+
+    let done = false;
+    const CLEANUP = () => { mlIframe.removeEventListener("load", onLoad); };
+
+    const onLoad = () => {
+      if (done) return; done = true; CLEANUP();
+      log("iframe GET loaded (success path)");
+      if (NEXT_URL && !DIAG) {
+        setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+      } else {
+        hintEl && (hintEl.textContent = "ok—received response from mail server.");
+      }
+    };
+
+    const onTimeout = () => {
+      if (done) return; done = true; CLEANUP();
+      log("timeout waiting for iframe (failure path, GET)");
+      // Last-resort optimism on iOS where load sometimes doesn't fire
+      if (NEXT_URL && !DIAG) {
+        setTimeout(() => { window.location.href = NEXT_URL; }, 400);
+        return;
+      }
+      inputEl.removeAttribute("disabled");
+      submitInFlight = false;
+      lockedOutput = false;
+      renderMirror();
+      hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
+    };
+
+    // Prime iframe to a same-origin URL first; then set to cross-origin target
+    try { mlIframe.src = 'about:blank'; } catch(_) {}
+    mlIframe.addEventListener("load", onLoad, { once: true });
+    setTimeout(onTimeout, 8000);
+
+    // Kick off navigation
+    mlIframe.src = `${base}?${qs.toString()}`;
+  }
+
+  function trySubmitEmail() {
+    if (submitInFlight) return;
 
     const email = (inputEl.value || "").trim();
 
@@ -281,7 +366,11 @@ function bindPrompt(){
       return;
     }
 
-    // Lock and submit
+    if (!(mlForm && mlEmail && mlIframe)) {
+      hintEl && (hintEl.textContent = "form not ready");
+      return;
+    }
+
     lockedOutput = true;
     submitInFlight = true;
     inputEl.setAttribute("disabled", "disabled");
@@ -289,49 +378,28 @@ function bindPrompt(){
     hintEl && (hintEl.textContent = "");
     log("submitting to MailerLite…");
 
-    if (mlForm && mlEmail && mlIframe){
-      mlEmail.value = email.toLowerCase();
+    // Ensure iframe is present (not display:none)
+    try { mlIframe.removeAttribute('hidden'); } catch(_) {}
 
-      // Ensure iframe is not hidden via hidden attribute
-      try { mlIframe.removeAttribute('hidden'); } catch(_) {}
-
-      let done = false;
-      const CLEANUP = () => { mlIframe.removeEventListener("load", onLoad); };
-
-      const onLoad = () => {
-        if (done) return; done = true; CLEANUP();
-        log("iframe loaded (success path)");
-        if (NEXT_URL && !DIAG) {
-          setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
-        } else {
-          hintEl && (hintEl.textContent = "ok—received response from mail server.");
-        }
-      };
-
-      const onTimeout = () => {
-        if (done) return; done = true; CLEANUP();
-        log("timeout waiting for iframe (failure path)");
-        inputEl.removeAttribute("disabled");
-        submitInFlight = false;
-        lockedOutput = false;
-        renderMirror();
-        hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
-      };
-
-      mlIframe.addEventListener("load", onLoad, { once: true });
-      setTimeout(onTimeout, 8000);
-
-      try {
-        if (typeof mlForm.requestSubmit === 'function') {
-          mlForm.requestSubmit();   // preferred path
-        } else {
-          mlForm.submit();          // fallback
-        }
-      } catch(err) {
-        log("submit threw:", err);
-        onTimeout();
-      }
+    if (isTouch) {
+      submitViaIframeGET(email);   // ← MOBILE PATH
+    } else {
+      submitViaFormPOST(email);    // ← DESKTOP PATH (unchanged)
     }
+  }
+
+  // Fire on Enter/Go reliably across mobile & desktop
+  const enterLike = (e) =>
+    e.key === 'Enter' || e.key === 'Go' || e.keyCode === 13;
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (!enterLike(e)) return;
+    trySubmitEmail();
+  });
+
+  inputEl.addEventListener('keyup', (e) => {
+    if (!enterLike(e)) return;
+    trySubmitEmail();
   });
 }
 
