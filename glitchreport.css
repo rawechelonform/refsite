@@ -42,9 +42,19 @@ html, body {
   font-family: 'DotGothic16', system-ui, monospace;
 }
 
+/* Utility to fully hide something (do NOT use on the ML iframe) */
 .hidden { display: none !important; }
 
-/* honeypot (not display:none so bots see it) */
+/* Generic offscreen utility for elements that must still function */
+.offscreen {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+/* honeypot (not display:none so bots can see it) */
 .hp-field {
   position: absolute !important;
   left: -9999px !important;
@@ -53,7 +63,7 @@ html, body {
   overflow: hidden !important;
 }
 
-/* Hide background iframe */
+/* Keep the background iframe offscreen but NOT display:none (iOS needs it “present”) */
 #ml_iframe {
   width: 0 !important;
   height: 0 !important;
@@ -185,21 +195,20 @@ html, body {
 
 /* real input (must remain in-viewport so mobile IME opens) */
 #cmd.cmd {
-  position: fixed;     /* was absolute off-screen */
+  position: fixed;
   bottom: 0;
   left: 0;
   width: 1px;
-  height: 1.4rem;      /* non-zero height helps heuristics */
-  opacity: 0.01;       /* effectively invisible but "present" */
+  height: 1.4rem;
+  opacity: 0.01;      /* effectively invisible but "present" */
   color: transparent;
   background: transparent;
   border: 0;
   padding: 0;
-  font-size: 16px;     /* prevents iOS zoom-on-focus */
+  font-size: 16px;    /* prevents iOS zoom-on-focus */
   z-index: 1;
   pointer-events: auto !important;
 }
-
 
 /* hint row */
 .hint {

@@ -44,16 +44,17 @@ function enableMobileIME(){
   setImp(inputEl, 'bottom', '0');
   setImp(inputEl, 'width', '1px');
   setImp(inputEl, 'height', '1.4rem');
-  setImp(inputEl, 'opacity', '0.1'); // changed from 0.01 for reliability
+  setImp(inputEl, 'opacity', '0.01'); // enough for iOS to consider it "present"
   setImp(inputEl, 'color', 'transparent');
   setImp(inputEl, 'background', 'transparent');
   setImp(inputEl, 'border', '0');
   setImp(inputEl, 'padding', '0');
   setImp(inputEl, 'z-index', '1');
-  setImp(inputEl, 'font-size', '16px'); // avoid iOS zoom-on-focus
+  setImp(inputEl, 'font-size', '16px'); // avoid iOS zoom
   setImp(inputEl, 'pointer-events', 'auto');
-  if (inputEl.type !== 'email') { try { inputEl.type = 'email'; } catch(_) {} }
+  if (inputEl.type !== 'text') { try { inputEl.type = 'text'; } catch(_) {} }
   inputEl.setAttribute('inputmode', 'email');
+  inputEl.setAttribute('autocomplete', 'email');
   inputEl.setAttribute('enterkeyhint', 'go');
 }
 
@@ -208,9 +209,9 @@ function bindPrompt(){
     // ===== MOBILE ONLY =====
     enableMobileIME();
 
-    // Focus the input when user interacts with the prompt area (for reliable IME opening)
+    // Tapping anywhere in the prompt focuses input (user gesture → IME opens)
     promptEl.addEventListener("touchstart", function() {
-      inputEl.focus();
+      try { inputEl.focus(); } catch(_) {}
     }, { passive: false });
 
     typedEl.addEventListener("touchstart", (e) => {
@@ -219,7 +220,7 @@ function bindPrompt(){
       const i = indexFromPoint(t.clientX);
       dragAnchorIdx = i;
       try {
-        if (document.activeElement !== inputEl) inputEl.focus(); // user gesture → opens IME
+        if (document.activeElement !== inputEl) inputEl.focus();
         inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
       } catch (_) {}
       renderMirror();
@@ -288,11 +289,14 @@ function bindPrompt(){
     hintEl && (hintEl.textContent = "");
     log("submitting to MailerLite…");
 
-    if (mlForm && mlEmail){
+    if (mlForm && mlEmail && mlIframe){
       mlEmail.value = email.toLowerCase();
 
+      // Ensure iframe is not hidden via hidden attribute
+      try { mlIframe.removeAttribute('hidden'); } catch(_) {}
+
       let done = false;
-      const CLEANUP = () => { mlIframe?.removeEventListener("load", onLoad); };
+      const CLEANUP = () => { mlIframe.removeEventListener("load", onLoad); };
 
       const onLoad = () => {
         if (done) return; done = true; CLEANUP();
@@ -314,14 +318,16 @@ function bindPrompt(){
         hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
       };
 
-      if (mlIframe) {
-        mlIframe.addEventListener("load", onLoad, { once: true });
-        setTimeout(onTimeout, 8000);
-      } else {
-        setTimeout(onTimeout, 0);
-      }
+      mlIframe.addEventListener("load", onLoad, { once: true });
+      setTimeout(onTimeout, 8000);
 
-      try { mlForm.submit(); } catch(err) {
+      try {
+        if (typeof mlForm.requestSubmit === 'function') {
+          mlForm.requestSubmit();   // preferred path
+        } else {
+          mlForm.submit();          // fallback
+        }
+      } catch(err) {
         log("submit threw:", err);
         onTimeout();
       }

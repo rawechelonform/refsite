@@ -1,0 +1,213 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crosshair — resilient (auto fallback if lock is stuck)</title>
+<style>
+  html,body{height:100%;margin:0;background:#111;color:#ddd;font:14px/1.5 system-ui}
+  .ui{position:fixed;left:0;right:0;top:0;padding:12px 14px;text-align:center;color:#aab;z-index:10}
+
+  /* When we’re in Soft mode, hide the OS cursor across the page */
+  html[data-soft="on"] body, html[data-soft="on"] body *{ cursor:none !important; }
+
+  :root{--s:34px;--t:2px;--g:18px;--d:3px}
+  #c{
+    position:fixed;left:0;top:0;width:var(--s);height:var(--s);
+    transform:translate(-50%,-50%);pointer-events:none;z-index:9999;
+    color:#fff;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 2px #000) drop-shadow(0 0 3px #000);
+    display:block
+  }
+  #c .arm{
+    position:absolute;left:50%;top:50%;width:var(--s);height:var(--t);
+    transform-origin:50% 50%;
+    background:linear-gradient(90deg,currentColor 0 calc(50% - (var(--g)/2)),
+      transparent calc(50% - (var(--g)/2)) calc(50% + (var(--g)/2)),
+      currentColor calc(50% + (var(--g)/2)) 100%)}
+  #c .arm-a{transform:translate(-50%,-50%) rotate(45deg)}
+  #c .arm-b{transform:translate(-50%,-50%) rotate(-45deg)}
+  #c .dot{position:absolute;left:50%;top:50%;width:var(--d);height:var(--d);
+    transform:translate(-50%,-50%);border-radius:50%;background:currentColor}
+
+  @keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+  #c.implode .arm-a,#c.implode .arm-b{animation:arm-implode 220ms ease-out forwards}
+  @keyframes arm-implode{
+    0%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(1)}
+    60%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(.25)}
+    100%{transform:translate(-50%,-50%) rotate(var(--deg,45deg)) scaleX(0)}
+  }
+  #c.implode .arm-a{--deg:45deg} #c.implode .arm-b{--deg:-45deg}
+  @media (prefers-reduced-motion: reduce){
+    #c{animation:none !important}
+    #c.implode .arm-a,#c.implode .arm-b{animation:none !important}
+  }
+
+  /* tiny mode pill */
+  .pill{position:fixed;right:10px;top:10px;z-index:10;font:12px ui-monospace;padding:4px 8px;border-radius:999px;background:#222;border:1px solid #333;color:#9cf}
+</style>
+
+<body>
+  <div class="ui">Click to lock. If Chrome sends no movement, it will auto-fallback to Soft mode. Click while locked/soft = squeeze. Esc unlocks (Lock mode).</div>
+  <div class="pill" id="mode">mode: Soft</div>
+
+  <div id="c" aria-hidden="true">
+    <span class="arm arm-a"></span><span class="arm arm-b"></span><span class="dot"></span>
+  </div>
+
+<script>
+(() => {
+  // ===== Tunables =====
+  const SENS   = 0.55;  // pointer-lock sensitivity multiplier
+  const DX_CAP = 24;    // cap per-frame raw delta pre-scale
+  const DY_CAP = 24;
+  const LOCK_WATCH_MS = 250; // if no deltas in this window after lock → fallback to Soft
+
+  // ===== Elements / state =====
+  const c = document.getElementById('c');
+  const pill = document.getElementById('mode');
+
+  let mode = 'soft';       // 'soft' or 'lock'
+  let locked = false;      // actual Pointer Lock state
+  let x = innerWidth/2, y = innerHeight/2;
+  let lastMoveTs = 0;
+  let gotDeltaSinceLock = false;
+  const prefersReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const clamp = (v,min,max)=> v<min?min : v>max?max : v;
+  const now   = ()=> performance.now();
+  const rand  = (a,b)=> Math.random()*(b-a)+a;
+
+  function paint(){
+    c.style.left = x+'px';
+    c.style.top  = y+'px';
+  }
+  function setMode(next){
+    mode = next;
+    document.documentElement.setAttribute('data-soft', next==='soft' ? 'on' : 'off');
+    pill.textContent = `mode: ${next==='soft'?'Soft':'Lock'}`;
+  }
+
+  // ===== SOFT MODE (no pointer lock) =====
+  function onSoftMove(e){
+    if (mode!=='soft') return;
+    x = e.clientX; y = e.clientY; paint();
+  }
+  // show/hide crosshair with page entry/exit
+  window.addEventListener('mouseleave', ()=>{ if(mode==='soft'){ c.style.display='none'; }});
+  window.addEventListener('mouseenter', ()=>{ if(mode==='soft'){ c.style.display='block'; }});
+
+  // ===== LOCK MODE (pointer lock) =====
+  const getDX = ev => (ev.movementX ?? ev.webkitMovementX ?? ev.mozMovementX ?? 0);
+  const getDY = ev => (ev.movementY ?? ev.webkitMovementY ?? ev.mozMovementY ?? 0);
+
+  function applyDelta(ev){
+    if (mode!=='lock' || !locked) return;
+    let dx = getDX(ev), dy = getDY(ev);
+    if (!dx && !dy) return;
+    gotDeltaSinceLock = true;
+
+    // cap spikes + scale
+    if (dx > DX_CAP) dx = DX_CAP; else if (dx < -DX_CAP) dx = -DX_CAP;
+    if (dy > DY_CAP) dy = DY_CAP; else if (dy < -DY_CAP) dy = -DY_CAP;
+    dx *= SENS; dy *= SENS;
+
+    x = clamp(x + dx, 0, innerWidth  - 1);
+    y = clamp(y + dy, 0, innerHeight - 1);
+    lastMoveTs = now();
+    paint();
+
+    // instant hand-off: if you touch an edge, unlock so OS cursor can leave
+    if (x<=0 || x>=innerWidth-1 || y<=0 || y>=innerHeight-1){
+      c.style.display = 'none';
+      document.exitPointerLock?.();
+    }
+  }
+
+  function addLockListeners(){
+    document.addEventListener('mousemove',        applyDelta, true);
+    document.addEventListener('pointermove',      applyDelta, true);
+    document.addEventListener('pointerrawupdate', applyDelta, true);
+  }
+  function removeLockListeners(){
+    document.removeEventListener('mousemove',        applyDelta, true);
+    document.removeEventListener('pointermove',      applyDelta, true);
+    document.removeEventListener('pointerrawupdate', applyDelta, true);
+  }
+
+  // ===== Random idle spins (both modes; suppressed during active motion) =====
+  let spinTimer=null;
+  function scheduleSpin(){
+    clearTimeout(spinTimer);
+    spinTimer = setTimeout(()=>{
+      const quiet = now() - lastMoveTs > 220;
+      if (!prefersReduce && quiet){
+        const rev = Math.random()<.5;
+        const dur = Math.round(rand(260,680));
+        c.style.animation='none'; void c.offsetWidth;
+        c.style.animation=`spin ${dur}ms ease-out ${rev?'reverse':'normal'}`;
+      }
+      scheduleSpin();
+    }, Math.round(rand(1200,4200)));
+  }
+
+  // ===== Click handling =====
+  window.addEventListener('pointerdown', (e) => {
+    if (mode==='soft'){
+      // Try to enter Lock mode
+      x = clamp(e.clientX, 0, innerWidth-1);
+      y = clamp(e.clientY, 0, innerHeight-1);
+      paint();
+      setMode('lock');
+      gotDeltaSinceLock = false;
+      c.style.display='block';
+      try { document.body.requestPointerLock(); } catch { document.body.requestPointerLock?.(); }
+
+      // If Chrome delivers no deltas, auto-fallback to Soft after a short window
+      setTimeout(() => {
+        if (mode==='lock' && !gotDeltaSinceLock){
+          // Give up on lock here; go Soft so you can move
+          document.exitPointerLock?.();
+          setMode('soft');
+          c.style.display='block';
+        }
+      }, LOCK_WATCH_MS);
+    } else {
+      // Lock mode: click = squeeze
+      c.classList.remove('implode'); void c.offsetWidth;
+      c.classList.add('implode');
+      setTimeout(()=>c.classList.remove('implode'), 240);
+    }
+  }, true);
+
+  // ===== Pointer-lock lifecycle =====
+  function onLockChange(){
+    locked = (document.pointerLockElement === document.body);
+    if (locked){
+      // active lock
+      removeEventListener('pointermove', onSoftMove, true);
+      addLockListeners();
+      c.style.display='block';
+    } else {
+      // left lock: return to Soft mode seamlessly
+      removeLockListeners();
+      setMode('soft');
+      c.style.display='block';
+    }
+  }
+  document.addEventListener('pointerlockchange', onLockChange);
+  document.addEventListener('pointerlockerror',  onLockChange);
+
+  // Esc (in Lock mode) → unlock (Soft resumes automatically)
+  window.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && mode==='lock') document.exitPointerLock?.(); });
+
+  // Soft mode tracking
+  document.addEventListener('pointermove', onSoftMove, { passive:true });
+
+  // Keep inside bounds on resize
+  window.addEventListener('resize', ()=>{ x=clamp(x,0,innerWidth-1); y=clamp(y,0,innerHeight-1); paint(); });
+
+  // Boot
+  setMode('soft');
+  paint();
+  scheduleSpin();
+})();
+</script>
+</body>

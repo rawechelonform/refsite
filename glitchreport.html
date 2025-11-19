@@ -5,7 +5,7 @@
   <title>REF // Gate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preload" as="image" href="avatar/avatar_intro.png">
-  <link rel="stylesheet" href="glitchreport.css?v=302">
+  <link rel="stylesheet" href="glitchreport.css?v=304">
 </head>
 <body>
   <!-- Fixed top-right back link -->
@@ -27,42 +27,41 @@
         <span class="caret">></span>
         <span id="typed" class="typed"></span>
 
-        <!-- Real input (hidden offscreen); the green CRT line mirrors it -->
+        <!-- Real input (kept tiny and transparent; JS mirrors it into #typed) -->
         <input
-  id="cmd"
-  class="cmd"
-  type="text"
-  inputmode="email"
-  autocomplete="email"
-  autocapitalize="off"
-  spellcheck="false"
-  name="newsletter_email"
-  data-lpignore="true"
-  data-form-type="other"
-/>
+          id="cmd"
+          class="cmd"
+          type="text"
+          inputmode="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          name="newsletter_email"
+          data-lpignore="true"
+          data-form-type="other">
       </div>
 
       <div id="hint" class="hint" aria-live="polite"></div>
 
-      <!-- Hidden MailerLite form (posts to hidden iframe; JS watches iframe load) -->
+      <!-- MailerLite form (kept off-screen but not display:none) -->
       <form
         id="ml-form"
         action="https://assets.mailerlite.com/jsonp/1876316/forms/169740892998993529/subscribe"
         method="post"
         target="ml_iframe"
-        class="hidden"
+        style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"
       >
-        <input type="email" name="fields[email]" id="ml-email" required />
-        <input type="hidden" name="ml-submit" value="1" />
+        <input type="email" name="fields[email]" id="ml-email" required>
+        <input type="hidden" name="ml-submit" value="1">
         <!-- honeypot: not display:none so bots still see it -->
-        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp-field" />
+        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp-field">
       </form>
 
-      <!-- Hidden iframe receives ML response -->
-      <iframe name="ml_iframe" id="ml_iframe" class="hidden" title="ml-response"></iframe>
+      <!-- Background iframe to receive ML response -->
+      <iframe name="ml_iframe" id="ml_iframe" title="ml-response"></iframe>
     </div>
   </div>
 
-  <script src="glitchreport.js?v=302"></script>
+  <script src="glitchreport.js?v=304"></script>
 </body>
 </html>
