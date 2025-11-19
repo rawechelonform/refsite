@@ -30,28 +30,55 @@ let lockedOutput    = false;
 let submitInFlight  = false;
 let dragAnchorIdx   = null;  // anchor index while dragging over .typed
 
-// ===== MOBILE FLAGS + HELPERS =====
+// ===== PLATFORM FLAGS + HELPERS =====
+const UA = navigator.userAgent || "";
+const isIOS = /iPhone|iPad|iPod/i.test(UA);
+const isAndroid = /Android/i.test(UA);
 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// set inline styles with !important
 function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
 
-// keep real input in-viewport on mobile so IME can open
+// Keep the real input focusable, platform-specific
 function enableMobileIME(){
   if (!isTouch || !inputEl) return;
-  setImp(inputEl, 'position', 'fixed');
-  setImp(inputEl, 'left', '0');
-  setImp(inputEl, 'bottom', '0');
-  setImp(inputEl, 'width', '1px');
-  setImp(inputEl, 'height', '1.4rem');
-  setImp(inputEl, 'opacity', '0.01'); // effectively invisible but "present"
-  setImp(inputEl, 'color', 'transparent');
-  setImp(inputEl, 'background', 'transparent');
-  setImp(inputEl, 'border', '0');
-  setImp(inputEl, 'padding', '0');
-  setImp(inputEl, 'z-index', '1');
-  setImp(inputEl, 'font-size', '16px'); // avoid iOS zoom
-  setImp(inputEl, 'pointer-events', 'auto');
+
+  if (isIOS) {
+    // iOS needs fixed, in-viewport tiny input or IME won't appear
+    setImp(inputEl, 'position', 'fixed');
+    setImp(inputEl, 'left', '0');
+    setImp(inputEl, 'bottom', '0');
+    setImp(inputEl, 'width', '1px');
+    setImp(inputEl, 'height', '1.4rem');
+    setImp(inputEl, 'opacity', '0.01');
+    setImp(inputEl, 'color', 'transparent');
+    setImp(inputEl, 'background', 'transparent');
+    setImp(inputEl, 'border', '0');
+    setImp(inputEl, 'padding', '0');
+    setImp(inputEl, 'z-index', '1');
+    setImp(inputEl, 'font-size', '16px'); // avoid zoom
+    setImp(inputEl, 'pointer-events', 'auto');
+  } else if (isAndroid) {
+    // Android prefers it inside the tap target; not fixed to viewport
+    const host = promptEl || document.body;
+    if (host && inputEl.parentElement !== host) {
+      try { host.appendChild(inputEl); } catch(_) {}
+    }
+    setImp(inputEl, 'position', 'absolute');
+    setImp(inputEl, 'left', '0');
+    setImp(inputEl, 'top', '0');
+    setImp(inputEl, 'width', '2px');    // small but present
+    setImp(inputEl, 'height', '2rem');  // non-zero height helps Android
+    setImp(inputEl, 'opacity', '0.01');
+    setImp(inputEl, 'color', 'transparent');
+    setImp(inputEl, 'background', 'transparent');
+    setImp(inputEl, 'border', '0');
+    setImp(inputEl, 'padding', '0');
+    setImp(inputEl, 'z-index', '1');
+    setImp(inputEl, 'font-size', '16px'); // avoid zoom
+    setImp(inputEl, 'pointer-events', 'auto');
+  }
+
+  // Common hints
   if (inputEl.type !== 'text') { try { inputEl.type = 'text'; } catch(_) {} }
   inputEl.setAttribute('inputmode', 'email');
   inputEl.setAttribute('autocomplete', 'email');
@@ -72,6 +99,7 @@ function typeWriter(text, el, speed = 40, done){
     } else { done && done(); }
   })();
 }
+
 function escapeHTML(s){
   return String(s).replace(/[&<>\"']/g, c =>
     c === '&' ? '&amp;' :
@@ -80,11 +108,12 @@ function escapeHTML(s){
     c === '\"' ? '&quot;' : '&#39;'
   );
 }
+
 function isValidEmail(e){
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
-// ===== RENDER (we wrap every char so we can hit-test precisely) =====
+// ===== RENDER (wrap every char so we can hit-test precisely) =====
 function renderMirror(){
   if (lockedOutput || !typedEl || !inputEl) return;
   const raw = inputEl.value || "";
@@ -94,7 +123,6 @@ function renderMirror(){
   const selMin = Math.min(start, end);
   const selMax = Math.max(start, end);
 
-  // Build char spans so clicks/drags can map to indices
   let html = "";
   for (let i = 0; i < raw.length; i++){
     const ch = escapeHTML(raw[i]);
@@ -103,35 +131,30 @@ function renderMirror(){
   }
 
   if (selMin === selMax) {
-    // Caret: insert a blinking block between characters (or at end)
     const idx = selMin;
     const before = htmlAtRange(0, idx, raw);
     const atChar = raw[idx] ? escapeHTML(raw[idx]) : "&nbsp;";
     const after  = htmlAtRange(idx + (raw[idx] ? 1 : 0), raw.length, raw);
-    typedEl.innerHTML =
-      before + `<span class="cursor-block">${atChar}</span>` + after;
+    typedEl.innerHTML = before + `<span class="cursor-block">${atChar}</span>` + after;
   } else {
-    // Selection rendered via classes above
     typedEl.innerHTML = html;
   }
 }
 
-// helper: build HTML for [a,b) using .ch spans from current raw
 function htmlAtRange(a, b, raw){
   let out = "";
-  for (let i = a; i < b; i++) {
+  for (let i = a; i < b; i++){
     out += `<span class="ch" data-i="${i}">${escapeHTML(raw[i])}</span>`;
   }
   return out;
 }
 
-// ===== Hit-testing: map mouse X to nearest character index =====
+// ===== Hit-testing: map pointer X to nearest char index =====
 function indexFromPoint(clientX){
   if (!typedEl) return 0;
   const boxes = typedEl.querySelectorAll('.ch');
   if (!boxes.length) return 0;
 
-  // Choose the .ch whose center is closest to the pointer X
   let bestI = 0;
   let bestDist = Infinity;
   boxes.forEach((el) => {
@@ -166,10 +189,8 @@ function startTerminalSequence(){
     typeWriter(TYPE_TEXT, typeEl, 50, () => {
       if (promptEl) {
         promptEl.classList.add("show");
-        // Desktop autofocus preserved
-        if (!isTouch) { inputEl && inputEl.focus(); }
-        // Mobile: prepare input, wait for user tap to focus
-        if (isTouch) enableMobileIME();
+        if (!isTouch) { inputEl && inputEl.focus(); } // desktop
+        if (isTouch) enableMobileIME();               // mobile prep
         renderMirror();
       }
     });
@@ -180,7 +201,7 @@ function bindPrompt(){
   if (!inputEl || !typedEl) return;
 
   if (!isTouch) {
-    // ===== DESKTOP (unchanged) =====
+    // ===== DESKTOP =====
     typedEl.addEventListener("mousedown", (e) => {
       const i = indexFromPoint(e.clientX);
       dragAnchorIdx = i;
@@ -201,46 +222,61 @@ function bindPrompt(){
       renderMirror();
     });
 
-    window.addEventListener("mouseup", () => {
-      dragAnchorIdx = null;
-    });
+    window.addEventListener("mouseup", () => { dragAnchorIdx = null; });
 
   } else {
-    // ===== MOBILE ONLY =====
+    // ===== MOBILE =====
     enableMobileIME();
 
-    // Tapping anywhere in the prompt focuses input (user gesture → IME opens)
-    promptEl.addEventListener("touchstart", function() {
-      try { inputEl.focus(); } catch(_) {}
-    }, { passive: false });
+    if (isIOS) {
+      // iOS: touchstart + preventDefault; focus inside handler
+      promptEl.addEventListener("touchstart", function() {
+        try { inputEl.focus(); } catch(_) {}
+      }, { passive: false });
 
-    typedEl.addEventListener("touchstart", (e) => {
-      const t = e.touches && e.touches[0];
-      if (!t) return;
-      const i = indexFromPoint(t.clientX);
-      dragAnchorIdx = i;
-      try {
-        if (document.activeElement !== inputEl) inputEl.focus();
-        inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
-      } catch (_) {}
-      renderMirror();
-      e.preventDefault();
-    }, { passive: false });
+      typedEl.addEventListener("touchstart", (e) => {
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const i = indexFromPoint(t.clientX);
+        dragAnchorIdx = i;
+        try {
+          if (document.activeElement !== inputEl) inputEl.focus();
+          inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
+        } catch (_) {}
+        renderMirror();
+        e.preventDefault();
+      }, { passive: false });
 
-    window.addEventListener("touchmove", (e) => {
-      if (dragAnchorIdx == null) return;
-      const t = e.touches && e.touches[0];
-      if (!t) return;
-      const j = indexFromPoint(t.clientX);
-      const a = Math.min(dragAnchorIdx, j);
-      const b = Math.max(dragAnchorIdx, j) + 1;
-      try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch (_) {}
-      renderMirror();
-    }, { passive: false });
+      window.addEventListener("touchmove", (e) => {
+        if (dragAnchorIdx == null) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const j = indexFromPoint(t.clientX);
+        const a = Math.min(dragAnchorIdx, j);
+        const b = Math.max(dragAnchorIdx, j) + 1;
+        try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch (_) {}
+        renderMirror();
+      }, { passive: false });
 
-    window.addEventListener("touchend", () => {
-      dragAnchorIdx = null;
-    });
+      window.addEventListener("touchend", () => { dragAnchorIdx = null; });
+
+    } else if (isAndroid) {
+      // ANDROID/CHROME: use pointerdown/click, NO preventDefault
+      const focusInput = () => { try { inputEl.focus(); } catch(_) {} };
+
+      promptEl.addEventListener('pointerdown', focusInput, { passive: true });
+      promptEl.addEventListener('click',       focusInput, { passive: true });
+
+      typedEl.addEventListener('pointerdown', focusInput, { passive: true });
+      typedEl.addEventListener('click', (e) => {
+        const i = indexFromPoint(e.clientX);
+        try {
+          if (document.activeElement !== inputEl) inputEl.focus();
+          inputEl.setSelectionRange(i, Math.min(i + 1, (inputEl.value || "").length));
+        } catch(_) {}
+        renderMirror();
+      }, { passive: true });
+    }
   }
 
   // ===== Shared bindings =====
@@ -260,9 +296,10 @@ function bindPrompt(){
     renderMirror();
   }, true);
 
-  // ===== SUBMIT LOGIC (desktop=form submit; mobile=iframe GET) =====
+  // ===== SUBMIT LOGIC =====
   function submitViaFormPOST(email){
     mlEmail.value = email.toLowerCase();
+
     let done = false;
     const CLEANUP = () => { mlIframe.removeEventListener("load", onLoad); };
 
@@ -301,7 +338,7 @@ function bindPrompt(){
     }
   }
 
-  // Mobile: navigate the iframe directly with GET query (avoids form semantics)
+  // Mobile: navigate iframe directly with GET (reliable on iOS/Android)
   function submitViaIframeGET(email){
     const base = mlForm.action; // e.g., https://assets.mailerlite.com/jsonp/.../subscribe
     const qs = new URLSearchParams();
@@ -326,7 +363,7 @@ function bindPrompt(){
     const onTimeout = () => {
       if (done) return; done = true; CLEANUP();
       log("timeout waiting for iframe (failure path, GET)");
-      // Last-resort optimism on iOS where load sometimes doesn't fire
+      // Last-resort optimism: some mobile browsers don’t fire load consistently
       if (NEXT_URL && !DIAG) {
         setTimeout(() => { window.location.href = NEXT_URL; }, 400);
         return;
@@ -338,12 +375,10 @@ function bindPrompt(){
       hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
     };
 
-    // Prime iframe to a same-origin URL first; then set to cross-origin target
     try { mlIframe.src = 'about:blank'; } catch(_) {}
     mlIframe.addEventListener("load", onLoad, { once: true });
     setTimeout(onTimeout, 8000);
 
-    // Kick off navigation
     mlIframe.src = `${base}?${qs.toString()}`;
   }
 
@@ -358,7 +393,6 @@ function bindPrompt(){
       return;
     }
 
-    // Honeypot
     const honeypot = mlForm?.querySelector('input[name="website"]');
     if (honeypot && honeypot.value) {
       log("honeypot filled; dropping");
@@ -378,29 +412,19 @@ function bindPrompt(){
     hintEl && (hintEl.textContent = "");
     log("submitting to MailerLite…");
 
-    // Ensure iframe is present (not display:none)
     try { mlIframe.removeAttribute('hidden'); } catch(_) {}
 
     if (isTouch) {
-      submitViaIframeGET(email);   // ← MOBILE PATH
+      submitViaIframeGET(email);   // MOBILE PATH
     } else {
-      submitViaFormPOST(email);    // ← DESKTOP PATH (unchanged)
+      submitViaFormPOST(email);    // DESKTOP PATH
     }
   }
 
-  // Fire on Enter/Go reliably across mobile & desktop
-  const enterLike = (e) =>
-    e.key === 'Enter' || e.key === 'Go' || e.keyCode === 13;
-
-  inputEl.addEventListener('keydown', (e) => {
-    if (!enterLike(e)) return;
-    trySubmitEmail();
-  });
-
-  inputEl.addEventListener('keyup', (e) => {
-    if (!enterLike(e)) return;
-    trySubmitEmail();
-  });
+  // Fire on Enter/Go reliably
+  const enterLike = (e) => e.key === 'Enter' || e.key === 'Go' || e.keyCode === 13;
+  inputEl.addEventListener('keydown', (e) => { if (enterLike(e)) trySubmitEmail(); });
+  inputEl.addEventListener('keyup',   (e) => { if (enterLike(e)) trySubmitEmail(); });
 }
 
 // ===== AVATAR =====
