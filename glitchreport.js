@@ -44,13 +44,14 @@ function enableMobileIME(){
   setImp(inputEl, 'bottom', '0');
   setImp(inputEl, 'width', '1px');
   setImp(inputEl, 'height', '1.4rem');
-  setImp(inputEl, 'opacity', '0.01');
+  setImp(inputEl, 'opacity', '0.1'); // changed from 0.01 for reliability
   setImp(inputEl, 'color', 'transparent');
   setImp(inputEl, 'background', 'transparent');
   setImp(inputEl, 'border', '0');
   setImp(inputEl, 'padding', '0');
   setImp(inputEl, 'z-index', '1');
-  setImp(inputEl, 'font-size', '16px'); // avoid iOS zoom
+  setImp(inputEl, 'font-size', '16px'); // avoid iOS zoom-on-focus
+  setImp(inputEl, 'pointer-events', 'auto');
   if (inputEl.type !== 'email') { try { inputEl.type = 'email'; } catch(_) {} }
   inputEl.setAttribute('inputmode', 'email');
   inputEl.setAttribute('enterkeyhint', 'go');
@@ -117,7 +118,7 @@ function renderMirror(){
 // helper: build HTML for [a,b) using .ch spans from current raw
 function htmlAtRange(a, b, raw){
   let out = "";
-  for (let i = a; i < b; i++){
+  for (let i = a; i < b; i++) {
     out += `<span class="ch" data-i="${i}">${escapeHTML(raw[i])}</span>`;
   }
   return out;
@@ -206,6 +207,11 @@ function bindPrompt(){
   } else {
     // ===== MOBILE ONLY =====
     enableMobileIME();
+
+    // Focus the input when user interacts with the prompt area (for reliable IME opening)
+    promptEl.addEventListener("touchstart", function() {
+      inputEl.focus();
+    }, { passive: false });
 
     typedEl.addEventListener("touchstart", (e) => {
       const t = e.touches && e.touches[0];
