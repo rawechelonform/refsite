@@ -134,13 +134,14 @@ html, body {
   user-select: none;
 }
 
-/* Make prompt always interactive — no visibility toggle at tap */
 .prompt {
   display: flex;
   align-items: center;
-  pointer-events: auto;
-  visibility: visible;
+  visibility: hidden;
+  pointer-events: none;
 }
+.prompt.show { visibility: visible; pointer-events: auto; }
+
 .caret { font-size: var(--term-font-size); }
 .caret::after { content: "\00a0"; }
 
@@ -300,9 +301,9 @@ html, body {
   }
 }
 
-/* === ANDROID-ONLY OVERRIDES (JS adds html.android) === */
-html.android .typed { display: none !important; }
-html.android #cmd.cmd {
+/* === ANDROID-ONLY OVERRIDES (JS adds html.android-stable) === */
+html.android-stable .typed { display: none !important; }
+html.android-stable #cmd.cmd {
   position: static !important;
   width: 100% !important;
   height: 1.9rem !important;
