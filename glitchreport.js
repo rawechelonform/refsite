@@ -23,13 +23,15 @@ const mlIframe = document.getElementById("ml_iframe");
 const UA = navigator.userAgent || "";
 const isAndroid = /Android/i.test(UA);
 const isIOS     = /iPhone|iPad|iPod/i.test(UA);
-const isTouch   = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+const isTouch   = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// Mark Android early so CSS can stabilize
-if (isAndroid) document.documentElement.classList.add("android-stable");
+// Mark Android early so CSS can stabilize layout before any taps
+if (isAndroid) document.documentElement.classList.add('android-stable');
 
 // ===== STATE =====
 let lockedOutput = false;
+let dragging = false;
+let dragAnchorIdx = null;
 
 // ===== UTIL =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
@@ -38,7 +40,7 @@ function typeWriter(text, el, speed = 40, done){
   if (!el) { done && done(); return; }
   el.textContent = "";
   (function step(){
-    if(i <= text.length){
+    if (i <= text.length) {
       el.textContent = text.slice(0, i++);
       setTimeout(step, speed);
     } else { done && done(); }
@@ -52,13 +54,25 @@ function escapeHTML(s){
     c === '\"' ? '&quot;' : '&#39;'
   );
 }
-function isValidEmail(e){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
+function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
 // ===== MIRROR (desktop + iOS only) =====
+function htmlAtRange(a, b, raw){
+  let out = "";
+  for (let i = a; i < b; i++){
+    out += `<span class="ch" data-i="${i}">${escapeHTML(raw[i])}</span>`;
+  }
+  return out;
+}
 function renderMirror(){
   if (!typedEl || !inputEl || isAndroid || lockedOutput) return;
+
+  // Hide caret until the real input has focus
+  if (document.activeElement !== inputEl) {
+    typedEl.textContent = inputEl.value || "";
+    return;
+  }
+
   const raw = inputEl.value || "";
   const start = inputEl.selectionStart ?? raw.length;
   const end   = inputEl.selectionEnd   ?? raw.length;
@@ -82,23 +96,16 @@ function renderMirror(){
     typedEl.innerHTML = html;
   }
 }
-function htmlAtRange(a, b, raw){
-  let out = "";
-  for (let i = a; i < b; i++){
-    out += `<span class="ch" data-i="${i}">${escapeHTML(raw[i])}</span>`;
-  }
-  return out;
-}
 function indexFromPoint(clientX){
   if (!typedEl) return 0;
-  const boxes = typedEl.querySelectorAll(".ch");
+  const boxes = typedEl.querySelectorAll('.ch');
   if (!boxes.length) return 0;
   let bestI = 0, bestDist = Infinity;
   boxes.forEach((el) => {
     const rect = el.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
     const d = Math.abs(clientX - midX);
-    if (d < bestDist) { bestDist = d; bestI = Number(el.getAttribute("data-i")) || 0; }
+    if (d < bestDist) { bestDist = d; bestI = Number(el.getAttribute('data-i')) || 0; }
   });
   return bestI;
 }
@@ -111,7 +118,7 @@ function caretRAF(){
     const v = inputEl.value || "";
     const s = inputEl.selectionStart ?? v.length;
     const e = inputEl.selectionEnd   ?? v.length;
-    if (v !== _v || s !== _s || e !== _e) {
+    if (v !== _v || s !== _s || e !== _e || document.activeElement !== inputEl) {
       _v = v; _s = s; _e = e;
       renderMirror();
     }
@@ -124,17 +131,17 @@ function enableMobileIME(){
   if (!isTouch || !inputEl) return;
 
   if (isIOS) {
-    try { inputEl.type = "text"; } catch(_) {}
-    inputEl.setAttribute("inputmode","email");
-    inputEl.setAttribute("autocomplete","email");
-    inputEl.setAttribute("autocapitalize","off");
-    inputEl.setAttribute("enterkeyhint","go");
+    try { inputEl.type = 'text'; } catch(_) {}
+    inputEl.setAttribute('inputmode','email');
+    inputEl.setAttribute('autocomplete','email');
+    inputEl.setAttribute('autocapitalize','off');
+    inputEl.setAttribute('enterkeyhint','go');
   } else if (isAndroid) {
-    try { inputEl.type = "email"; } catch(_) {}
-    inputEl.setAttribute("inputmode","email");
-    inputEl.setAttribute("autocomplete","email");
-    inputEl.setAttribute("autocapitalize","off");
-    inputEl.setAttribute("enterkeyhint","go");
+    try { inputEl.type = 'email'; } catch(_) {}
+    inputEl.setAttribute('inputmode','email');
+    inputEl.setAttribute('autocomplete','email');
+    inputEl.setAttribute('autocapitalize','off');
+    inputEl.setAttribute('enterkeyhint','go');
   }
 }
 
@@ -142,18 +149,18 @@ function enableMobileIME(){
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  if (isAndroid && promptEl && !promptEl.classList.contains("show")) {
-    promptEl.classList.add("show");
+  // Android can show prompt immediately; iOS/desktop after typewriter
+  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
+    promptEl.classList.add('show');
   }
 
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
       if (promptEl && !isAndroid) promptEl.classList.add("show");
+
+      // Desktop: autofocus. Touch: never programmatically focus.
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
-
-      // Add a small GO button on touch devices (tap-to-submit fallback)
-      if (isTouch) ensureMobileGoButton();
 
       if (!isAndroid) renderMirror();
     });
@@ -164,11 +171,8 @@ function startTerminalSequence(){
 function bindPrompt(){
   if (!inputEl) return;
 
-  // Desktop: click places collapsed caret; drag selects
+  // Desktop: click = place collapsed caret; drag = select range
   if (!isTouch) {
-    let dragging = false;
-    let dragAnchorIdx = null;
-
     typedEl.addEventListener("mousedown", (e) => {
       const i = indexFromPoint(e.clientX);
       dragging = true;
@@ -196,7 +200,7 @@ function bindPrompt(){
     });
   }
 
-  // iOS: tap anywhere on prompt focuses the input
+  // iOS: tap to focus (don’t prevent default; let the IME appear)
   if (isIOS) {
     promptEl.addEventListener("touchstart", () => {
       try { inputEl.focus(); } catch(_) {}
@@ -213,7 +217,7 @@ function bindPrompt(){
 
   // Cmd/Ctrl+A (desktop)
   document.addEventListener("keydown", (e) => {
-    const isA = (e.key === "a" || e.key === "A");
+    const isA = (e.key === 'a' || e.key === 'A');
     const withMeta = (e.metaKey || e.ctrlKey);
     if (!isA || !withMeta || lockedOutput) return;
     e.preventDefault();
@@ -222,46 +226,22 @@ function bindPrompt(){
     if (!isAndroid) renderMirror();
   }, true);
 
-  // “Enter/Go” detection (multiple event types for iOS Chrome reliability)
-  const isEnterKey = (e) => (e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13));
-
-  inputEl.addEventListener("keydown", (e) => { if (isEnterKey(e)) { e.preventDefault(); trySubmitEmail(); } });
-  inputEl.addEventListener("keyup",   (e) => { if (isEnterKey(e)) { e.preventDefault(); trySubmitEmail(); } });
-  inputEl.addEventListener("keypress",(e) => { if (isEnterKey(e)) { e.preventDefault(); trySubmitEmail(); } });
-
-  // iOS sometimes emits beforeinput/textInput instead of key* for Go
+  // Enter/Go to submit (multiple hooks for iOS Chrome reliability)
+  const isEnter = (e) => e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
+  inputEl.addEventListener("keydown", (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
+  inputEl.addEventListener("keyup",   (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
+  inputEl.addEventListener("keypress",(e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("beforeinput", (e) => {
     if (e.inputType === "insertLineBreak") { e.preventDefault(); trySubmitEmail(); }
   });
   inputEl.addEventListener("textInput", (e) => {
     if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
   });
-}
 
-// ===== Touch “GO” button (only on mobile) =====
-function ensureMobileGoButton(){
-  if (!promptEl || document.getElementById("go-btn")) return;
-  const btn = document.createElement("button");
-  btn.id = "go-btn";
-  btn.type = "button";
-  btn.textContent = "GO";
-  // inline styles so desktop CSS is untouched
-  btn.style.cssText = [
-    "margin-left:8px",
-    "padding:2px 6px",
-    "font-family:inherit",
-    "font-size:14px",
-    "letter-spacing:0.08em",
-    "background:transparent",
-    "color:inherit",
-    "border:1px solid rgba(0,255,0,0.7)",
-    "border-radius:2px",
-    "line-height:1",
-    "height:1.4rem"
-  ].join(";");
-
-  btn.addEventListener("click", () => trySubmitEmail());
-  promptEl.appendChild(btn);
+  // As an extra safety, submit the hidden form if the user hits the browser Go
+  mlForm && mlForm.addEventListener("submit", (ev) => {
+    // let it proceed; iframe load listener below handles the redirect
+  });
 }
 
 // ===== SUBMIT =====
@@ -286,7 +266,7 @@ function trySubmitEmail() {
     return;
   }
 
-  // Freeze mirror and show <GO>
+  // Freeze mirror and show <GO> on desktop/iOS
   lockedOutput = true;
   inputEl.setAttribute("disabled", "disabled");
   if (!isAndroid && typedEl) {
@@ -297,26 +277,27 @@ function trySubmitEmail() {
   mlEmail.value = email.toLowerCase();
 
   let finished = false;
-  const cleanupFail = (msg) => {
-    if (finished) return;
-    finished = true;
+  const doneSuccess = () => {
+    if (finished) return; finished = true;
+    setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+  };
+  const doneFail = () => {
+    if (finished) return; finished = true;
     lockedOutput = false;
     inputEl.removeAttribute("disabled");
-    hintEl && (hintEl.textContent = msg || "hmm… couldn’t reach mail server. try again?");
+    hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
     renderMirror();
   };
 
-  const onLoad = () => {
-    if (finished) return;
-    finished = true;
-    setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
-  };
+  // Watch the iframe
+  const onLoad = () => doneSuccess();
+  mlIframe.addEventListener("load", onLoad, { once: true });
 
-  const timeoutId = setTimeout(() => cleanupFail(), 8000);
-  mlIframe.addEventListener("load", () => {
-    clearTimeout(timeoutId);
-    onLoad();
-  }, { once: true });
+  // Timeout fallback
+  const to = setTimeout(() => {
+    mlIframe.removeEventListener("load", onLoad);
+    doneFail();
+  }, 8000);
 
   try {
     if (typeof mlForm.requestSubmit === "function") {
@@ -324,22 +305,23 @@ function trySubmitEmail() {
     } else {
       mlForm.submit();
     }
-  } catch(err) {
-    clearTimeout(timeoutId);
-    cleanupFail();
+  } catch (err) {
+    clearTimeout(to);
+    mlIframe.removeEventListener("load", onLoad);
     log("submit threw:", err);
+    doneFail();
   }
 }
 
 // ===== AVATAR =====
 function startAvatar(){
-  if(!figureEl){ startTerminalSequence(); return; }
+  if (!figureEl) { startTerminalSequence(); return; }
   const img = new Image();
   img.onload = () => {
     figureEl.style.backgroundImage = `url("${SPRITE_PATH}")`;
     figureEl.classList.add("walking");
     figureEl.addEventListener("animationend", (e) => {
-      if(e.animationName !== "walk-in") return;
+      if (e.animationName !== "walk-in") return;
       figureEl.classList.add("forward");
       figureEl.classList.remove("walking");
       startTerminalSequence();
@@ -354,6 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
   if (!isAndroid) requestAnimationFrame(caretRAF); // Android: no mirror loop
-  if (isTouch) enableMobileIME();
+  if (isTouch) enableMobileIME();                  // don’t focus—just configure
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
 });
