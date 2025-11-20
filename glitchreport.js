@@ -23,7 +23,7 @@ const mlIframe = document.getElementById("ml_iframe");
 const UA = navigator.userAgent || "";
 const isAndroid    = /Android/i.test(UA);
 const isIOS        = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome  = /CriOS/i.test(UA);     // iOS Chrome (WebKit)
+const isIOSChrome  = /CriOS/i.test(UA);   // iOS Chrome (still WebKit)
 const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 // Mark Android early so CSS can stabilize layout before any taps
@@ -33,9 +33,19 @@ if (isAndroid) document.documentElement.classList.add('android-stable');
 let lockedOutput = false;
 let dragging = false;
 let dragAnchorIdx = null;
+let ceEl = null;              // iOS Chrome contenteditable shim
+let iosChromeUsingCE = false; // whether CE is active
 
 // ===== UTIL =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
+function escapeHTML(s){
+  return String(s).replace(/[&<>\"']/g, c =>
+    c === '&' ? '&amp;' :
+    c === '<' ? '&lt;' :
+    c === '>' ? '&gt;' :
+    c === '\"' ? '&quot;' : '&#39;'
+  );
+}
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
   if (!el) { done && done(); return; }
@@ -47,18 +57,10 @@ function typeWriter(text, el, speed = 40, done){
     } else { done && done(); }
   })();
 }
-function escapeHTML(s){
-  return String(s).replace(/[&<>\"']/g, c =>
-    c === '&' ? '&amp;' :
-    c === '<' ? '&lt;' :
-    c === '>' ? '&gt;' :
-    c === '\"' ? '&quot;' : '&#39;'
-  );
-}
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
 
-// ===== MIRROR (desktop + iOS Safari only; NOT Android, NOT iOS Chrome) =====
+// ===== MIRROR (desktop + iOS Safari; NOT Android; NOT iOS Chrome when CE mode) =====
 function htmlAtRange(a, b, raw){
   let out = "";
   for (let i = a; i < b; i++){
@@ -67,9 +69,10 @@ function htmlAtRange(a, b, raw){
   return out;
 }
 function renderMirror(){
-  if (!typedEl || !inputEl || isAndroid || isIOSChrome || lockedOutput) return;
+  if (!typedEl || !inputEl || isAndroid) return;
+  if (isIOSChrome && iosChromeUsingCE) return; // CE handles caret; no mirror
 
-  // Hide caret until the real input has focus
+  // Hide caret unless the real input has focus
   if (document.activeElement !== inputEl) {
     typedEl.textContent = inputEl.value || "";
     return;
@@ -112,10 +115,10 @@ function indexFromPoint(clientX){
   return bestI;
 }
 
-// ===== RAF (desktop + iOS Safari) =====
+// ===== RAF (desktop + iOS Safari only) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
-  if (!inputEl || isAndroid || isIOSChrome) { requestAnimationFrame(caretRAF); return; }
+  if (!inputEl || isAndroid || (isIOSChrome && iosChromeUsingCE)) { requestAnimationFrame(caretRAF); return; }
   if (!lockedOutput) {
     const v = inputEl.value || "";
     const s = inputEl.selectionStart ?? v.length;
@@ -128,53 +131,101 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
+// ===== iOS CHROME CE SHIM =====
+function ensureIOSChromeCE(){
+  if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
+
+  // Create a contenteditable span that lives after the caret ">"
+  ceEl = document.createElement('span');
+  ceEl.id = 'iosc-ce';
+  ceEl.contentEditable = 'true';
+  ceEl.setAttribute('role','textbox');
+  ceEl.setAttribute('aria-label','email input');
+  ceEl.spellcheck = false;
+  ceEl.autocapitalize = 'off';
+  ceEl.autocorrect = 'off';
+
+  // Style: same line, no box, invisible glyphs, but caret visible (so user sees where they type)
+  Object.assign(ceEl.style, {
+    position: 'relative',
+    display: 'inline-block',
+    minWidth: '2ch',
+    lineHeight: '1',
+    outline: 'none',
+    border: '0',
+    background: 'transparent',
+    color: 'transparent',
+    caretColor: 'var(--crt)',
+    marginLeft: '0.3ch',
+    letterSpacing: '0.08em',
+  });
+
+  // Mirror updates from CE → real input, then to #typed (we keep #typed visible on iOS Chrome in CE mode)
+  const syncFromCE = () => {
+    inputEl.value = (ceEl.textContent || '').trim();
+    // fake a caret at end
+    if (typedEl) {
+      const txt = escapeHTML(inputEl.value);
+      typedEl.innerHTML = txt + `<span class="cursor-block">&nbsp;</span>`;
+    }
+  };
+
+  ceEl.addEventListener('input', syncFromCE);
+  ceEl.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); }
+  });
+  ceEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); }
+  });
+
+  // Place it after the mirrored text node
+  // Structure:  > [typed span][CE shim]
+  promptEl.appendChild(ceEl);
+  if (typedEl) typedEl.style.display = 'inline';
+
+  iosChromeUsingCE = true;
+}
+
+// Attempt to focus an element and report if the keyboard opened
+function focusWithKeyboard(el, onFail){
+  let before = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  let fired = false;
+  const t0 = Date.now();
+
+  const check = () => {
+    const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const delta = before - nowH;
+    // If viewport shrank or element is the active one after a tiny delay, assume keyboard is up
+    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 200)) {
+      fired = true;
+      return;
+    }
+    if (!fired && Date.now() - t0 > 220) {
+      // keyboard didn't open → fall back
+      onFail && onFail();
+    }
+  };
+
+  try { el.focus(); } catch(_) {}
+  setTimeout(check, 160);
+  setTimeout(check, 240);
+}
+
 // ===== MOBILE IME CONFIG =====
 function enableMobileIME(){
-  if (!isTouch || !inputEl) return;
+  if (!isTouch) return;
+
+  // Base attributes for the real input
+  try { inputEl.type = 'text'; } catch(_) {}
+  inputEl.setAttribute('inputmode','email');
+  inputEl.setAttribute('autocomplete','email');
+  inputEl.setAttribute('autocapitalize','off');
+  inputEl.setAttribute('enterkeyhint','go');
 
   if (isIOSChrome) {
-    // iOS Chrome: overlay an in-flow input inside the prompt to prevent the keyboard bounce
-    try { inputEl.type = 'email'; } catch(_) {}
-    inputEl.setAttribute('inputmode','email');
-    inputEl.setAttribute('autocomplete','email');
-    inputEl.setAttribute('autocapitalize','off');
-    inputEl.setAttribute('enterkeyhint','go');
-
-    // Make sure it's inside the prompt and overlayed after the caret
-    if (promptEl && inputEl.parentElement !== promptEl) promptEl.appendChild(inputEl);
-    setImp(promptEl, 'position', 'relative');
-    setImp(inputEl, 'position', 'absolute');
-    setImp(inputEl, 'left', '1.3ch');   // after the ">" caret
-    setImp(inputEl, 'right', '0');
-    setImp(inputEl, 'top', '0');
-    setImp(inputEl, 'height', '1.9rem');
-    setImp(inputEl, 'lineHeight', '1.9rem');
-    setImp(inputEl, 'opacity', '0.18');    // barely visible, keeps IME stable
-    setImp(inputEl, 'background', 'transparent');
-    setImp(inputEl, 'border', '0');
-    setImp(inputEl, 'padding', '0');
-    setImp(inputEl, 'zIndex', '1001');
-    setImp(inputEl, 'fontSize', '16px');
-    setImp(inputEl, 'letterSpacing', '0.08em');
-    setImp(inputEl, 'color', 'transparent');   // hide glyphs
-    setImp(inputEl, 'caretColor', 'transparent');
-    // The mirror fights with overlay—hide it for iOS Chrome
-    if (typedEl) typedEl.style.display = 'none';
-  }
-  else if (isIOS) {
-    // iOS Safari: tiny fixed input + mirror is fine
-    try { inputEl.type = 'text'; } catch(_) {}
-    inputEl.setAttribute('inputmode','email');
-    inputEl.setAttribute('autocomplete','email');
-    inputEl.setAttribute('autocapitalize','off');
-    inputEl.setAttribute('enterkeyhint','go');
-  }
-  else if (isAndroid) {
-    try { inputEl.type = 'email'; } catch(_) {}
-    inputEl.setAttribute('inputmode','email');
-    inputEl.setAttribute('autocomplete','email');
-    inputEl.setAttribute('autocapitalize','off');
-    inputEl.setAttribute('enterkeyhint','go');
+    // Keep the real input around (for form submit) but don't rely on it to show the keyboard
+    // Let the first tap try to focus it; if the keyboard doesn't appear, switch to CE shim
+    if (typedEl) typedEl.style.display = 'inline';
   }
 }
 
@@ -182,11 +233,11 @@ function enableMobileIME(){
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
+  // Android shows prompt immediately to avoid visibility flip
   if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
     promptEl.classList.add('show');
   }
   if (isIOSChrome && promptEl && !promptEl.classList.contains('show')) {
-    // Show promptly so the overlay input is already "in flow" before first tap
     promptEl.classList.add('show');
   }
 
@@ -195,7 +246,7 @@ function startTerminalSequence(){
       if (promptEl && !(isAndroid || isIOSChrome)) promptEl.classList.add("show");
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
-      if (!(isAndroid || isIOSChrome)) renderMirror();
+      if (!(isAndroid)) renderMirror();
     });
   }, 300);
 }
@@ -204,10 +255,9 @@ function startTerminalSequence(){
 function bindPrompt(){
   if (!inputEl) return;
 
-  // Desktop (and iOS Safari mirror)
-  if (!isTouch || isIOS) {
+  // Desktop + iOS Safari mirror interactions
+  if (!isTouch || (isIOS && !isIOSChrome)) {
     typedEl && typedEl.addEventListener("mousedown", (e) => {
-      if (isIOSChrome) return; // no mirror here
       const i = indexFromPoint(e.clientX);
       dragging = true;
       dragAnchorIdx = i;
@@ -220,7 +270,6 @@ function bindPrompt(){
     });
 
     window.addEventListener("mousemove", (e) => {
-      if (isIOSChrome) return;
       if (!dragging || dragAnchorIdx == null || lockedOutput) return;
       const j = indexFromPoint(e.clientX);
       const a = Math.min(dragAnchorIdx, j);
@@ -235,17 +284,21 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: focus only on user tap; no preventDefault
+  // iOS Chrome: try real input; if keyboard doesn’t appear, switch to CE shim
   if (isIOSChrome) {
-    promptEl.addEventListener("touchstart", () => {
-      try { inputEl.focus(); } catch(_) {}
-    }, { passive: true });
-    promptEl.addEventListener("click", () => {
-      try { inputEl.focus(); } catch(_) {}
-    }, { passive: true });
+    const activate = () => {
+      // First try focusing the real input (kept tiny off-screen per your CSS)
+      focusWithKeyboard(inputEl, () => {
+        // Fallback: CE shim
+        ensureIOSChromeCE();
+        focusWithKeyboard(ceEl);
+      });
+    };
+    promptEl.addEventListener("touchstart", activate, { passive: true });
+    promptEl.addEventListener("click", activate, { passive: true });
   }
 
-  // Mirror updates (desktop + iOS Safari only)
+  // Mirror updates (desktop + iOS Safari)
   if (!(isAndroid || isIOSChrome)) {
     ["input","focus","blur","keyup","select","click"].forEach(evt =>
       inputEl.addEventListener(evt, renderMirror)
@@ -261,10 +314,10 @@ function bindPrompt(){
     e.preventDefault();
     const len = (inputEl.value || "").length;
     try { inputEl.setSelectionRange(0, len); } catch(_) {}
-    if (!(isAndroid || isIOSChrome)) renderMirror();
+    renderMirror();
   }, true);
 
-  // Enter/Go to submit (many hooks for mobile reliability)
+  // Submit on Enter/Go (cover all event types)
   const isEnter = (e) => e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
   inputEl.addEventListener("keydown", (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("keyup",   (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
@@ -275,11 +328,20 @@ function bindPrompt(){
   inputEl.addEventListener("textInput", (e) => {
     if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
   });
+
+  if (isIOSChrome) {
+    // CE shim also triggers submit on Enter (handlers set in ensureIOSChromeCE)
+  }
 }
 
-// ===== SUBMIT (unchanged logic, but robust for iOS Chrome) =====
+// ===== SUBMIT =====
 function trySubmitEmail() {
-  if (!inputEl || inputEl.disabled) return;
+  if (lockedOutput) return;
+
+  // If using CE, sync one last time
+  if (isIOSChrome && iosChromeUsingCE && ceEl) {
+    inputEl.value = (ceEl.textContent || '').trim();
+  }
 
   const email = (inputEl.value || "").trim();
   if (!isValidEmail(email)){
@@ -299,7 +361,7 @@ function trySubmitEmail() {
     return;
   }
 
-  // Keep iframe 1x1 so iOS Chrome fires load
+  // Keep iframe present (1x1) so load fires everywhere
   try {
     mlIframe.style.position = "absolute";
     mlIframe.style.left = "-9999px";
@@ -321,11 +383,13 @@ function trySubmitEmail() {
 
   lockedOutput = true;
   inputEl.setAttribute("disabled", "disabled");
-  if (!isAndroid && !isIOSChrome && typedEl) {
+  if (!(isAndroid || (isIOSChrome && iosChromeUsingCE)) && typedEl) {
+    typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
+  } else if (typedEl && isIOSChrome && iosChromeUsingCE) {
+    // Replace CE caret with GO
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   hintEl && (hintEl.textContent = "");
-  log("submitting to MailerLite…");
   mlEmail.value = email.toLowerCase();
 
   let finished = false;
@@ -385,7 +449,6 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!(isAndroid || isIOSChrome)) requestAnimationFrame(caretRAF);
-  if (isTouch) enableMobileIME(); // configure (focus only on user action)
+  if (!(isAndroid)) requestAnimationFrame(caretRAF);
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
 });
