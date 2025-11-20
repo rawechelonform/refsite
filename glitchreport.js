@@ -3,7 +3,7 @@ const NEXT_URL   = "artist.html?registration=complete";
 const GO_HOLD_MS = 600;
 const SPRITE_PATH = "avatar/avatar_intro.png";
 
-// Diagnostics
+// Diagnostics: add ?diag=1 to disable auto-continue + log
 const params = new URLSearchParams(location.search);
 const DIAG = params.get("diag") === "1";
 
@@ -21,10 +21,9 @@ const mlIframe = document.getElementById("ml_iframe");
 
 // ===== PLATFORM DETECTION =====
 const UA = navigator.userAgent || "";
-const isAndroid    = /Android/i.test(UA);
-const isIOS        = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome  = /CriOS/i.test(UA);   // iOS Chrome (still WebKit)
-const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const isAndroid = /Android/i.test(UA);
+const isIOS     = /iPhone|iPad|iPod/i.test(UA);
+const isTouch   = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 // Mark Android early so CSS can stabilize layout before any taps
 if (isAndroid) document.documentElement.classList.add('android-stable');
@@ -33,19 +32,9 @@ if (isAndroid) document.documentElement.classList.add('android-stable');
 let lockedOutput = false;
 let dragging = false;
 let dragAnchorIdx = null;
-let ceEl = null;              // iOS Chrome contenteditable shim
-let iosChromeUsingCE = false; // whether CE is active
 
 // ===== UTIL =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
-function escapeHTML(s){
-  return String(s).replace(/[&<>\"']/g, c =>
-    c === '&' ? '&amp;' :
-    c === '<' ? '&lt;' :
-    c === '>' ? '&gt;' :
-    c === '\"' ? '&quot;' : '&#39;'
-  );
-}
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
   if (!el) { done && done(); return; }
@@ -57,10 +46,17 @@ function typeWriter(text, el, speed = 40, done){
     } else { done && done(); }
   })();
 }
+function escapeHTML(s){
+  return String(s).replace(/[&<>\"']/g, c =>
+    c === '&' ? '&amp;' :
+    c === '<' ? '&lt;' :
+    c === '>' ? '&gt;' :
+    c === '\"' ? '&quot;' : '&#39;'
+  );
+}
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
 
-// ===== MIRROR (desktop + iOS Safari; NOT Android; NOT iOS Chrome when CE mode) =====
+// ===== MIRROR (desktop + iOS only) =====
 function htmlAtRange(a, b, raw){
   let out = "";
   for (let i = a; i < b; i++){
@@ -69,11 +65,10 @@ function htmlAtRange(a, b, raw){
   return out;
 }
 function renderMirror(){
-  if (!typedEl || !inputEl || isAndroid) return;
-  if (isIOSChrome && iosChromeUsingCE) return; // CE handles caret; no mirror
+  if (!typedEl || !inputEl || isAndroid || lockedOutput) return;
 
-  // Hide caret unless the real input has focus
-  if (document.activeElement !== inputEl || lockedOutput) {
+  // Hide caret until the real input has focus
+  if (document.activeElement !== inputEl) {
     typedEl.textContent = inputEl.value || "";
     return;
   }
@@ -115,10 +110,10 @@ function indexFromPoint(clientX){
   return bestI;
 }
 
-// ===== RAF (desktop + iOS Safari only) =====
+// ===== RAF (desktop + iOS) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
-  if (!inputEl || isAndroid || (isIOSChrome && iosChromeUsingCE)) { requestAnimationFrame(caretRAF); return; }
+  if (!inputEl || isAndroid) { requestAnimationFrame(caretRAF); return; }
   if (!lockedOutput) {
     const v = inputEl.value || "";
     const s = inputEl.selectionStart ?? v.length;
@@ -131,90 +126,22 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== iOS CHROME CE SHIM =====
-function ensureIOSChromeCE(){
-  if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
-
-  // Create a contenteditable span that lives after the caret ">"
-  ceEl = document.createElement('span');
-  ceEl.id = 'iosc-ce';
-  ceEl.contentEditable = 'true';
-  ceEl.setAttribute('role','textbox');
-  ceEl.setAttribute('aria-label','email input');
-  ceEl.spellcheck = false;
-  ceEl.autocapitalize = 'off';
-  ceEl.autocorrect = 'off';
-
-  Object.assign(ceEl.style, {
-    position: 'relative',
-    display: 'inline-block',
-    minWidth: '2ch',
-    lineHeight: '1',
-    outline: 'none',
-    border: '0',
-    background: 'transparent',
-    color: 'transparent',
-    caretColor: 'var(--crt)',
-    marginLeft: '0.3ch',
-    letterSpacing: '0.08em',
-  });
-
-  const syncFromCE = () => {
-    inputEl.value = (ceEl.textContent || '').trim();
-    if (typedEl) {
-      const txt = escapeHTML(inputEl.value);
-      typedEl.innerHTML = txt + `<span class="cursor-block">&nbsp;</span>`;
-    }
-  };
-
-  ceEl.addEventListener('input', syncFromCE);
-  ceEl.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); }
-  });
-  ceEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); }
-  });
-
-  promptEl.appendChild(ceEl);
-  if (typedEl) typedEl.style.display = 'inline';
-
-  iosChromeUsingCE = true;
-}
-
-function focusWithKeyboard(el, onFail){
-  let before = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  let fired = false;
-  const t0 = Date.now();
-
-  const check = () => {
-    const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const delta = before - nowH;
-    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 200)) {
-      fired = true;
-      return;
-    }
-    if (!fired && Date.now() - t0 > 220) {
-      onFail && onFail();
-    }
-  };
-
-  try { el.focus(); } catch(_) {}
-  setTimeout(check, 160);
-  setTimeout(check, 240);
-}
-
-// ===== MOBILE IME CONFIG =====
+// ===== IME CONFIG (mobile) =====
 function enableMobileIME(){
-  if (!isTouch) return;
+  if (!isTouch || !inputEl) return;
 
-  try { inputEl.type = 'text'; } catch(_) {}
-  inputEl.setAttribute('inputmode','email');
-  inputEl.setAttribute('autocomplete','email');
-  inputEl.setAttribute('autocapitalize','off');
-  inputEl.setAttribute('enterkeyhint','go');
-
-  if (isIOSChrome) {
-    if (typedEl) typedEl.style.display = 'inline';
+  if (isIOS) {
+    try { inputEl.type = 'text'; } catch(_) {}
+    inputEl.setAttribute('inputmode','email');
+    inputEl.setAttribute('autocomplete','email');
+    inputEl.setAttribute('autocapitalize','off');
+    inputEl.setAttribute('enterkeyhint','go');
+  } else if (isAndroid) {
+    try { inputEl.type = 'email'; } catch(_) {}
+    inputEl.setAttribute('inputmode','email');
+    inputEl.setAttribute('autocomplete','email');
+    inputEl.setAttribute('autocapitalize','off');
+    inputEl.setAttribute('enterkeyhint','go');
   }
 }
 
@@ -222,14 +149,13 @@ function enableMobileIME(){
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  // Show prompt early for Android and iOS Chrome to avoid visibility flip
-  if ((isAndroid || isIOSChrome) && promptEl && !promptEl.classList.contains('show')) {
+  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
     promptEl.classList.add('show');
   }
 
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
-      if (promptEl && !(isAndroid || isIOSChrome)) promptEl.classList.add("show");
+      if (promptEl && !isAndroid) promptEl.classList.add("show");
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
       if (!isAndroid) renderMirror();
@@ -241,15 +167,15 @@ function startTerminalSequence(){
 function bindPrompt(){
   if (!inputEl) return;
 
-  // Desktop + iOS Safari mirror interactions
-  if (!isTouch || (isIOS && !isIOSChrome)) {
-    typedEl && typedEl.addEventListener("mousedown", (e) => {
+  // Desktop: click = place collapsed caret; drag = select range
+  if (!isTouch) {
+    typedEl.addEventListener("mousedown", (e) => {
       const i = indexFromPoint(e.clientX);
       dragging = true;
       dragAnchorIdx = i;
       try {
         if (document.activeElement !== inputEl) inputEl.focus();
-        inputEl.setSelectionRange(i, i); // collapsed caret (insert, not replace)
+        inputEl.setSelectionRange(i, i);
       } catch(_) {}
       renderMirror();
       e.preventDefault();
@@ -270,27 +196,15 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: try real input; if keyboard doesn’t appear, switch to CE shim
-  if (isIOSChrome) {
-    const activate = () => {
-      focusWithKeyboard(inputEl, () => {
-        ensureIOSChromeCE();
-        focusWithKeyboard(ceEl);
-      });
-    };
-    promptEl.addEventListener("touchstart", activate, { passive: true });
-    promptEl.addEventListener("click", activate, { passive: true });
-  }
-
-  // iOS Safari: just tap to focus the real input
-  if (isIOS && !isIOSChrome) {
+  // iOS: tap to focus (don’t prevent default)
+  if (isIOS) {
     promptEl.addEventListener("touchstart", () => {
       try { inputEl.focus(); } catch(_) {}
     }, { passive: true });
   }
 
-  // Mirror updates (desktop + iOS Safari)
-  if (!(isAndroid || isIOSChrome)) {
+  // Mirror updates (desktop + iOS)
+  if (!isAndroid) {
     ["input","focus","blur","keyup","select","click"].forEach(evt =>
       inputEl.addEventListener(evt, renderMirror)
     );
@@ -305,10 +219,10 @@ function bindPrompt(){
     e.preventDefault();
     const len = (inputEl.value || "").length;
     try { inputEl.setSelectionRange(0, len); } catch(_) {}
-    if (!(isAndroid || (isIOSChrome && iosChromeUsingCE))) renderMirror();
+    if (!isAndroid) renderMirror();
   }, true);
 
-  // Enter/Go to submit (cover all event types)
+  // Enter/Go to submit (extra hooks for iOS Chrome reliability)
   const isEnter = (e) => e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
   inputEl.addEventListener("keydown", (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("keyup",   (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
@@ -319,18 +233,11 @@ function bindPrompt(){
   inputEl.addEventListener("textInput", (e) => {
     if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
   });
-
-  // CE shim also submits on Enter (handlers in ensureIOSChromeCE)
 }
 
 // ===== SUBMIT =====
 function trySubmitEmail() {
-  if (lockedOutput) return;
-
-  // If using CE, sync one last time
-  if (isIOSChrome && iosChromeUsingCE && ceEl) {
-    inputEl.value = (ceEl.textContent || '').trim();
-  }
+  if (!inputEl || inputEl.disabled) return;
 
   const email = (inputEl.value || "").trim();
   if (!isValidEmail(email)){
@@ -350,7 +257,7 @@ function trySubmitEmail() {
     return;
   }
 
-  // Keep iframe present (1x1) so load fires everywhere
+  // Make sure the iframe is a real 1x1 (0x0 can drop load on iOS Chrome)
   try {
     mlIframe.style.position = "absolute";
     mlIframe.style.left = "-9999px";
@@ -358,6 +265,7 @@ function trySubmitEmail() {
     mlIframe.style.width = "1px";
     mlIframe.style.height = "1px";
     mlIframe.style.border = "0";
+    // prime with about:blank so a subsequent cross-origin load fires reliably
     if (!mlIframe.src) mlIframe.src = "about:blank";
   } catch(_) {}
 
@@ -371,14 +279,12 @@ function trySubmitEmail() {
     mlForm.appendChild(hiddenBtn);
   }
 
+  // Freeze mirror and show <GO> on desktop/iOS
   lockedOutput = true;
   inputEl.setAttribute("disabled", "disabled");
-
-  // Freeze mirror and show <GO> where we use it (desktop + iOS Safari, and iOS Chrome CE path)
-  if (!(isAndroid) && typedEl) {
+  if (!isAndroid && typedEl) {
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
-
   hintEl && (hintEl.textContent = "");
   log("submitting to MailerLite…");
   mlEmail.value = email.toLowerCase();
@@ -406,7 +312,7 @@ function trySubmitEmail() {
 
   try {
     if (typeof mlForm.requestSubmit === "function") {
-      mlForm.requestSubmit(hiddenBtn);
+      mlForm.requestSubmit(hiddenBtn);   // click the real (hidden) submit button
     } else {
       hiddenBtn.click();
     }
@@ -440,6 +346,7 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!(isAndroid)) requestAnimationFrame(caretRAF);
+  if (!isAndroid) requestAnimationFrame(caretRAF); // Android: no mirror loop
+  if (isTouch) enableMobileIME();                  // don’t focus—just configure
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
 });
