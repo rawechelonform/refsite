@@ -29,11 +29,10 @@ const isTouch   = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
 if (isAndroid) document.documentElement.classList.add("android-stable");
 
 // ===== STATE =====
-let lockedOutput = false;   // <— NEW: freeze mirror once we render <GO>
+let lockedOutput = false;
 
 // ===== UTIL =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
-
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
   if (!el) { done && done(); return; }
@@ -45,7 +44,6 @@ function typeWriter(text, el, speed = 40, done){
     } else { done && done(); }
   })();
 }
-
 function escapeHTML(s){
   return String(s).replace(/[&<>\"']/g, c =>
     c === '&' ? '&amp;' :
@@ -54,14 +52,13 @@ function escapeHTML(s){
     c === '\"' ? '&quot;' : '&#39;'
   );
 }
-
 function isValidEmail(e){
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
 // ===== MIRROR (desktop + iOS only) =====
 function renderMirror(){
-  if (!typedEl || !inputEl || isAndroid || lockedOutput) return; // <— honor lock
+  if (!typedEl || !inputEl || isAndroid || lockedOutput) return;
   const raw = inputEl.value || "";
   const start = inputEl.selectionStart ?? raw.length;
   const end   = inputEl.selectionEnd   ?? raw.length;
@@ -85,7 +82,6 @@ function renderMirror(){
     typedEl.innerHTML = html;
   }
 }
-
 function htmlAtRange(a, b, raw){
   let out = "";
   for (let i = a; i < b; i++){
@@ -93,7 +89,6 @@ function htmlAtRange(a, b, raw){
   }
   return out;
 }
-
 function indexFromPoint(clientX){
   if (!typedEl) return 0;
   const boxes = typedEl.querySelectorAll(".ch");
@@ -156,6 +151,10 @@ function startTerminalSequence(){
       if (promptEl && !isAndroid) promptEl.classList.add("show");
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
+
+      // Add a small GO button on touch devices (tap-to-submit fallback)
+      if (isTouch) ensureMobileGoButton();
+
       if (!isAndroid) renderMirror();
     });
   }, 300);
@@ -165,7 +164,7 @@ function startTerminalSequence(){
 function bindPrompt(){
   if (!inputEl) return;
 
-  // Desktop: click places a collapsed caret; drag selects
+  // Desktop: click places collapsed caret; drag selects
   if (!isTouch) {
     let dragging = false;
     let dragAnchorIdx = null;
@@ -197,7 +196,7 @@ function bindPrompt(){
     });
   }
 
-  // iOS: tap anywhere on prompt focuses tiny input
+  // iOS: tap anywhere on prompt focuses the input
   if (isIOS) {
     promptEl.addEventListener("touchstart", () => {
       try { inputEl.focus(); } catch(_) {}
@@ -223,13 +222,46 @@ function bindPrompt(){
     if (!isAndroid) renderMirror();
   }, true);
 
-  // Enter/Go to submit
-  const isEnter = (e) => (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
-  inputEl.addEventListener("keydown", (e) => {
-    if (!isEnter(e)) return;
-    e.preventDefault();
-    trySubmitEmail();
+  // “Enter/Go” detection (multiple event types for iOS Chrome reliability)
+  const isEnterKey = (e) => (e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13));
+
+  inputEl.addEventListener("keydown", (e) => { if (isEnterKey(e)) { e.preventDefault(); trySubmitEmail(); } });
+  inputEl.addEventListener("keyup",   (e) => { if (isEnterKey(e)) { e.preventDefault(); trySubmitEmail(); } });
+  inputEl.addEventListener("keypress",(e) => { if (isEnterKey(e)) { e.preventDefault(); trySubmitEmail(); } });
+
+  // iOS sometimes emits beforeinput/textInput instead of key* for Go
+  inputEl.addEventListener("beforeinput", (e) => {
+    if (e.inputType === "insertLineBreak") { e.preventDefault(); trySubmitEmail(); }
   });
+  inputEl.addEventListener("textInput", (e) => {
+    if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
+  });
+}
+
+// ===== Touch “GO” button (only on mobile) =====
+function ensureMobileGoButton(){
+  if (!promptEl || document.getElementById("go-btn")) return;
+  const btn = document.createElement("button");
+  btn.id = "go-btn";
+  btn.type = "button";
+  btn.textContent = "GO";
+  // inline styles so desktop CSS is untouched
+  btn.style.cssText = [
+    "margin-left:8px",
+    "padding:2px 6px",
+    "font-family:inherit",
+    "font-size:14px",
+    "letter-spacing:0.08em",
+    "background:transparent",
+    "color:inherit",
+    "border:1px solid rgba(0,255,0,0.7)",
+    "border-radius:2px",
+    "line-height:1",
+    "height:1.4rem"
+  ].join(";");
+
+  btn.addEventListener("click", () => trySubmitEmail());
+  promptEl.appendChild(btn);
 }
 
 // ===== SUBMIT =====
@@ -255,7 +287,7 @@ function trySubmitEmail() {
   }
 
   // Freeze mirror and show <GO>
-  lockedOutput = true;                       // <— lock repaint
+  lockedOutput = true;
   inputEl.setAttribute("disabled", "disabled");
   if (!isAndroid && typedEl) {
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
@@ -265,11 +297,10 @@ function trySubmitEmail() {
   mlEmail.value = email.toLowerCase();
 
   let finished = false;
-
   const cleanupFail = (msg) => {
     if (finished) return;
     finished = true;
-    lockedOutput = false;                   // <— unlock so caret returns if we failed
+    lockedOutput = false;
     inputEl.removeAttribute("disabled");
     hintEl && (hintEl.textContent = msg || "hmm… couldn’t reach mail server. try again?");
     renderMirror();
