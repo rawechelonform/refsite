@@ -55,9 +55,7 @@ function isValidEmail(e){
 
 // ===== MIRROR (desktop + Safari iOS only) =====
 function renderMirror(){
-  // Skip on iOS Chrome and Android (those use the real input inline)
   if (!typedEl || !inputEl || isIOSChrome || isAndroid) return;
-
   const raw = inputEl.value || "";
   const start = inputEl.selectionStart ?? raw.length;
   const end   = inputEl.selectionEnd   ?? raw.length;
@@ -102,7 +100,7 @@ function indexFromPoint(clientX){
   return bestI;
 }
 
-// ===== RAF (desktop + Safari iOS only) =====
+// ===== RAF (desktop + Safari iOS) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
   if (!inputEl || isIOSChrome || isAndroid) { requestAnimationFrame(caretRAF); return; }
@@ -116,31 +114,62 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== iOS Chrome ONLY: inline real input, hide mirror =====
+// ===== iOS Chrome ONLY: inline real input, remove box, match font, make Enter work =====
+let iosChromeForm = null;
 function applyIOSChromeInline() {
-  if (!(isIOS && isIOSChrome && isTouch) || !inputEl) return;
-  // Hide mirror entirely for this browser
+  if (!(isIOS && isIOSChrome && isTouch) || !inputEl || !promptEl) return;
+
+  // 1) Hide the CRT mirror; use the real input
   if (typedEl) typedEl.style.display = 'none';
 
-  // Make the real input in-flow and readable so the keyboard stays open
-  const s = inputEl.style;
-  s.position = 'static';
-  s.width = '100%';
-  s.height = '1.9rem';
-  s.lineHeight = '1.9rem';
-  s.marginLeft = '1.3ch';           // visually after ">" caret
-  s.opacity = '1';
-  s.color = 'var(--crt)';
-  s.caretColor = 'var(--crt)';
-  s.background = 'transparent';
-  s.border = '0';
-  s.padding = '0';
-  s.fontSize = 'var(--term-font-size)';
-  s.letterSpacing = '0.08em';
-  s.zIndex = '1';
-  s.pointerEvents = 'auto';
+  // 2) Create a throwaway form so the "Go" key submits
+  if (!iosChromeForm) {
+    iosChromeForm = document.createElement('form');
+    iosChromeForm.style.display = 'contents'; // no visual box
+    // Fallback if display:contents isn’t supported
+    if (getComputedStyle(iosChromeForm).display !== 'contents') {
+      iosChromeForm.style.display = 'inline';
+      iosChromeForm.style.border = '0';
+      iosChromeForm.style.margin = '0';
+      iosChromeForm.style.padding = '0';
+      iosChromeForm.style.background = 'transparent';
+    }
+    // Move input into the form (keeps it inside the same prompt line)
+    promptEl.insertBefore(iosChromeForm, inputEl);
+    iosChromeForm.appendChild(inputEl);
 
-  // IME hints
+    iosChromeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      trySubmitEmail();
+    });
+  }
+
+  // 3) Inline styles to remove box + match CRT look
+  const s = inputEl.style;
+  s.position        = 'static';
+  s.width           = '100%';
+  s.height          = '1.9rem';
+  s.lineHeight      = '1.9rem';
+  s.marginLeft      = '1.3ch';                 // sit after ">" caret
+  s.opacity         = '1';
+  s.color           = 'var(--crt)';
+  s.caretColor      = 'var(--crt)';
+  s.background      = 'transparent';
+  s.fontSize        = 'var(--term-font-size)';
+  s.letterSpacing   = '0.08em';
+  s.fontFamily      = "'DotGothic16', system-ui, monospace";
+  s.pointerEvents   = 'auto';
+  s.zIndex          = '1';
+
+  // Remove border/focus ring/rounded corners/inner shadow
+  s.border          = '0';
+  s.outline         = '0';
+  s.boxShadow       = 'none';
+  s.borderRadius    = '0';
+  s.webkitAppearance = 'none';
+  s.appearance      = 'none';
+
+  // Input semantics so keyboard is email + Go
   try { inputEl.type = 'email'; } catch(_) {}
   inputEl.setAttribute('inputmode','email');
   inputEl.setAttribute('autocomplete','email');
@@ -193,11 +222,8 @@ function bindPrompt(){
     promptEl.addEventListener("touchstart", () => { try { inputEl.focus(); } catch(_) {} }, { passive: true });
 
   } else if (isIOSChrome) {
-    // Chrome iOS: real input is inline; let it focus naturally
+    // Chrome iOS: input is inline; let it focus naturally
     // No preventDefault, no programmatic focus
-
-  } else if (isAndroid) {
-    // If you decide later to support Android inline input, do it here similarly
   }
 
   // Mirror updates only where mirror exists
@@ -219,7 +245,7 @@ function bindPrompt(){
     if (!isIOSChrome && !isAndroid) renderMirror();
   }, true);
 
-  // Enter/Go to submit
+  // Enter/Go to submit — keep as a backup if the IME fires key events
   const enterLike = (e) => e.key === "Enter" || e.key === "Go" || e.keyCode === 13;
   inputEl.addEventListener("keydown", (e) => { if (enterLike(e)) trySubmitEmail(); });
   inputEl.addEventListener("keyup",   (e) => { if (enterLike(e)) trySubmitEmail(); });
@@ -249,7 +275,6 @@ function trySubmitEmail() {
   }
 
   inputEl.setAttribute("disabled", "disabled");
-  // Only show the "<GO>" echo on platforms that still use the mirror
   if (!isIOSChrome && !isAndroid && typedEl) {
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
@@ -298,7 +323,6 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  // Only run the mirror RAF where we actually mirror
   if (!isIOSChrome && !isAndroid) requestAnimationFrame(caretRAF);
   if (isTouch && isIOSChrome) applyIOSChromeInline();
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
