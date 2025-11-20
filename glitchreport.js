@@ -6,6 +6,7 @@ const SPRITE_PATH = "avatar/avatar_intro.png";
 // Diagnostics: add ?diag=1 to disable auto-continue + log
 const params = new URLSearchParams(location.search);
 const DIAG = params.get("diag") === "1";
+function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 
 // ===== ELEMENTS =====
 const staticEl = document.getElementById("static-part");
@@ -19,16 +20,16 @@ const mlForm   = document.getElementById("ml-form");
 const mlEmail  = document.getElementById("ml-email");
 const mlIframe = document.getElementById("ml_iframe");
 
-// ===== PLATFORM DETECTION =====
+// ===== UA =====
 const UA = navigator.userAgent || "";
 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 const isIOS = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome = /CriOS/i.test(UA); // Chrome on iOS user agent contains "CriOS"
+const isIOSChrome = /CriOS/i.test(UA);
+const isIOSSafari = isIOS && !isIOSChrome && !/FxiOS|EdgiOS/i.test(UA);
 const isAndroid = /Android/i.test(UA);
 const isDesktop = !isTouch;
 
 // ===== UTIL =====
-function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 function escapeHTML(s){
   return String(s).replace(/[&<>\"']/g, c =>
     c === '&' ? '&amp;' :
@@ -37,8 +38,9 @@ function escapeHTML(s){
     c === '\"' ? '&quot;' : '&#39;'
   );
 }
-function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-
+function isValidEmail(e){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
 function typeWriter(text, el, speed = 40, done){
   let i = 0;
   if (!el) { done && done(); return; }
@@ -51,10 +53,10 @@ function typeWriter(text, el, speed = 40, done){
   })();
 }
 
-// ===== MIRROR (desktop + iOS only; Android uses real input) =====
-let dragActive = false, dragAnchorIdx = null;
+// ===== MIRROR (desktop + iOS) =====
+let dragActive = false;
 function renderMirror(){
-  if (!typedEl || !inputEl || isAndroid) return;
+  if (!typedEl || !inputEl || isAndroid) return; // Android uses real input drawn by CSS
   const raw = inputEl.value || "";
   const start = inputEl.selectionStart ?? raw.length;
   const end   = inputEl.selectionEnd   ?? raw.length;
@@ -70,10 +72,10 @@ function renderMirror(){
 
   if (selMin === selMax) {
     const idx = selMin;
-    const before = htmlAtRange(0, idx, raw);
-    const atChar = raw[idx] ? escapeHTML(raw[idx]) : "&nbsp;";
-    const after  = htmlAtRange(idx + (raw[idx] ? 1 : 0), raw.length, raw);
-    typedEl.innerHTML = before + `<span class="cursor-block">${atChar}</span>` + after;
+    typedEl.innerHTML =
+      htmlAtRange(0, idx, raw) +
+      `<span class="cursor-block">${raw[idx] ? escapeHTML(raw[idx]) : "&nbsp;"}</span>` +
+      htmlAtRange(idx + (raw[idx] ? 1 : 0), raw.length, raw);
   } else {
     typedEl.innerHTML = html;
   }
@@ -99,7 +101,7 @@ function indexFromPoint(clientX){
   return bestI;
 }
 
-// RAF mirror loop (only where mirror is used)
+// RAF to keep mirror in sync (desktop + iOS)
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
   if (!inputEl || isAndroid) { requestAnimationFrame(caretRAF); return; }
@@ -113,87 +115,64 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== MOBILE INPUT MODES =====
-let shim = null; // contenteditable fallback (iOS Chrome only)
-
-function setupIOS_Safari_Mode(){
-  // Tiny fixed input at bottom, mirror shows text. Tap to focus.
+// ===== MOBILE MODES =====
+// iOS Safari (older working approach): tiny fixed input + tap-to-focus
+function setupIOSSafari(){
   try { inputEl.type = 'text'; } catch(_) {}
   inputEl.setAttribute('inputmode','email');
   inputEl.setAttribute('autocomplete','email');
   inputEl.setAttribute('autocapitalize','off');
   inputEl.setAttribute('enterkeyhint','go');
-
-  // Focus ONLY on explicit tap; do not auto-focus to avoid Safari blocking IME
+  // only focus on explicit tap (prevents keyboard flicker)
   promptEl.addEventListener('touchstart', () => {
-    // Use rAF to run focus in the same tick as user gesture
     requestAnimationFrame(() => { try { inputEl.focus(); } catch(_) {} });
   }, { passive: true });
 }
 
-function setupIOS_Chrome_Mode(){
-  // First try focusing the real input; if keyboard doesn’t fully open, use a shim
-  try { inputEl.type = 'text'; } catch(_) {}
+// iOS Chrome (working approach you liked): show an inline real input styled like the CRT, hide mirror
+function setupIOSChrome(){
+  // Hide the mirror text/cursor, use the real input in-place
+  if (typedEl) typedEl.style.display = 'none';
+
+  // Absolutely position the input over the "typed line"
+  const cs = getComputedStyle(typedEl || promptEl);
+  Object.assign(inputEl.style, {
+    position: 'absolute',
+    left: 'calc(1.3ch + 0px)',
+    right: '0',
+    top: '0',
+    height: cs.lineHeight || '1.8rem',
+    outline: 'none',
+    background: 'transparent',
+    border: '0',
+    padding: '0',
+    margin: '0',
+    color: 'var(--crt)',
+    caretColor: 'var(--crt)',
+    letterSpacing: '0.08em',
+    fontFamily: `'DotGothic16', system-ui, monospace`,
+    fontSize: cs.fontSize || '16px',
+    zIndex: '2'
+  });
+  // ensure prompt is positioned
+  if (getComputedStyle(promptEl).position === 'static') {
+    promptEl.style.position = 'relative';
+  }
+
+  try { inputEl.type = 'email'; } catch(_) {}
   inputEl.setAttribute('inputmode','email');
   inputEl.setAttribute('autocomplete','email');
   inputEl.setAttribute('autocapitalize','off');
   inputEl.setAttribute('enterkeyhint','go');
 
-  let triedShim = false;
-
-  function ensureKeyboard() {
-    // Attempt 1: direct focus
-    inputEl.focus();
-
-    // If keyboard collapses, after short delay swap to contenteditable shim
-    setTimeout(() => {
-      if (document.activeElement !== inputEl && !triedShim) {
-        triedShim = true;
-        if (!shim) {
-          shim = document.createElement('div');
-          shim.setAttribute('role','textbox');
-          shim.setAttribute('aria-label','email');
-          shim.contentEditable = 'true';
-          shim.style.position = 'absolute';
-          shim.style.left = '1.3ch';
-          shim.style.right = '0';
-          shim.style.top = '0';
-          shim.style.height = '1.8rem';
-          shim.style.outline = 'none';
-          shim.style.caretColor = 'var(--crt)';
-          shim.style.letterSpacing = '0.08em';
-          shim.style.fontFamily = `DotGothic16, system-ui, monospace`;
-          shim.style.fontSize = getComputedStyle(typedEl).fontSize || '16px';
-          promptEl.appendChild(shim);
-
-          // Mirror shim text into the real input
-          shim.addEventListener('input', () => {
-            inputEl.value = (shim.textContent || '').trimStart();
-            renderMirror();
-          });
-          shim.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-              // sync and submit
-              inputEl.value = (shim.textContent || '').trim();
-              trySubmitEmail();
-              e.preventDefault();
-            }
-          });
-        }
-        // Hide the mirror text because the shim is visible
-        typedEl.style.display = 'none';
-        shim.focus();
-      }
-    }, 200);
-  }
-
+  // focus on tap (don’t auto-focus)
   promptEl.addEventListener('touchstart', () => {
-    requestAnimationFrame(ensureKeyboard);
+    requestAnimationFrame(() => { try { inputEl.focus(); } catch(_) {} });
   }, { passive: true });
 }
 
-function setupAndroid_Mode(){
-  // Uses your CSS android overrides (if any); just ensure attributes
+// Android: you already use android-specific CSS elsewhere; just set attrs
+function setupAndroid(){
   try { inputEl.type = 'email'; } catch(_) {}
   inputEl.setAttribute('inputmode','email');
   inputEl.setAttribute('autocomplete','email');
@@ -201,16 +180,22 @@ function setupAndroid_Mode(){
   inputEl.setAttribute('enterkeyhint','go');
 }
 
-// ===== TERMINAL SEQUENCE =====
+// ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
       if (promptEl) promptEl.classList.add("show");
-      if (isDesktop) { inputEl && inputEl.focus(); }
-      if (isIOS && !isIOSChrome) setupIOS_Safari_Mode();
-      else if (isIOSChrome) setupIOS_Chrome_Mode();
-      else if (isAndroid) setupAndroid_Mode();
+
+      if (isDesktop) {
+        inputEl && inputEl.focus();
+      } else if (isIOSSafari) {
+        setupIOSSafari();
+      } else if (isIOSChrome) {
+        setupIOSChrome();
+      } else if (isAndroid) {
+        setupAndroid();
+      }
       renderMirror();
     });
   }, 300);
@@ -218,22 +203,22 @@ function startTerminalSequence(){
 
 // ===== PROMPT BINDINGS =====
 function bindPrompt(){
-  if (!inputEl) return;
+  if (!inputEl || !typedEl) return;
 
-  // Desktop mirror interactions
+  // Desktop: click to position caret BEFORE char, typing inserts, not replaces
   if (isDesktop) {
     typedEl.addEventListener("mousedown", (e) => {
       dragActive = true;
       const i = indexFromPoint(e.clientX);
       try {
         if (document.activeElement !== inputEl) inputEl.focus();
-        inputEl.setSelectionRange(i, i); // insert BEFORE char
+        inputEl.setSelectionRange(i, i); // insert before clicked char
       } catch(_) {}
       renderMirror();
       e.preventDefault();
     });
     window.addEventListener("mousemove", (e) => {
-      if (!dragActive) return;
+      if (!dragActive) return; // only while mouse is down
       const j = indexFromPoint(e.clientX);
       const pos = Math.max(0, Math.min(j, (inputEl.value||"").length));
       try { inputEl.setSelectionRange(pos, pos); } catch(_) {}
@@ -248,8 +233,9 @@ function bindPrompt(){
     inputEl.addEventListener("keydown", () => setTimeout(renderMirror, 0));
   }
 
-  // Submit with Enter / Go
-  const enterLike = (e) => (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
+  // Enter/Go submits everywhere
+  const enterLike = (e) =>
+    e.key === "Enter" || e.key === "Go" || e.keyCode === 13;
   inputEl.addEventListener("keydown", (e) => { if (enterLike(e)) trySubmitEmail(); });
   inputEl.addEventListener("keyup",   (e) => { if (enterLike(e)) trySubmitEmail(); });
 }
@@ -273,17 +259,23 @@ function trySubmitEmail() {
     return;
   }
 
-  // Lock UI
+  // Lock UI + show GO on desktop/iOS Safari (mirror-driven UIs)
   inputEl.setAttribute("disabled", "disabled");
-  if (!isAndroid && typedEl) {
+  if ((isDesktop || isIOSSafari) && typedEl) {
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   hintEl && (hintEl.textContent = "");
   mlEmail.value = email.toLowerCase();
 
-  // iOS Safari sometimes ignores form.requestSubmit on offscreen forms; click a hidden submit instead
+  // Attach onLoad BEFORE submit
+  const onLoad = () => {
+    setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
+  };
+  mlIframe.addEventListener("load", onLoad, { once: true });
+
+  // iOS Safari is picky about offscreen forms: click a hidden submit button
   let tempSubmitBtn = null;
-  if (isIOS && !isIOSChrome) {
+  if (isIOSSafari) {
     tempSubmitBtn = mlForm.querySelector('button[type="submit"]');
     if (!tempSubmitBtn) {
       tempSubmitBtn = document.createElement('button');
@@ -296,13 +288,8 @@ function trySubmitEmail() {
     }
   }
 
-  const onLoad = () => {
-    setTimeout(() => { window.location.href = NEXT_URL; }, GO_HOLD_MS);
-  };
-  mlIframe.addEventListener("load", onLoad, { once: true });
-
   try {
-    if (isIOS && !isIOSChrome && tempSubmitBtn) {
+    if (isIOSSafari && tempSubmitBtn) {
       tempSubmitBtn.click();
     } else if (typeof mlForm.requestSubmit === "function") {
       mlForm.requestSubmit();
@@ -339,6 +326,6 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!isAndroid) requestAnimationFrame(caretRAF); // Android: real input, no mirror
+  if (!isAndroid) requestAnimationFrame(caretRAF); // Android draws the real input; no mirror loop
   if (DIAG) console.info("[gate] diagnostics mode ON");
 });
