@@ -15,22 +15,19 @@ const typedEl  = document.getElementById("typed");
 const hintEl   = document.getElementById("hint");
 const figureEl = document.querySelector(".figure");
 const promptEl = document.getElementById("prompt");
+
 const mlForm   = document.getElementById("ml-form");
 const mlEmail  = document.getElementById("ml-email");
 const mlIframe = document.getElementById("ml_iframe");
 
 // ===== PLATFORM DETECTION =====
 const UA = navigator.userAgent || "";
-const isAndroid = /Android/i.test(UA);
-const isIOS     = /iPhone|iPad|iPod/i.test(UA);
-const isTouch   = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const isIOS       = /iPhone|iPad|iPod/i.test(UA);
+const isIOSChrome = /CriOS/i.test(UA);       // Chrome on iOS
+const isAndroid   = /Android/i.test(UA);
+const isTouch     = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// Mark Android early so CSS can stabilize layout before any taps
-if (isAndroid) {
-  document.documentElement.classList.add('android-stable');
-}
-
-// ===== UTIL =====
+// ===== HELPERS =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 
 function typeWriter(text, el, speed = 40, done){
@@ -56,9 +53,11 @@ function isValidEmail(e){
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
-// ===== MIRROR (desktop + iOS only) =====
+// ===== MIRROR (desktop + Safari iOS only) =====
 function renderMirror(){
-  if (!typedEl || !inputEl || isAndroid) return;
+  // Skip on iOS Chrome and Android (those use the real input inline)
+  if (!typedEl || !inputEl || isIOSChrome || isAndroid) return;
+
   const raw = inputEl.value || "";
   const start = inputEl.selectionStart ?? raw.length;
   const end   = inputEl.selectionEnd   ?? raw.length;
@@ -103,10 +102,10 @@ function indexFromPoint(clientX){
   return bestI;
 }
 
-// ===== RAF (desktop + iOS) =====
+// ===== RAF (desktop + Safari iOS only) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
-  if (!inputEl || isAndroid) { requestAnimationFrame(caretRAF); return; }
+  if (!inputEl || isIOSChrome || isAndroid) { requestAnimationFrame(caretRAF); return; }
   const v = inputEl.value || "";
   const s = inputEl.selectionStart ?? v.length;
   const e = inputEl.selectionEnd   ?? v.length;
@@ -117,44 +116,50 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== IME CONFIG =====
-function enableMobileIME(){
-  if (!isTouch || !inputEl) return;
+// ===== iOS Chrome ONLY: inline real input, hide mirror =====
+function applyIOSChromeInline() {
+  if (!(isIOS && isIOSChrome && isTouch) || !inputEl) return;
+  // Hide mirror entirely for this browser
+  if (typedEl) typedEl.style.display = 'none';
 
-  if (isIOS) {
-    // tiny fixed, invisible input at bottom; mirror shows text
-    try { inputEl.type = 'text'; } catch(_) {}
-    inputEl.setAttribute('inputmode','email');
-    inputEl.setAttribute('autocomplete','email');
-    inputEl.setAttribute('autocapitalize','off');
-    inputEl.setAttribute('enterkeyhint','go');
-  } else if (isAndroid) {
-    // Android: visible in-flow input (CSS handles layout)
-    try { inputEl.type = 'email'; } catch(_) {}
-    inputEl.setAttribute('inputmode','email');
-    inputEl.setAttribute('autocomplete','email');
-    inputEl.setAttribute('autocapitalize','off');
-    inputEl.setAttribute('enterkeyhint','go');
-  }
+  // Make the real input in-flow and readable so the keyboard stays open
+  const s = inputEl.style;
+  s.position = 'static';
+  s.width = '100%';
+  s.height = '1.9rem';
+  s.lineHeight = '1.9rem';
+  s.marginLeft = '1.3ch';           // visually after ">" caret
+  s.opacity = '1';
+  s.color = 'var(--crt)';
+  s.caretColor = 'var(--crt)';
+  s.background = 'transparent';
+  s.border = '0';
+  s.padding = '0';
+  s.fontSize = 'var(--term-font-size)';
+  s.letterSpacing = '0.08em';
+  s.zIndex = '1';
+  s.pointerEvents = 'auto';
+
+  // IME hints
+  try { inputEl.type = 'email'; } catch(_) {}
+  inputEl.setAttribute('inputmode','email');
+  inputEl.setAttribute('autocomplete','email');
+  inputEl.setAttribute('autocapitalize','off');
+  inputEl.setAttribute('enterkeyhint','go');
 }
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  // For Android: show prompt now so there is no visibility flip at first tap
-  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
-    promptEl.classList.add('show');
-  }
-
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
-      if (promptEl && !isAndroid) {
-        promptEl.classList.add("show");
+      if (promptEl && !promptEl.classList.contains('show')) {
+        promptEl.classList.add('show');
       }
       if (!isTouch) { inputEl && inputEl.focus(); }
-      if (isTouch) enableMobileIME();
-      if (!isAndroid) renderMirror();
+      applyIOSChromeInline();     // only affects Chrome on iOS
+      if (!isIOSChrome && !isAndroid) renderMirror(); // desktop + Safari iOS
     });
   }, 300);
 }
@@ -183,20 +188,20 @@ function bindPrompt(){
       renderMirror();
     });
 
-  } else if (isIOS) {
-    // iOS: tap to focus tiny offscreen input
+  } else if (isIOS && !isIOSChrome) {
+    // Safari iOS: tap prompt to focus the tiny fixed input (opens IME reliably)
     promptEl.addEventListener("touchstart", () => { try { inputEl.focus(); } catch(_) {} }, { passive: true });
 
+  } else if (isIOSChrome) {
+    // Chrome iOS: real input is inline; let it focus naturally
+    // No preventDefault, no programmatic focus
+
   } else if (isAndroid) {
-    // Android: let the real, visible input take focus via direct tap
-    // No preventDefault; no programmatic focus needed
-    promptEl.addEventListener("click", (e) => {
-      if (e.target !== inputEl) { /* optional: inputEl.focus(); */ }
-    }, { passive: true });
+    // If you decide later to support Android inline input, do it here similarly
   }
 
   // Mirror updates only where mirror exists
-  if (!isAndroid) {
+  if (!isIOSChrome && !isAndroid) {
     ["input","focus","blur","keyup","select","click"].forEach(evt =>
       inputEl.addEventListener(evt, renderMirror)
     );
@@ -211,7 +216,7 @@ function bindPrompt(){
     e.preventDefault();
     const len = (inputEl.value || "").length;
     try { inputEl.setSelectionRange(0, len); } catch(_) {}
-    if (!isAndroid) renderMirror();
+    if (!isIOSChrome && !isAndroid) renderMirror();
   }, true);
 
   // Enter/Go to submit
@@ -231,6 +236,7 @@ function trySubmitEmail() {
     return;
   }
 
+  // Honeypot
   const honeypot = mlForm?.querySelector('input[name="website"]');
   if (honeypot && honeypot.value) {
     log("honeypot filled; dropping");
@@ -243,7 +249,8 @@ function trySubmitEmail() {
   }
 
   inputEl.setAttribute("disabled", "disabled");
-  if (!isAndroid && typedEl) {
+  // Only show the "<GO>" echo on platforms that still use the mirror
+  if (!isIOSChrome && !isAndroid && typedEl) {
     typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   hintEl && (hintEl.textContent = "");
@@ -291,7 +298,8 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!isAndroid) requestAnimationFrame(caretRAF); // Android: no mirror loop
-  if (isTouch) enableMobileIME();
+  // Only run the mirror RAF where we actually mirror
+  if (!isIOSChrome && !isAndroid) requestAnimationFrame(caretRAF);
+  if (isTouch && isIOSChrome) applyIOSChromeInline();
   if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
 });

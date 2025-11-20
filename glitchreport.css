@@ -193,7 +193,7 @@ html, body {
   color: var(--crt);
 }
 
-/* real input (desktop + iOS default: tiny fixed input so iOS IME opens) */
+/* real input (desktop + Safari iOS default): tiny fixed input so IME opens */
 #cmd.cmd {
   position: fixed;
   bottom: 0;
@@ -299,24 +299,4 @@ html, body {
     10%  { opacity: 1; }
     100% { transform: translateX(-50%); }
   }
-}
-
-/* === ANDROID-ONLY OVERRIDES (JS adds html.android-stable) === */
-html.android-stable .typed { display: none !important; }
-html.android-stable #cmd.cmd {
-  position: static !important;
-  width: 100% !important;
-  height: 1.9rem !important;
-  line-height: 1.9rem !important;
-  margin-left: 1.3ch !important;   /* after ">" caret */
-  opacity: 1 !important;
-  color: var(--crt) !important;
-  caret-color: var(--crt) !important;
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 !important;
-  font-size: var(--term-font-size) !important;
-  letter-spacing: 0.08em !important;
-  z-index: 1 !important;
-  pointer-events: auto !important;
 }
