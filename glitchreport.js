@@ -149,7 +149,6 @@ function enableMobileIME(){
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  // Android can show prompt immediately; iOS/desktop after typewriter
   if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
     promptEl.classList.add('show');
   }
@@ -157,11 +156,8 @@ function startTerminalSequence(){
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
       if (promptEl && !isAndroid) promptEl.classList.add("show");
-
-      // Desktop: autofocus. Touch: never programmatically focus.
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
-
       if (!isAndroid) renderMirror();
     });
   }, 300);
@@ -179,7 +175,7 @@ function bindPrompt(){
       dragAnchorIdx = i;
       try {
         if (document.activeElement !== inputEl) inputEl.focus();
-        inputEl.setSelectionRange(i, i); // collapsed caret so typing inserts
+        inputEl.setSelectionRange(i, i);
       } catch(_) {}
       renderMirror();
       e.preventDefault();
@@ -189,7 +185,7 @@ function bindPrompt(){
       if (!dragging || dragAnchorIdx == null || lockedOutput) return;
       const j = indexFromPoint(e.clientX);
       const a = Math.min(dragAnchorIdx, j);
-      const b = Math.max(dragAnchorIdx, j) + 1; // include char under cursor
+      const b = Math.max(dragAnchorIdx, j) + 1;
       try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch(_) {}
       renderMirror();
     });
@@ -200,7 +196,7 @@ function bindPrompt(){
     });
   }
 
-  // iOS: tap to focus (don’t prevent default; let the IME appear)
+  // iOS: tap to focus (don’t prevent default)
   if (isIOS) {
     promptEl.addEventListener("touchstart", () => {
       try { inputEl.focus(); } catch(_) {}
@@ -226,7 +222,7 @@ function bindPrompt(){
     if (!isAndroid) renderMirror();
   }, true);
 
-  // Enter/Go to submit (multiple hooks for iOS Chrome reliability)
+  // Enter/Go to submit (extra hooks for iOS Chrome reliability)
   const isEnter = (e) => e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
   inputEl.addEventListener("keydown", (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("keyup",   (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
@@ -236,11 +232,6 @@ function bindPrompt(){
   });
   inputEl.addEventListener("textInput", (e) => {
     if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
-  });
-
-  // As an extra safety, submit the hidden form if the user hits the browser Go
-  mlForm && mlForm.addEventListener("submit", (ev) => {
-    // let it proceed; iframe load listener below handles the redirect
   });
 }
 
@@ -266,6 +257,28 @@ function trySubmitEmail() {
     return;
   }
 
+  // Make sure the iframe is a real 1x1 (0x0 can drop load on iOS Chrome)
+  try {
+    mlIframe.style.position = "absolute";
+    mlIframe.style.left = "-9999px";
+    mlIframe.style.top = "-9999px";
+    mlIframe.style.width = "1px";
+    mlIframe.style.height = "1px";
+    mlIframe.style.border = "0";
+    // prime with about:blank so a subsequent cross-origin load fires reliably
+    if (!mlIframe.src) mlIframe.src = "about:blank";
+  } catch(_) {}
+
+  // Ensure there is a real submit button for requestSubmit()
+  let hiddenBtn = mlForm.querySelector('#ml-hidden-submit');
+  if (!hiddenBtn) {
+    hiddenBtn = document.createElement('button');
+    hiddenBtn.type = 'submit';
+    hiddenBtn.id = 'ml-hidden-submit';
+    hiddenBtn.style.display = 'none';
+    mlForm.appendChild(hiddenBtn);
+  }
+
   // Freeze mirror and show <GO> on desktop/iOS
   lockedOutput = true;
   inputEl.setAttribute("disabled", "disabled");
@@ -289,21 +302,19 @@ function trySubmitEmail() {
     renderMirror();
   };
 
-  // Watch the iframe
   const onLoad = () => doneSuccess();
   mlIframe.addEventListener("load", onLoad, { once: true });
 
-  // Timeout fallback
   const to = setTimeout(() => {
     mlIframe.removeEventListener("load", onLoad);
     doneFail();
-  }, 8000);
+  }, 9000);
 
   try {
     if (typeof mlForm.requestSubmit === "function") {
-      mlForm.requestSubmit();
+      mlForm.requestSubmit(hiddenBtn);   // click the real (hidden) submit button
     } else {
-      mlForm.submit();
+      hiddenBtn.click();
     }
   } catch (err) {
     clearTimeout(to);
