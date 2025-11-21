@@ -139,7 +139,6 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== iOS CHROME CE SHIM =====
 function ensureIOSChromeCE(){
   if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
 
@@ -160,18 +159,31 @@ function ensureIOSChromeCE(){
     outline: 'none',
     border: '0',
     background: 'transparent',
+    /* keep the CE text invisible; we render the green cursor in #typed */
     color: 'transparent',
     caretColor: 'var(--crt)',
     marginLeft: '0.3ch',
     letterSpacing: '0.08em',
+    /* iOS Chrome: force plain text (stops .com autolink underline) */
+    WebkitUserModify: 'read-write-plaintext-only'
   });
 
+  // Build per-char spans in #typed so we can map taps to indices
+  const paintTypedFromInput = () => {
+    if (submittedUI) return;
+    const raw = (inputEl.value || '');
+    let html = '';
+    for (let i = 0; i < raw.length; i++) {
+      const ch = escapeHTML(raw[i]);
+      html += `<span class="ch" data-i="${i}">${ch}</span>`;
+    }
+    typedEl.innerHTML = html + `<span class="cursor-block">&nbsp;</span>`;
+  };
+
+  // Keep CE → hidden input in sync (form still submits the input value)
   const syncFromCE = () => {
     inputEl.value = (ceEl.textContent || '').trim();
-    if (typedEl && !submittedUI) {
-      const txt = escapeHTML(inputEl.value);
-      typedEl.innerHTML = txt + `<span class="cursor-block">&nbsp;</span>`;
-    }
+    paintTypedFromInput();
   };
 
   ceEl.addEventListener('input', syncFromCE);
@@ -185,8 +197,12 @@ function ensureIOSChromeCE(){
   promptEl.appendChild(ceEl);
   if (typedEl) typedEl.style.display = 'inline';
 
+  // Initialize typed mirror once CE is in DOM
+  paintTypedFromInput();
+
   iosChromeUsingCE = true;
 }
+
 
 function focusWithKeyboard(el, onFail){
   const baseH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -287,7 +303,7 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: try real input; if keyboard doesn’t appear, switch to CE shim
+  // iOS Chrome: activate CE shim if needed + enable tap/drag caret/selection
   if (isIOSChrome) {
     const activate = () => {
       if (submittedUI) return;
@@ -298,6 +314,61 @@ function bindPrompt(){
     };
     promptEl.addEventListener("touchstart", activate, { passive: true });
     promptEl.addEventListener("click", activate, { passive: true });
+
+    // After CE is active, let taps/drag on the green line control caret/selection
+    const setCESelection = (start, end) => {
+      if (!ceEl) return;
+      // CE contains a single text node; if not, fall back to CE itself
+      const txtNode = ceEl.firstChild || ceEl;
+      const len = (ceEl.textContent || '').length;
+      const a = Math.max(0, Math.min(start, len));
+      const b = Math.max(0, Math.min(end == null ? a : end, len));
+      const r = document.createRange();
+      try { r.setStart(txtNode, a); r.setEnd(txtNode, b); } catch(_) { return; }
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    };
+
+    let dragAnchor = null;
+
+    const indexAtClientX = (clientX) => indexFromPoint(clientX);
+
+    const handleDown = (clientX) => {
+      ensureIOSChromeCE();          // make sure CE exists
+      if (!ceEl) return;
+      dragAnchor = indexAtClientX(clientX);
+      setCESelection(dragAnchor, dragAnchor);
+      try { ceEl.focus(); } catch(_) {}
+    };
+
+    const handleMove = (clientX) => {
+      if (dragAnchor == null) return;
+      const j = indexAtClientX(clientX);
+      setCESelection(Math.min(dragAnchor, j), Math.max(dragAnchor, j));
+    };
+
+    const handleUp = () => { dragAnchor = null; };
+
+    if (typedEl) {
+      // mouse (desktop simulator / dev tools)
+      typedEl.addEventListener('mousedown', (e) => { e.preventDefault(); handleDown(e.clientX); });
+      window.addEventListener('mousemove', (e) => handleMove(e.clientX));
+      window.addEventListener('mouseup', handleUp);
+
+      // touch (actual phone)
+      typedEl.addEventListener('touchstart', (e) => {
+        const t = e.touches && e.touches[0];
+        if (t) handleDown(t.clientX);
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        const t = e.touches && e.touches[0];
+        if (t) handleMove(t.clientX);
+      }, { passive: true });
+
+      window.addEventListener('touchend', handleUp);
+    }
   }
 
   // iOS Safari: tap to focus the real input
@@ -339,6 +410,7 @@ function bindPrompt(){
     if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
   });
 }
+
 
 // Small helper: render <GO> and permanently freeze the mirror
 function showGO(emailText){
