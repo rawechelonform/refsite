@@ -64,5 +64,25 @@
   </div>
 
   <script src="glitchreport.js?v=304"></script>
+<script>
+  (function(){
+    const params = new URLSearchParams(location.search);
+    const isComplete = params.get('registration') === 'complete';
+    if (!isComplete) return;
+    const b = document.getElementById('reg-banner');
+    if (!b) return;
+    b.textContent = "registration complete";
+    b.classList.add('show');
+
+    // Optional: remove the query param so refresh doesn’t keep the banner
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('registration');
+      window.history.replaceState({}, "", url.toString());
+    } catch(_) {}
+  })();
+</script>
+
+
 </body>
 </html>

@@ -301,6 +301,15 @@ html, body {
   }
 }
 
+
+/* desktop only: keep the real input offscreen so Chrome's suggestion UI is hidden */
+html.desktop #cmd.cmd {
+  left: -9999px !important;
+  bottom: auto !important;
+}
+
+
+
 /* === ANDROID-ONLY OVERRIDES (JS adds html.android-stable) === */
 html.android-stable .typed { display: none !important; }
 html.android-stable #cmd.cmd {
@@ -320,3 +329,29 @@ html.android-stable #cmd.cmd {
   z-index: 1 !important;
   pointer-events: auto !important;
 }
+
+
+/* Never underline anything inside the fake terminal line */
+.terminal, .terminal * {
+  text-decoration: none !important;
+  -webkit-text-decoration-skip: none !important;
+  text-decoration-skip-ink: none !important;
+}
+
+
+
+
+/* Banner that appears after successful registration */
+.reg-banner {
+  position: relative;
+  width: 100%;
+  background: #0a0;       /* green-ish; adjust to taste */
+  color: #000;
+  font-family: 'DotGothic16', system-ui, monospace;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border-bottom: 2px solid #030;
+  display: none;          /* default hidden; JS will show it */
+  z-index: 5;             /* above photo, below fixed menu if any */
+}
+.reg-banner.show { display: block; }

@@ -29,8 +29,13 @@ const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0
 // Mark Android early so CSS can stabilize layout before any taps
 if (isAndroid) document.documentElement.classList.add('android-stable');
 
+// Desktop flag for tiny desktop-only behavior
+const isDesktop = !isTouch;
+if (isDesktop) document.documentElement.classList.add('desktop');
+
 // ===== STATE =====
-let lockedOutput = false;
+let lockedOutput = false;     // freezes mirror during/after submit
+let submittedUI  = false;     // prevents any mirror repaint after <GO> shown
 let dragging = false;
 let dragAnchorIdx = null;
 let ceEl = null;              // iOS Chrome contenteditable shim
@@ -69,8 +74,11 @@ function htmlAtRange(a, b, raw){
   return out;
 }
 function renderMirror(){
+  // hard stop once we have shown <GO> so it cannot flash away
+  if (submittedUI) return;
+
   if (!typedEl || !inputEl || isAndroid) return;
-  if (isIOSChrome && iosChromeUsingCE) return; // CE handles caret; no mirror
+  if (isIOSChrome && iosChromeUsingCE) return;
 
   // Hide caret unless the real input has focus, or when we freeze for submit
   if (document.activeElement !== inputEl || lockedOutput) {
@@ -119,7 +127,7 @@ function indexFromPoint(clientX){
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
   if (!inputEl || isAndroid || (isIOSChrome && iosChromeUsingCE)) { requestAnimationFrame(caretRAF); return; }
-  if (!lockedOutput) {
+  if (!lockedOutput && !submittedUI) {
     const v = inputEl.value || "";
     const s = inputEl.selectionStart ?? v.length;
     const e = inputEl.selectionEnd   ?? v.length;
@@ -160,7 +168,7 @@ function ensureIOSChromeCE(){
 
   const syncFromCE = () => {
     inputEl.value = (ceEl.textContent || '').trim();
-    if (typedEl) {
+    if (typedEl && !submittedUI) {
       const txt = escapeHTML(inputEl.value);
       typedEl.innerHTML = txt + `<span class="cursor-block">&nbsp;</span>`;
     }
@@ -240,9 +248,19 @@ function startTerminalSequence(){
 function bindPrompt(){
   if (!inputEl) return;
 
+  // Desktop only: disable browser autocomplete UI on the hidden input
+  if (!isTouch) {
+    try {
+      inputEl.setAttribute('autocomplete', 'off');
+      inputEl.setAttribute('autocorrect', 'off');
+      inputEl.setAttribute('autocapitalize', 'off');
+    } catch (_) {}
+  }
+
   // Desktop + iOS Safari mirror interactions
   if (!isTouch || (isIOS && !isIOSChrome)) {
     typedEl && typedEl.addEventListener("mousedown", (e) => {
+      if (submittedUI) return;
       const i = indexFromPoint(e.clientX);
       dragging = true;
       dragAnchorIdx = i;
@@ -255,7 +273,7 @@ function bindPrompt(){
     });
 
     window.addEventListener("mousemove", (e) => {
-      if (!dragging || dragAnchorIdx == null || lockedOutput) return;
+      if (!dragging || dragAnchorIdx == null || lockedOutput || submittedUI) return;
       const j = indexFromPoint(e.clientX);
       const a = Math.min(dragAnchorIdx, j);
       const b = Math.max(dragAnchorIdx, j) + 1;
@@ -272,6 +290,7 @@ function bindPrompt(){
   // iOS Chrome: try real input; if keyboard doesn’t appear, switch to CE shim
   if (isIOSChrome) {
     const activate = () => {
+      if (submittedUI) return;
       focusWithKeyboard(inputEl, () => {
         ensureIOSChromeCE();
         focusWithKeyboard(ceEl);
@@ -284,6 +303,7 @@ function bindPrompt(){
   // iOS Safari: tap to focus the real input
   if (isIOS && !isIOSChrome) {
     promptEl.addEventListener("touchstart", () => {
+      if (submittedUI) return;
       try { inputEl.focus(); } catch(_) {}
     }, { passive: true });
   }
@@ -300,7 +320,7 @@ function bindPrompt(){
   document.addEventListener("keydown", (e) => {
     const isA = (e.key === 'a' || e.key === 'A');
     const withMeta = (e.metaKey || e.ctrlKey);
-    if (!isA || !withMeta || lockedOutput) return;
+    if (!isA || !withMeta || lockedOutput || submittedUI) return;
     e.preventDefault();
     const len = (inputEl.value || "").length;
     try { inputEl.setSelectionRange(0, len); } catch(_) {}
@@ -318,15 +338,31 @@ function bindPrompt(){
   inputEl.addEventListener("textInput", (e) => {
     if (e && e.data === "\n") { e.preventDefault(); trySubmitEmail(); }
   });
+}
 
-  // CE shim also submits on Enter (handlers in ensureIOSChromeCE)
+// Small helper: render <GO> and permanently freeze the mirror
+function showGO(emailText){
+  submittedUI = true;                 // never repaint again
+  lockedOutput = true;
+  if (typedEl) {
+    typedEl.style.display = 'inline'; // ensure visible on Safari
+    typedEl.innerHTML = `${escapeHTML(emailText)} <span class="go-pill">&lt;GO&gt;</span>`;
+  }
+  try { inputEl.setAttribute("disabled", "disabled"); } catch(_) {}
+
+  // remove any late mirror triggers that might still be queued
+  try {
+    ["input","focus","blur","keyup","select","click","keydown","keypress"].forEach(evt => {
+      inputEl && inputEl.removeEventListener(evt, renderMirror, true);
+      inputEl && inputEl.removeEventListener(evt, renderMirror, false);
+    });
+  } catch(_) {}
 }
 
 // ===== SUBMIT (iframe + JSONP fallback) =====
 function trySubmitEmail() {
-  if (lockedOutput) return;
+  if (lockedOutput || submittedUI) return;
 
-  // If using CE, sync one last time
   if (isIOSChrome && iosChromeUsingCE && ceEl) {
     inputEl.value = (ceEl.textContent || '').trim();
   }
@@ -349,7 +385,7 @@ function trySubmitEmail() {
     return;
   }
 
-  // Keep iframe present (1x1) so load fires everywhere
+  // Keep iframe present (1x1)
   try {
     mlIframe.style.position = "absolute";
     mlIframe.style.left = "-9999px";
@@ -370,18 +406,13 @@ function trySubmitEmail() {
     mlForm.appendChild(hiddenBtn);
   }
 
-  lockedOutput = true;
-  inputEl.setAttribute("disabled", "disabled");
-
-  // Freeze mirror and show <GO> (desktop + iOS Safari + iOS Chrome CE path)
-  if (!(isAndroid) && typedEl) {
-    typedEl.innerHTML = `${escapeHTML(email)} <span class="go-pill">&lt;GO&gt;</span>`;
-  }
+  // Freeze UI and show <GO> immediately (Desktop + iOS)
+  if (!isAndroid) showGO(email);
   hintEl && (hintEl.textContent = "");
   log("submitting to MailerLite…");
   mlEmail.value = email.toLowerCase();
 
-  // --- Success / failure gates shared by both strategies ---
+  // Gate for success/failure
   let finished = false;
   const doneSuccess = () => {
     if (finished) return; finished = true;
@@ -389,19 +420,20 @@ function trySubmitEmail() {
   };
   const doneFail = () => {
     if (finished) return; finished = true;
+    submittedUI = false;
     lockedOutput = false;
-    inputEl.removeAttribute("disabled");
+    try { inputEl.removeAttribute("disabled"); } catch(_) {}
     hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
     renderMirror();
   };
 
-  // --- Strategy A: Hidden-iframe form submit (original path) ---
+  // Strategy A: hidden-iframe submit
   const onLoad = () => doneSuccess();
   mlIframe.addEventListener("load", onLoad, { once: true });
 
   const iframeTO = setTimeout(() => {
     mlIframe.removeEventListener("load", onLoad);
-    // don't fail yet—jsonp may still succeed
+    // jsonp might still succeed
   }, 9000);
 
   try {
@@ -412,11 +444,9 @@ function trySubmitEmail() {
     }
   } catch (err) {
     log("iframe submit threw:", err);
-    // continue; JSONP fallback may still succeed
   }
 
-  // --- Strategy B: JSONP fallback (works even if iframe load is blocked) ---
-  // Build JSONP URL: action?fields[email]=...&ml-submit=1&callback=mlcb_xxx
+  // Strategy B: JSONP fallback
   try {
     const base = mlForm.getAttribute('action');
     const cbName = "mlcb_" + Math.random().toString(36).slice(2);
@@ -439,7 +469,6 @@ function trySubmitEmail() {
 
     const jsonpTO = setTimeout(() => {
       cleanupJSONP(script);
-      // If iframe also failed by now, call fail; otherwise success already fired
       if (!finished) {
         clearTimeout(iframeTO);
         doneFail();
@@ -447,7 +476,6 @@ function trySubmitEmail() {
     }, 9000);
   } catch (e) {
     log("jsonp path error:", e);
-    // If both paths fail naturally, the timeouts will surface the error
   }
 }
 
