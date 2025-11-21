@@ -154,21 +154,25 @@ function ensureIOSChromeCE(){
     position: 'relative',
     display: 'inline-block',
     minWidth: '2ch',
+    maxWidth: '100%',                // prevent widening the page (fix #1)
+    whiteSpace: 'pre-wrap',          // wrap within viewport (fix #1)
+    overflowWrap: 'anywhere',        // wrap long chunks like emails (fix #1)
+    wordBreak: 'break-word',
     lineHeight: '1',
     outline: 'none',
     border: '0',
     background: 'transparent',
     color: 'transparent',
-    caretColor: 'transparent',              // hide native blinking caret (fix #2)
+    caretColor: 'transparent',       // hide native blinking caret
     marginLeft: '0.3ch',
     letterSpacing: '0.08em',
-    WebkitUserModify: 'read-write-plaintext-only', // kill .com autolink (fix #4)
+    WebkitUserModify: 'read-write-plaintext-only', // kill .com autolink
     textDecoration: 'none',
     WebkitTextDecorationSkip: 'none',
     textDecorationColor: 'transparent'
   });
 
-  // seed CE with any existing value
+  // seed CE with any existing value (ensure there's a text node)
   ceEl.textContent = (inputEl?.value || '');
 
   // --- helpers
@@ -208,7 +212,7 @@ function ensureIOSChromeCE(){
     const raw = getText();
     const sel = getSel();
 
-    // show a block cursor immediately on focus when empty (fix #1)
+    // show a block cursor immediately on focus when empty
     if (raw.length === 0) {
       typedEl.innerHTML = `<span class="cursor-block">&nbsp;</span>`;
       return;
@@ -247,12 +251,11 @@ function ensureIOSChromeCE(){
     if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
   });
   ceEl.addEventListener('focus', () => {
-    // put a cursor where the CE is focused; default to end
-    if (!getText().length) setSel(0, 0);
-    paint();
+    // If you focus by tapping end, keep selection at end and ensure keyboard
+    setTimeout(() => paint(), 0);
   });
 
-  // repaint as you drag to highlight (fix #5)
+  // repaint as you drag to highlight
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
@@ -373,50 +376,57 @@ function bindPrompt(){
       if (submittedUI) return;
       focusWithKeyboard(inputEl, () => {
         ensureIOSChromeCE();
+        // ensure keyboard + cursor even when tapping end
         focusWithKeyboard(ceEl);
-        ceEl && ceEl._paint && ceEl._paint(); // show block cursor immediately (fix #1)
+        ceEl && ceEl._paint && ceEl._paint();
       });
     };
-    promptEl.addEventListener("touchstart", activate, { passive: true });
+    // not passive so we can prevent default when needed
+    promptEl.addEventListener("touchstart", (e) => { activate(); }, { passive: false });
     promptEl.addEventListener("click", activate, { passive: true });
 
     const placeFromPoint = (clientX) => indexFromPoint(clientX);
     let dragAnchor = null;
 
-    const handleDown = (clientX) => {
+    const handleDown = (clientX, e) => {
       ensureIOSChromeCE();
       if (!ceEl) return;
       const i = placeFromPoint(clientX);
       dragAnchor = i;
       ceEl._setSel?.(i, i);
-      try { ceEl.focus(); } catch(_) {}
+      // ensure typing works after moving to end (fix #2)
+      focusWithKeyboard(ceEl);
       ceEl._paint?.();
+      if (e) e.preventDefault();
     };
 
-    const handleMove = (clientX) => {
+    const handleMove = (clientX, e) => {
       if (dragAnchor == null || !ceEl) return;
       const j = placeFromPoint(clientX);
       const a = Math.min(dragAnchor, j);
       const b = Math.max(dragAnchor, j);
       ceEl._setSel?.(a, b);
       ceEl._paint?.();
+      if (e) e.preventDefault(); // keeps drag selection smooth (fix #3/#5)
     };
 
     const handleUp = () => { dragAnchor = null; };
 
     if (typedEl) {
-      typedEl.addEventListener('mousedown', (e) => { e.preventDefault(); handleDown(e.clientX); });
-      window.addEventListener('mousemove', (e) => handleMove(e.clientX));
+      // mouse (simulators)
+      typedEl.addEventListener('mousedown', (e) => handleDown(e.clientX, e));
+      window.addEventListener('mousemove', (e) => handleMove(e.clientX, e), { passive: false });
       window.addEventListener('mouseup', handleUp);
 
+      // touch (real phone) — NOT passive so we can preventDefault()
       typedEl.addEventListener('touchstart', (e) => {
         const t = e.touches && e.touches[0];
-        if (t) handleDown(t.clientX);
-      }, { passive: true });
+        if (t) handleDown(t.clientX, e);
+      }, { passive: false });
       window.addEventListener('touchmove', (e) => {
         const t = e.touches && e.touches[0];
-        if (t) handleMove(t.clientX);
-      }, { passive: true });
+        if (t) handleMove(t.clientX, e);
+      }, { passive: false });
       window.addEventListener('touchend', handleUp);
     }
   }
