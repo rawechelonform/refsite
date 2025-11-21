@@ -29,7 +29,7 @@ const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0
 // Mark Android early so CSS can stabilize layout before any taps
 if (isAndroid) document.documentElement.classList.add('android-stable');
 
-// Desktop flag for tiny desktop-only behavior
+// Desktop flag (used elsewhere; unchanged behavior)
 const isDesktop = !isTouch;
 if (isDesktop) document.documentElement.classList.add('desktop');
 
@@ -65,7 +65,7 @@ function typeWriter(text, el, speed = 40, done){
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
 
-// ===== MIRROR (desktop + iOS Safari; NOT Android; NOT iOS Chrome when CE mode) =====
+// ===== DESKTOP MIRROR (unchanged paths) =====
 function htmlAtRange(a, b, raw){
   let out = "";
   for (let i = a; i < b; i++){
@@ -78,7 +78,7 @@ function renderMirror(){
   if (submittedUI) return;
 
   if (!typedEl || !inputEl || isAndroid) return;
-  if (isIOSChrome && iosChromeUsingCE) return;
+  if (isIOSChrome && iosChromeUsingCE) return; // CE path handles its own rendering
 
   // Hide caret unless the real input has focus, or when we freeze for submit
   if (document.activeElement !== inputEl || lockedOutput) {
@@ -139,6 +139,7 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
+// ===== iOS CHROME CE SHIM (mobile Chrome only) =====
 function ensureIOSChromeCE(){
   if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
 
@@ -151,6 +152,7 @@ function ensureIOSChromeCE(){
   ceEl.autocapitalize = 'off';
   ceEl.autocorrect = 'off';
 
+  // Keep CE invisible text; we paint visible chars/cursor in #typed
   Object.assign(ceEl.style, {
     position: 'relative',
     display: 'inline-block',
@@ -159,50 +161,120 @@ function ensureIOSChromeCE(){
     outline: 'none',
     border: '0',
     background: 'transparent',
-    /* keep the CE text invisible; we render the green cursor in #typed */
     color: 'transparent',
     caretColor: 'var(--crt)',
     marginLeft: '0.3ch',
     letterSpacing: '0.08em',
-    /* iOS Chrome: force plain text (stops .com autolink underline) */
-    WebkitUserModify: 'read-write-plaintext-only'
+    WebkitUserModify: 'read-write-plaintext-only' // kills .com underline/autolink
   });
 
-  // Build per-char spans in #typed so we can map taps to indices
-  const paintTypedFromInput = () => {
-    if (submittedUI) return;
-    const raw = (inputEl.value || '');
-    let html = '';
-    for (let i = 0; i < raw.length; i++) {
-      const ch = escapeHTML(raw[i]);
-      html += `<span class="ch" data-i="${i}">${ch}</span>`;
+  // initialize CE with any existing value
+  ceEl.textContent = (inputEl?.value || '');
+
+  // ---- selection helpers for CE
+  const getCENode = () => ceEl.firstChild || ceEl;
+  const getCEText = () => (ceEl.textContent || '');
+  const setCESelection = (start, end) => {
+    const txt = getCENode();
+    const len = getCEText().length;
+    const a = Math.max(0, Math.min(start, len));
+    const b = Math.max(0, Math.min(end == null ? a : end, len));
+    const r = document.createRange();
+    try {
+      r.setStart(txt, a); r.setEnd(txt, b);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    } catch(_) {}
+  };
+  const getCESelection = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+      const len = getCEText().length;
+      return { start: len, end: len, collapsed: true };
     }
-    typedEl.innerHTML = html + `<span class="cursor-block">&nbsp;</span>`;
+    const r = sel.getRangeAt(0);
+    // Normalize to offsets within CE
+    let start = r.startOffset, end = r.endOffset;
+    return { start, end, collapsed: start === end };
   };
 
-  // Keep CE → hidden input in sync (form still submits the input value)
+  // ---- painting the green line from CE selection/value
+  const paintFromCE = () => {
+    if (submittedUI || !typedEl) return;
+    const raw = getCEText();
+    const sel = getCESelection();
+
+    if (raw.length === 0) {
+      // show a single block cursor when empty/focused
+      typedEl.innerHTML = `<span class="cursor-block">&nbsp;</span>`;
+      return;
+    }
+
+    // build spans with selection highlight, or collapsed cursor block
+    let html = "";
+    if (sel.collapsed) {
+      const idx = sel.start;
+      const before = htmlAtRange(0, idx, raw);
+      const atChar = raw[idx] ? escapeHTML(raw[idx]) : "&nbsp;";
+      const after  = htmlAtRange(idx + (raw[idx] ? 1 : 0), raw.length, raw);
+      html = before + `<span class="cursor-block">${atChar}</span>` + after;
+    } else {
+      for (let i = 0; i < raw.length; i++){
+        const ch = escapeHTML(raw[i]);
+        const cls = (i >= sel.start && i < sel.end) ? "ch cursor-sel" : "ch";
+        html += `<span class="${cls}" data-i="${i}">${ch}</span>`;
+      }
+    }
+    typedEl.innerHTML = html;
+  };
+
+  // ---- keep CE → input (for submission), and repaint mirror
   const syncFromCE = () => {
-    inputEl.value = (ceEl.textContent || '').trim();
-    paintTypedFromInput();
+    if (!inputEl) return;
+    inputEl.value = getCEText().trim();
+    paintFromCE();
   };
 
+  // events to keep things in sync and show the green block cursor immediately
   ceEl.addEventListener('input', syncFromCE);
   ceEl.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); }
+    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
+    paintFromCE();
   });
   ceEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); }
+    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
+    // let iOS update selection, we'll paint on selectionchange/keyup
+  });
+  ceEl.addEventListener('focus', () => {
+    // if empty, ensure cursor shows
+    if (!getCEText().length) setCESelection(0, 0);
+    paintFromCE();
   });
 
+  // global selectionchange lets us repaint as you drag to highlight
+  document.addEventListener('selectionchange', () => {
+    // only repaint when the selection is inside our CE
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const a = sel.anchorNode, f = sel.focusNode;
+    if (ceEl.contains(a) || ceEl.contains(f) || a === ceEl || f === ceEl) {
+      paintFromCE();
+    }
+  });
+
+  // mount CE into the prompt and show typed line
   promptEl.appendChild(ceEl);
   if (typedEl) typedEl.style.display = 'inline';
 
-  // Initialize typed mirror once CE is in DOM
-  paintTypedFromInput();
+  // initial paint to show cursor as soon as you tap to type
+  paintFromCE();
 
+  // expose helpers on the element for bindPrompt() taps/drags
+  ceEl._setCESelection = setCESelection;
+  ceEl._paintFromCE = paintFromCE;
   iosChromeUsingCE = true;
 }
-
 
 function focusWithKeyboard(el, onFail){
   const baseH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -273,7 +345,7 @@ function bindPrompt(){
     } catch (_) {}
   }
 
-  // Desktop + iOS Safari mirror interactions
+  // Desktop + iOS Safari mirror interactions (unchanged)
   if (!isTouch || (isIOS && !isIOSChrome)) {
     typedEl && typedEl.addEventListener("mousedown", (e) => {
       if (submittedUI) return;
@@ -282,7 +354,7 @@ function bindPrompt(){
       dragAnchorIdx = i;
       try {
         if (document.activeElement !== inputEl) inputEl.focus();
-        inputEl.setSelectionRange(i, i); // collapsed caret (insert, not replace)
+        inputEl.setSelectionRange(i, i); // collapsed caret
       } catch(_) {}
       renderMirror();
       e.preventDefault();
@@ -303,70 +375,60 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: activate CE shim if needed + enable tap/drag caret/selection
+  // iOS Chrome: activate CE shim + enable tap/drag caret/selection on the green line
   if (isIOSChrome) {
     const activate = () => {
       if (submittedUI) return;
       focusWithKeyboard(inputEl, () => {
         ensureIOSChromeCE();
         focusWithKeyboard(ceEl);
+        // Paint cursor immediately on focus even if empty
+        if (ceEl && ceEl._paintFromCE) ceEl._paintFromCE();
       });
     };
     promptEl.addEventListener("touchstart", activate, { passive: true });
     promptEl.addEventListener("click", activate, { passive: true });
 
-    // After CE is active, let taps/drag on the green line control caret/selection
-    const setCESelection = (start, end) => {
-      if (!ceEl) return;
-      // CE contains a single text node; if not, fall back to CE itself
-      const txtNode = ceEl.firstChild || ceEl;
-      const len = (ceEl.textContent || '').length;
-      const a = Math.max(0, Math.min(start, len));
-      const b = Math.max(0, Math.min(end == null ? a : end, len));
-      const r = document.createRange();
-      try { r.setStart(txtNode, a); r.setEnd(txtNode, b); } catch(_) { return; }
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(r);
-    };
+    const placeFromPoint = (clientX) => indexFromPoint(clientX);
 
     let dragAnchor = null;
 
-    const indexAtClientX = (clientX) => indexFromPoint(clientX);
-
     const handleDown = (clientX) => {
-      ensureIOSChromeCE();          // make sure CE exists
+      ensureIOSChromeCE();
       if (!ceEl) return;
-      dragAnchor = indexAtClientX(clientX);
-      setCESelection(dragAnchor, dragAnchor);
+      const i = placeFromPoint(clientX);
+      dragAnchor = i;
+      ceEl._setCESelection?.(i, i);
       try { ceEl.focus(); } catch(_) {}
+      ceEl._paintFromCE?.();
     };
 
     const handleMove = (clientX) => {
-      if (dragAnchor == null) return;
-      const j = indexAtClientX(clientX);
-      setCESelection(Math.min(dragAnchor, j), Math.max(dragAnchor, j));
+      if (dragAnchor == null || !ceEl) return;
+      const j = placeFromPoint(clientX);
+      const a = Math.min(dragAnchor, j);
+      const b = Math.max(dragAnchor, j);
+      ceEl._setCESelection?.(a, b);
+      ceEl._paintFromCE?.();
     };
 
     const handleUp = () => { dragAnchor = null; };
 
     if (typedEl) {
-      // mouse (desktop simulator / dev tools)
+      // mouse (useful in simulators)
       typedEl.addEventListener('mousedown', (e) => { e.preventDefault(); handleDown(e.clientX); });
       window.addEventListener('mousemove', (e) => handleMove(e.clientX));
       window.addEventListener('mouseup', handleUp);
 
-      // touch (actual phone)
+      // touch (real phone)
       typedEl.addEventListener('touchstart', (e) => {
         const t = e.touches && e.touches[0];
         if (t) handleDown(t.clientX);
       }, { passive: true });
-
       window.addEventListener('touchmove', (e) => {
         const t = e.touches && e.touches[0];
         if (t) handleMove(t.clientX);
       }, { passive: true });
-
       window.addEventListener('touchend', handleUp);
     }
   }
@@ -411,7 +473,6 @@ function bindPrompt(){
   });
 }
 
-
 // Small helper: render <GO> and permanently freeze the mirror
 function showGO(emailText){
   submittedUI = true;                 // never repaint again
@@ -435,6 +496,7 @@ function showGO(emailText){
 function trySubmitEmail() {
   if (lockedOutput || submittedUI) return;
 
+  // iOS Chrome CE → hidden input sync one last time
   if (isIOSChrome && iosChromeUsingCE && ceEl) {
     inputEl.value = (ceEl.textContent || '').trim();
   }
