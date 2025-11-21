@@ -23,7 +23,7 @@ const mlIframe = document.getElementById("ml_iframe");
 const UA = navigator.userAgent || "";
 const isAndroid    = /Android/i.test(UA);
 const isIOS        = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome  = /CriOS/i.test(UA);   // iOS Chrome (WebKit)
+const isIOSChrome  = /CriOS/i.test(UA);         // Chrome on iOS
 const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 // Mark Android early so CSS can stabilize layout before any taps
@@ -63,7 +63,6 @@ function typeWriter(text, el, speed = 40, done){
   })();
 }
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-function setImp(el, prop, value){ el && el.style.setProperty(prop, value, 'important'); }
 
 // ===== DESKTOP MIRROR (unchanged paths) =====
 function htmlAtRange(a, b, raw){
@@ -136,7 +135,7 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== iOS CHROME CE SHIM (mobile Chrome only) =====
+// ===== iOS CHROME CE SHIM (Chrome on iOS only) =====
 function ensureIOSChromeCE(){
   if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
 
@@ -151,28 +150,28 @@ function ensureIOSChromeCE(){
 
   // Keep CE text invisible; use green block/selection in #typed only
   Object.assign(ceEl.style, {
-    position: 'relative',
-    display: 'inline-block',
-    minWidth: '2ch',
-    maxWidth: '100%',                // prevent widening the page (fix #1)
-    whiteSpace: 'pre-wrap',          // wrap within viewport (fix #1)
-    overflowWrap: 'anywhere',        // wrap long chunks like emails (fix #1)
+    display: 'block',
+    width: '100%',                 // never widen the viewport
+    maxWidth: '100%',
+    whiteSpace: 'pre-wrap',        // wrap within container
+    overflowWrap: 'anywhere',      // break long emails
     wordBreak: 'break-word',
     lineHeight: '1',
     outline: 'none',
     border: '0',
     background: 'transparent',
     color: 'transparent',
-    caretColor: 'transparent',       // hide native blinking caret
+    caretColor: 'transparent',     // hide native blinking caret
     marginLeft: '0.3ch',
     letterSpacing: '0.08em',
     WebkitUserModify: 'read-write-plaintext-only', // kill .com autolink
     textDecoration: 'none',
     WebkitTextDecorationSkip: 'none',
-    textDecorationColor: 'transparent'
+    textDecorationColor: 'transparent',
+    WebkitTapHighlightColor: 'transparent'
   });
 
-  // seed CE with any existing value (ensure there's a text node)
+  // seed CE with any existing value (ensures there’s a text node)
   ceEl.textContent = (inputEl?.value || '');
 
   // --- helpers
@@ -206,14 +205,18 @@ function ensureIOSChromeCE(){
   const paint = () => {
     if (submittedUI || !typedEl) return;
 
-    // never allow underline to show up in the mirror
+    // Never allow any underline to show up in the mirror
     typedEl.style.textDecoration = 'none';
+    typedEl.style.whiteSpace = 'pre-wrap';
+    typedEl.style.wordBreak = 'break-word';
+    typedEl.style.overflowWrap = 'anywhere';
+    typedEl.style.maxWidth = '100%';
 
     const raw = getText();
     const sel = getSel();
 
-    // show a block cursor immediately on focus when empty
     if (raw.length === 0) {
+      // show the green block cursor even when empty once focused
       typedEl.innerHTML = `<span class="cursor-block">&nbsp;</span>`;
       return;
     }
@@ -251,18 +254,18 @@ function ensureIOSChromeCE(){
     if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
   });
   ceEl.addEventListener('focus', () => {
-    // If you focus by tapping end, keep selection at end and ensure keyboard
-    setTimeout(() => paint(), 0);
+    // Ensure a visible cursor on first focus (before any typing)
+    const len = getText().length;
+    setSel(len, len);
+    paint();
   });
 
-  // repaint as you drag to highlight
+  // repaint as you drag to highlight (selectionchange only when within CE)
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const a = sel.anchorNode, f = sel.focusNode;
-    if (ceEl.contains(a) || ceEl.contains(f) || a === ceEl || f === ceEl) {
-      paint();
-    }
+    if (ceEl.contains(a) || ceEl.contains(f) || a === ceEl || f === ceEl) paint();
   });
 
   promptEl.appendChild(ceEl);
@@ -280,14 +283,12 @@ function focusWithKeyboard(el, onFail){
   const baseH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   let fired = false;
   const t0 = Date.now();
-
   const check = () => {
     const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const delta = baseH - nowH;
     if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 200)) { fired = true; return; }
     if (!fired && Date.now() - t0 > 220) { onFail && onFail(); }
   };
-
   try { el.focus(); } catch(_) {}
   setTimeout(check, 160);
   setTimeout(check, 240);
@@ -296,30 +297,28 @@ function focusWithKeyboard(el, onFail){
 // ===== MOBILE IME CONFIG =====
 function enableMobileIME(){
   if (!isTouch) return;
-
   try { inputEl.type = 'text'; } catch(_) {}
   inputEl.setAttribute('inputmode','email');
   inputEl.setAttribute('autocomplete','email');
   inputEl.setAttribute('autocapitalize','off');
   inputEl.setAttribute('enterkeyhint','go');
-
-  if (isIOSChrome) {
-    if (typedEl) typedEl.style.display = 'inline';
-  }
+  if (isIOSChrome) typedEl && (typedEl.style.display = 'inline');
 }
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  // Show prompt early for Android and iOS Chrome to avoid visibility flip
-  if ((isAndroid || isIOSChrome) && promptEl && !promptEl.classList.contains('show')) {
+  // Do NOT show the prompt early on iOS Chrome (caret should appear only after header finishes)
+  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
     promptEl.classList.add('show');
   }
 
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
-      if (promptEl && !(isAndroid || isIOSChrome)) promptEl.classList.add("show");
+      // Show the prompt only after header text completes (all platforms)
+      if (promptEl && !promptEl.classList.contains('show')) promptEl.classList.add("show");
+
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
       if (!isAndroid) renderMirror();
@@ -370,18 +369,23 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: activate CE shim + tap/drag caret/selection on the green line
+  // iOS Chrome: CE shim + tap/drag caret/selection on the green line
   if (isIOSChrome) {
     const activate = () => {
       if (submittedUI) return;
       focusWithKeyboard(inputEl, () => {
         ensureIOSChromeCE();
-        // ensure keyboard + cursor even when tapping end
-        focusWithKeyboard(ceEl);
-        ceEl && ceEl._paint && ceEl._paint();
+        // Show the green cursor immediately even before typing
+        focusWithKeyboard(ceEl, () => {});
+        // If nothing is typed yet, ensure the caret is at end and painted
+        if (ceEl && ceEl._paint) {
+          const len = (ceEl.textContent || '').length;
+          ceEl._setSel?.(len, len);
+          ceEl._paint();
+        }
       });
     };
-    // not passive so we can prevent default when needed
+    // Use non-passive so we can preventDefault during drags (keeps typing enabled)
     promptEl.addEventListener("touchstart", (e) => { activate(); }, { passive: false });
     promptEl.addEventListener("click", activate, { passive: true });
 
@@ -394,8 +398,8 @@ function bindPrompt(){
       const i = placeFromPoint(clientX);
       dragAnchor = i;
       ceEl._setSel?.(i, i);
-      // ensure typing works after moving to end (fix #2)
-      focusWithKeyboard(ceEl);
+      // Focus CE so typing works after moving to end
+      focusWithKeyboard(ceEl, () => {});
       ceEl._paint?.();
       if (e) e.preventDefault();
     };
@@ -407,18 +411,16 @@ function bindPrompt(){
       const b = Math.max(dragAnchor, j);
       ceEl._setSel?.(a, b);
       ceEl._paint?.();
-      if (e) e.preventDefault(); // keeps drag selection smooth (fix #3/#5)
+      if (e) e.preventDefault(); // keeps drag highlight smooth and stops scrolling
     };
 
     const handleUp = () => { dragAnchor = null; };
 
     if (typedEl) {
-      // mouse (simulators)
       typedEl.addEventListener('mousedown', (e) => handleDown(e.clientX, e));
       window.addEventListener('mousemove', (e) => handleMove(e.clientX, e), { passive: false });
       window.addEventListener('mouseup', handleUp);
 
-      // touch (real phone) — NOT passive so we can preventDefault()
       typedEl.addEventListener('touchstart', (e) => {
         const t = e.touches && e.touches[0];
         if (t) handleDown(t.clientX, e);
@@ -536,7 +538,6 @@ function trySubmitEmail() {
 
   if (!isAndroid) showGO(email);
   hintEl && (hintEl.textContent = "");
-  log("submitting to MailerLite…");
   mlEmail.value = email.toLowerCase();
 
   let finished = false;
@@ -566,9 +567,7 @@ function trySubmitEmail() {
     } else {
       hiddenBtn.click();
     }
-  } catch (err) {
-    log("iframe submit threw:", err);
-  }
+  } catch (_) {}
 
   try {
     const base = mlForm.getAttribute('action');
@@ -581,7 +580,7 @@ function trySubmitEmail() {
     };
 
     const script = document.createElement('script');
-    window[cbName] = function jsonpOK(resp){
+    window[cbName] = function jsonpOK(){
       cleanupJSONP(script);
       clearTimeout(jsonpTO);
       doneSuccess();
@@ -592,14 +591,9 @@ function trySubmitEmail() {
 
     const jsonpTO = setTimeout(() => {
       cleanupJSONP(script);
-      if (!finished) {
-        clearTimeout(iframeTO);
-        doneFail();
-      }
+      if (!finished) { clearTimeout(iframeTO); doneFail(); }
     }, 9000);
-  } catch (e) {
-    log("jsonp path error:", e);
-  }
+  } catch (_) {}
 }
 
 // ===== AVATAR =====
@@ -625,5 +619,5 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
   if (!(isAndroid)) requestAnimationFrame(caretRAF);
-  if (DIAG) console.info("[gate] diagnostics mode ON — no auto-continue; watch console logs");
+  if (DIAG) console.info("[gate] diagnostics mode ON");
 });
