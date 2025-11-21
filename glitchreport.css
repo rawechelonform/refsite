@@ -357,16 +357,5 @@ html.android-stable #cmd.cmd {
 .reg-banner.show { display: block; }
 
 
-/* iOS Chrome CE selection should look like the desktop terminal selection */
-#iosc-ce::selection {
-  background: var(--crt) !important;
-  color: #000 !important;
-  -webkit-text-fill-color: #000 !important;
-}
-
-/* Belt-and-suspenders: no UA underline while composing/auto-linking */
-#iosc-ce {
-  text-decoration: none !important;
-  -webkit-text-decoration-skip: none !important;
-  text-decoration-color: transparent !important;
-}
+#iosc-ce::selection { background: var(--crt) !important; color:#000 !important; -webkit-text-fill-color:#000 !important; }
+#iosc-ce { text-decoration:none !important; -webkit-text-decoration-skip:none !important; text-decoration-color:transparent !important; }

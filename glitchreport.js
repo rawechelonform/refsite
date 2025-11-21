@@ -29,7 +29,7 @@ const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0
 // Mark Android early so CSS can stabilize layout before any taps
 if (isAndroid) document.documentElement.classList.add('android-stable');
 
-// Desktop flag (used elsewhere; unchanged behavior)
+// Desktop flag (unchanged behavior)
 const isDesktop = !isTouch;
 if (isDesktop) document.documentElement.classList.add('desktop');
 
@@ -74,13 +74,10 @@ function htmlAtRange(a, b, raw){
   return out;
 }
 function renderMirror(){
-  // hard stop once we have shown <GO> so it cannot flash away
   if (submittedUI) return;
-
   if (!typedEl || !inputEl || isAndroid) return;
-  if (isIOSChrome && iosChromeUsingCE) return; // CE path handles its own rendering
+  if (isIOSChrome && iosChromeUsingCE) return; // iOS Chrome paints via CE path
 
-  // Hide caret unless the real input has focus, or when we freeze for submit
   if (document.activeElement !== inputEl || lockedOutput) {
     typedEl.textContent = inputEl.value || "";
     return;
@@ -152,7 +149,7 @@ function ensureIOSChromeCE(){
   ceEl.autocapitalize = 'off';
   ceEl.autocorrect = 'off';
 
-  // Keep CE invisible text; we paint visible chars/cursor in #typed
+  // Keep CE text invisible; use green block/selection in #typed only
   Object.assign(ceEl.style, {
     position: 'relative',
     display: 'inline-block',
@@ -162,117 +159,117 @@ function ensureIOSChromeCE(){
     border: '0',
     background: 'transparent',
     color: 'transparent',
-    caretColor: 'var(--crt)',
+    caretColor: 'transparent',              // hide native blinking caret (fix #2)
     marginLeft: '0.3ch',
     letterSpacing: '0.08em',
-    WebkitUserModify: 'read-write-plaintext-only' // kills .com underline/autolink
+    WebkitUserModify: 'read-write-plaintext-only', // kill .com autolink (fix #4)
+    textDecoration: 'none',
+    WebkitTextDecorationSkip: 'none',
+    textDecorationColor: 'transparent'
   });
 
-  // initialize CE with any existing value
+  // seed CE with any existing value
   ceEl.textContent = (inputEl?.value || '');
 
-  // ---- selection helpers for CE
-  const getCENode = () => ceEl.firstChild || ceEl;
-  const getCEText = () => (ceEl.textContent || '');
-  const setCESelection = (start, end) => {
-    const txt = getCENode();
-    const len = getCEText().length;
+  // --- helpers
+  const getNode = () => ceEl.firstChild || ceEl;
+  const getText = () => (ceEl.textContent || '');
+
+  const setSel = (start, end) => {
+    const len = getText().length;
     const a = Math.max(0, Math.min(start, len));
     const b = Math.max(0, Math.min(end == null ? a : end, len));
     const r = document.createRange();
+    const n = getNode();
     try {
-      r.setStart(txt, a); r.setEnd(txt, b);
+      r.setStart(n, a); r.setEnd(n, b);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(r);
-    } catch(_) {}
+    } catch(_){}
   };
-  const getCESelection = () => {
+
+  const getSel = () => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) {
-      const len = getCEText().length;
+      const len = getText().length;
       return { start: len, end: len, collapsed: true };
     }
     const r = sel.getRangeAt(0);
-    // Normalize to offsets within CE
-    let start = r.startOffset, end = r.endOffset;
-    return { start, end, collapsed: start === end };
+    return { start: r.startOffset, end: r.endOffset, collapsed: r.startOffset === r.endOffset };
   };
 
-  // ---- painting the green line from CE selection/value
-  const paintFromCE = () => {
+  const paint = () => {
     if (submittedUI || !typedEl) return;
-    const raw = getCEText();
-    const sel = getCESelection();
 
+    // never allow underline to show up in the mirror
+    typedEl.style.textDecoration = 'none';
+
+    const raw = getText();
+    const sel = getSel();
+
+    // show a block cursor immediately on focus when empty (fix #1)
     if (raw.length === 0) {
-      // show a single block cursor when empty/focused
       typedEl.innerHTML = `<span class="cursor-block">&nbsp;</span>`;
       return;
     }
 
-    // build spans with selection highlight, or collapsed cursor block
-    let html = "";
     if (sel.collapsed) {
       const idx = sel.start;
       const before = htmlAtRange(0, idx, raw);
       const atChar = raw[idx] ? escapeHTML(raw[idx]) : "&nbsp;";
       const after  = htmlAtRange(idx + (raw[idx] ? 1 : 0), raw.length, raw);
-      html = before + `<span class="cursor-block">${atChar}</span>` + after;
+      typedEl.innerHTML = before + `<span class="cursor-block">${atChar}</span>` + after;
     } else {
+      let html = "";
       for (let i = 0; i < raw.length; i++){
         const ch = escapeHTML(raw[i]);
         const cls = (i >= sel.start && i < sel.end) ? "ch cursor-sel" : "ch";
         html += `<span class="${cls}" data-i="${i}">${ch}</span>`;
       }
+      typedEl.innerHTML = html;
     }
-    typedEl.innerHTML = html;
   };
 
-  // ---- keep CE → input (for submission), and repaint mirror
   const syncFromCE = () => {
     if (!inputEl) return;
-    inputEl.value = getCEText().trim();
-    paintFromCE();
+    inputEl.value = getText().trim(); // keep real input for submit
+    paint();
   };
 
-  // events to keep things in sync and show the green block cursor immediately
+  // --- events
   ceEl.addEventListener('input', syncFromCE);
   ceEl.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
-    paintFromCE();
+    paint();
   });
   ceEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
-    // let iOS update selection, we'll paint on selectionchange/keyup
   });
   ceEl.addEventListener('focus', () => {
-    // if empty, ensure cursor shows
-    if (!getCEText().length) setCESelection(0, 0);
-    paintFromCE();
+    // put a cursor where the CE is focused; default to end
+    if (!getText().length) setSel(0, 0);
+    paint();
   });
 
-  // global selectionchange lets us repaint as you drag to highlight
+  // repaint as you drag to highlight (fix #5)
   document.addEventListener('selectionchange', () => {
-    // only repaint when the selection is inside our CE
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const a = sel.anchorNode, f = sel.focusNode;
     if (ceEl.contains(a) || ceEl.contains(f) || a === ceEl || f === ceEl) {
-      paintFromCE();
+      paint();
     }
   });
 
-  // mount CE into the prompt and show typed line
   promptEl.appendChild(ceEl);
   if (typedEl) typedEl.style.display = 'inline';
+  paint();
 
-  // initial paint to show cursor as soon as you tap to type
-  paintFromCE();
+  // expose helpers
+  ceEl._setSel = setSel;
+  ceEl._paint  = paint;
 
-  // expose helpers on the element for bindPrompt() taps/drags
-  ceEl._setCESelection = setCESelection;
-  ceEl._paintFromCE = paintFromCE;
   iosChromeUsingCE = true;
 }
 
@@ -284,13 +281,8 @@ function focusWithKeyboard(el, onFail){
   const check = () => {
     const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const delta = baseH - nowH;
-    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 200)) {
-      fired = true;
-      return;
-    }
-    if (!fired && Date.now() - t0 > 220) {
-      onFail && onFail();
-    }
+    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 200)) { fired = true; return; }
+    if (!fired && Date.now() - t0 > 220) { onFail && onFail(); }
   };
 
   try { el.focus(); } catch(_) {}
@@ -354,7 +346,7 @@ function bindPrompt(){
       dragAnchorIdx = i;
       try {
         if (document.activeElement !== inputEl) inputEl.focus();
-        inputEl.setSelectionRange(i, i); // collapsed caret
+        inputEl.setSelectionRange(i, i);
       } catch(_) {}
       renderMirror();
       e.preventDefault();
@@ -375,22 +367,20 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: activate CE shim + enable tap/drag caret/selection on the green line
+  // iOS Chrome: activate CE shim + tap/drag caret/selection on the green line
   if (isIOSChrome) {
     const activate = () => {
       if (submittedUI) return;
       focusWithKeyboard(inputEl, () => {
         ensureIOSChromeCE();
         focusWithKeyboard(ceEl);
-        // Paint cursor immediately on focus even if empty
-        if (ceEl && ceEl._paintFromCE) ceEl._paintFromCE();
+        ceEl && ceEl._paint && ceEl._paint(); // show block cursor immediately (fix #1)
       });
     };
     promptEl.addEventListener("touchstart", activate, { passive: true });
     promptEl.addEventListener("click", activate, { passive: true });
 
     const placeFromPoint = (clientX) => indexFromPoint(clientX);
-
     let dragAnchor = null;
 
     const handleDown = (clientX) => {
@@ -398,9 +388,9 @@ function bindPrompt(){
       if (!ceEl) return;
       const i = placeFromPoint(clientX);
       dragAnchor = i;
-      ceEl._setCESelection?.(i, i);
+      ceEl._setSel?.(i, i);
       try { ceEl.focus(); } catch(_) {}
-      ceEl._paintFromCE?.();
+      ceEl._paint?.();
     };
 
     const handleMove = (clientX) => {
@@ -408,19 +398,17 @@ function bindPrompt(){
       const j = placeFromPoint(clientX);
       const a = Math.min(dragAnchor, j);
       const b = Math.max(dragAnchor, j);
-      ceEl._setCESelection?.(a, b);
-      ceEl._paintFromCE?.();
+      ceEl._setSel?.(a, b);
+      ceEl._paint?.();
     };
 
     const handleUp = () => { dragAnchor = null; };
 
     if (typedEl) {
-      // mouse (useful in simulators)
       typedEl.addEventListener('mousedown', (e) => { e.preventDefault(); handleDown(e.clientX); });
       window.addEventListener('mousemove', (e) => handleMove(e.clientX));
       window.addEventListener('mouseup', handleUp);
 
-      // touch (real phone)
       typedEl.addEventListener('touchstart', (e) => {
         const t = e.touches && e.touches[0];
         if (t) handleDown(t.clientX);
@@ -475,15 +463,14 @@ function bindPrompt(){
 
 // Small helper: render <GO> and permanently freeze the mirror
 function showGO(emailText){
-  submittedUI = true;                 // never repaint again
+  submittedUI = true;
   lockedOutput = true;
   if (typedEl) {
-    typedEl.style.display = 'inline'; // ensure visible on Safari
+    typedEl.style.display = 'inline';
     typedEl.innerHTML = `${escapeHTML(emailText)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   try { inputEl.setAttribute("disabled", "disabled"); } catch(_) {}
 
-  // remove any late mirror triggers that might still be queued
   try {
     ["input","focus","blur","keyup","select","click","keydown","keypress"].forEach(evt => {
       inputEl && inputEl.removeEventListener(evt, renderMirror, true);
@@ -496,7 +483,6 @@ function showGO(emailText){
 function trySubmitEmail() {
   if (lockedOutput || submittedUI) return;
 
-  // iOS Chrome CE → hidden input sync one last time
   if (isIOSChrome && iosChromeUsingCE && ceEl) {
     inputEl.value = (ceEl.textContent || '').trim();
   }
@@ -519,7 +505,6 @@ function trySubmitEmail() {
     return;
   }
 
-  // Keep iframe present (1x1)
   try {
     mlIframe.style.position = "absolute";
     mlIframe.style.left = "-9999px";
@@ -530,7 +515,6 @@ function trySubmitEmail() {
     if (!mlIframe.src) mlIframe.src = "about:blank";
   } catch(_) {}
 
-  // Ensure there is a real submit button for requestSubmit()
   let hiddenBtn = mlForm.querySelector('#ml-hidden-submit');
   if (!hiddenBtn) {
     hiddenBtn = document.createElement('button');
@@ -540,13 +524,11 @@ function trySubmitEmail() {
     mlForm.appendChild(hiddenBtn);
   }
 
-  // Freeze UI and show <GO> immediately (Desktop + iOS)
   if (!isAndroid) showGO(email);
   hintEl && (hintEl.textContent = "");
   log("submitting to MailerLite…");
   mlEmail.value = email.toLowerCase();
 
-  // Gate for success/failure
   let finished = false;
   const doneSuccess = () => {
     if (finished) return; finished = true;
@@ -561,13 +543,11 @@ function trySubmitEmail() {
     renderMirror();
   };
 
-  // Strategy A: hidden-iframe submit
   const onLoad = () => doneSuccess();
   mlIframe.addEventListener("load", onLoad, { once: true });
 
   const iframeTO = setTimeout(() => {
     mlIframe.removeEventListener("load", onLoad);
-    // jsonp might still succeed
   }, 9000);
 
   try {
@@ -580,7 +560,6 @@ function trySubmitEmail() {
     log("iframe submit threw:", err);
   }
 
-  // Strategy B: JSONP fallback
   try {
     const base = mlForm.getAttribute('action');
     const cbName = "mlcb_" + Math.random().toString(36).slice(2);
