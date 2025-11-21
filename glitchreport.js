@@ -148,10 +148,10 @@ function ensureIOSChromeCE(){
   ceEl.autocapitalize = 'off';
   ceEl.autocorrect = 'off';
 
-  // Keep CE text invisible; use green block/selection in #typed only
+  // CE is invisible; we render everything in #typed
   Object.assign(ceEl.style, {
     display: 'block',
-    width: '100%',                 // never widen the viewport
+    width: '100%',
     maxWidth: '100%',
     whiteSpace: 'pre-wrap',        // wrap within container
     overflowWrap: 'anywhere',      // break long emails
@@ -161,22 +161,35 @@ function ensureIOSChromeCE(){
     border: '0',
     background: 'transparent',
     color: 'transparent',
-    caretColor: 'transparent',     // hide native blinking caret
+    caretColor: 'transparent',     // hide native caret
     marginLeft: '0.3ch',
     letterSpacing: '0.08em',
-    WebkitUserModify: 'read-write-plaintext-only', // kill .com autolink
+    WebkitUserModify: 'read-write-plaintext-only', // kills .com autolink
     textDecoration: 'none',
     WebkitTextDecorationSkip: 'none',
     textDecorationColor: 'transparent',
     WebkitTapHighlightColor: 'transparent'
   });
 
-  // seed CE with any existing value (ensures there’s a text node)
+  // Make the prompt container and mirror wrap within viewport
+  try {
+    promptEl.style.flexWrap = 'wrap';
+    typedEl.style.display = 'block';
+    typedEl.style.width = '100%';
+    typedEl.style.whiteSpace = 'pre-wrap';
+    typedEl.style.overflowWrap = 'anywhere';
+    typedEl.style.wordBreak = 'break-word';
+    typedEl.style.maxWidth = '100%';
+    typedEl.style.touchAction = 'none'; // enable smooth drag highlight
+  } catch(_){}
+
+  // seed CE with any existing value
   ceEl.textContent = (inputEl?.value || '');
 
   // --- helpers
+  const sanitize = (s) => (s || "").replace(/\r?\n/g, ""); // strip accidental line breaks
   const getNode = () => ceEl.firstChild || ceEl;
-  const getText = () => (ceEl.textContent || '');
+  const getText = () => sanitize(ceEl.textContent || "");
 
   const setSel = (start, end) => {
     const len = getText().length;
@@ -205,18 +218,11 @@ function ensureIOSChromeCE(){
   const paint = () => {
     if (submittedUI || !typedEl) return;
 
-    // Never allow any underline to show up in the mirror
-    typedEl.style.textDecoration = 'none';
-    typedEl.style.whiteSpace = 'pre-wrap';
-    typedEl.style.wordBreak = 'break-word';
-    typedEl.style.overflowWrap = 'anywhere';
-    typedEl.style.maxWidth = '100%';
-
     const raw = getText();
     const sel = getSel();
 
     if (raw.length === 0) {
-      // show the green block cursor even when empty once focused
+      // show the green block cursor on focus before typing
       typedEl.innerHTML = `<span class="cursor-block">&nbsp;</span>`;
       return;
     }
@@ -240,9 +246,18 @@ function ensureIOSChromeCE(){
 
   const syncFromCE = () => {
     if (!inputEl) return;
-    inputEl.value = getText().trim(); // keep real input for submit
+    // keep real input for submit and remove any rogue newlines
+    inputEl.value = getText();
     paint();
   };
+
+  // --- block unwanted iOS CE behaviors (line breaks, formatting)
+  ceEl.addEventListener('beforeinput', (e) => {
+    const t = e.inputType || "";
+    if (t === 'insertLineBreak' || t === 'insertParagraph') {
+      e.preventDefault(); // stop newlines that caused split into two lines
+    }
+  });
 
   // --- events
   ceEl.addEventListener('input', syncFromCE);
@@ -269,7 +284,7 @@ function ensureIOSChromeCE(){
   });
 
   promptEl.appendChild(ceEl);
-  if (typedEl) typedEl.style.display = 'inline';
+  if (typedEl) typedEl.style.display = 'block';
   paint();
 
   // expose helpers
@@ -302,14 +317,14 @@ function enableMobileIME(){
   inputEl.setAttribute('autocomplete','email');
   inputEl.setAttribute('autocapitalize','off');
   inputEl.setAttribute('enterkeyhint','go');
-  if (isIOSChrome) typedEl && (typedEl.style.display = 'inline');
+  if (isIOSChrome) typedEl && (typedEl.style.display = 'block');
 }
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  // Do NOT show the prompt early on iOS Chrome (caret should appear only after header finishes)
+  // Do NOT show the prompt early on iOS Chrome — caret appears only after header finishes
   if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
     promptEl.classList.add('show');
   }
@@ -375,9 +390,8 @@ function bindPrompt(){
       if (submittedUI) return;
       focusWithKeyboard(inputEl, () => {
         ensureIOSChromeCE();
-        // Show the green cursor immediately even before typing
+        // Show green cursor immediately even before typing
         focusWithKeyboard(ceEl, () => {});
-        // If nothing is typed yet, ensure the caret is at end and painted
         if (ceEl && ceEl._paint) {
           const len = (ceEl.textContent || '').length;
           ceEl._setSel?.(len, len);
@@ -385,7 +399,8 @@ function bindPrompt(){
         }
       });
     };
-    // Use non-passive so we can preventDefault during drags (keeps typing enabled)
+
+    // Not passive so we can preventDefault during drags (keeps typing enabled)
     promptEl.addEventListener("touchstart", (e) => { activate(); }, { passive: false });
     promptEl.addEventListener("click", activate, { passive: true });
 
@@ -398,7 +413,7 @@ function bindPrompt(){
       const i = placeFromPoint(clientX);
       dragAnchor = i;
       ceEl._setSel?.(i, i);
-      // Focus CE so typing works after moving to end
+      // Force focus so typing works after jumping to end
       focusWithKeyboard(ceEl, () => {});
       ceEl._paint?.();
       if (e) e.preventDefault();
@@ -411,7 +426,7 @@ function bindPrompt(){
       const b = Math.max(dragAnchor, j);
       ceEl._setSel?.(a, b);
       ceEl._paint?.();
-      if (e) e.preventDefault(); // keeps drag highlight smooth and stops scrolling
+      if (e) e.preventDefault(); // keeps drag highlight smooth and stops page scroll
     };
 
     const handleUp = () => { dragAnchor = null; };
@@ -478,7 +493,7 @@ function showGO(emailText){
   submittedUI = true;
   lockedOutput = true;
   if (typedEl) {
-    typedEl.style.display = 'inline';
+    typedEl.style.display = 'block';
     typedEl.innerHTML = `${escapeHTML(emailText)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   try { inputEl.setAttribute("disabled", "disabled"); } catch(_) {}
@@ -496,7 +511,8 @@ function trySubmitEmail() {
   if (lockedOutput || submittedUI) return;
 
   if (isIOSChrome && iosChromeUsingCE && ceEl) {
-    inputEl.value = (ceEl.textContent || '').trim();
+    // final newline scrub just in case
+    inputEl.value = (ceEl.textContent || '').replace(/\r?\n/g, '').trim();
   }
 
   const email = (inputEl.value || "").trim();
