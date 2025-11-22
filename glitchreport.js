@@ -44,6 +44,10 @@ let iosChromeUsingCE = false; // whether CE is active
 // Line map cache for robust hit-testing
 let _lineMap = null;     // [{top,bottom,midY,spans:[{i,left,midX,right}]}...]
 
+// Keyboard avoidance (iOS Chrome small screens)
+let vvBaseHeight = null;
+let ceFocused = false;
+
 // ===== UTIL =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 function escapeHTML(s){
@@ -262,7 +266,7 @@ function indexFromPoint(clientX, clientY){
   // outside left → start of this line
   if (clientX < bestLine.spans[0].left - 16) return clamp(bestLine.spans[0].i, 0, raw.length);
 
-  // outside right → ***END OF WHOLE STRING*** (requested behavior)
+  // outside right → END OF WHOLE STRING (requested behavior)
   const lastCh = bestLine.spans[bestLine.spans.length - 1];
   if (clientX > lastCh.right + 16) return raw.length;
 
@@ -283,6 +287,49 @@ function caretRAF(){
     }
   }
   requestAnimationFrame(caretRAF);
+}
+
+// ===== iOS CHROME: keyboard avoidance =====
+function keyboardInsetPX(){
+  if (!window.visualViewport) return 0;
+  if (vvBaseHeight == null) vvBaseHeight = window.visualViewport.height;
+  const vv = window.visualViewport;
+  // how much shorter the viewport is vs baseline (approx keyboard height)
+  return Math.max(0, Math.round(vvBaseHeight - vv.height));
+}
+function applyKeyboardPadding(){
+  if (!isIOSChrome) return;
+  const inset = keyboardInsetPX();
+  // add padding so there is space to scroll content above keyboard
+  document.body.style.paddingBottom = inset > 0 ? (inset + 24) + "px" : "";
+}
+function ensurePromptVisible(reason){
+  if (!isIOSChrome || !promptEl || !typedEl) return;
+  // run in next frame to let layout settle after resize/focus
+  requestAnimationFrame(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const tr = typedEl.getBoundingClientRect();
+    const safeBottom = vv.height - 10;        // bottom of visible viewport
+    const desiredGap = 20;                    // keep some space below text
+    const overflow = (tr.bottom + desiredGap) - safeBottom;
+    if (overflow > 0) {
+      // scroll the page (layout viewport) upward by the overflow amount
+      const targetY = Math.max(0, window.scrollY + overflow);
+      window.scrollTo({ top: targetY, behavior: "auto" });
+    }
+  });
+}
+function bindKeyboardAvoidance(){
+  if (!isIOSChrome || !window.visualViewport) return;
+  vvBaseHeight = window.visualViewport.height;
+
+  const onVV = () => {
+    applyKeyboardPadding();
+    if (ceFocused) ensurePromptVisible("vv");
+  };
+  window.visualViewport.addEventListener("resize", onVV);
+  window.visualViewport.addEventListener("scroll", onVV);
 }
 
 // ===== iOS CHROME CE SHIM =====
@@ -406,9 +453,17 @@ function ensureIOSChromeCE(){
     if (e.key === "Enter") { e.preventDefault(); trySubmitEmail(); return; }
   });
   ceEl.addEventListener("focus", () => {
+    ceFocused = true;
+    applyKeyboardPadding();
+    ensurePromptVisible("focus");
     const len = (ceEl.textContent || "").length;
     setSel(len, len);
     paint();
+  });
+  ceEl.addEventListener("blur", () => {
+    ceFocused = false;
+    // remove extra padding after keyboard hides
+    setTimeout(() => { if (!ceFocused) document.body.style.paddingBottom = ""; }, 300);
   });
 
   document.addEventListener("selectionchange", () => {
@@ -428,6 +483,7 @@ function ensureIOSChromeCE(){
   iosChromeUsingCE = true;
 }
 
+// Keep CE focused and move keyboard reliably
 function focusWithKeyboard(el, onFail){
   const baseH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   let fired = false;
@@ -435,12 +491,12 @@ function focusWithKeyboard(el, onFail){
   const check = () => {
     const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const delta = baseH - nowH;
-    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 200)) { fired = true; return; }
-    if (!fired && Date.now() - t0 > 220) { onFail && onFail(); }
+    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 220)) { fired = true; ensurePromptVisible("focus-check"); return; }
+    if (!fired && Date.now() - t0 > 260) { onFail && onFail(); }
   };
   try { el.focus(); } catch(_) {}
-  setTimeout(check, 160);
-  setTimeout(check, 240);
+  setTimeout(check, 180);
+  setTimeout(check, 280);
 }
 
 // ===== MOBILE IME CONFIG =====
@@ -517,8 +573,10 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome ONLY: Pointer Events with capture for single-finger highlight
+  // iOS Chrome ONLY: Pointer Events with capture for single-finger highlight + keyboard avoidance
   if (isIOSChrome && window.PointerEvent) {
+    bindKeyboardAvoidance();
+
     typedEl.style.touchAction = "none";
     promptEl.style.touchAction = "none";
 
@@ -547,6 +605,8 @@ function bindPrompt(){
       paintMirrorRange(ceEl.textContent || "", i, i);
 
       try { ceEl.focus(); } catch(_) {}
+      applyKeyboardPadding();
+      ensurePromptVisible("pointerdown");
       focusWithKeyboard(ceEl, () => {});
       ev.preventDefault();
     };
@@ -590,15 +650,19 @@ function bindPrompt(){
           x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
         peDown(ev);
       } else if (x > tr.right + H_PAD) {
-        // Tap far to the RIGHT of the text region → jump to END of whole string
+        // Far right → jump to END of whole string
         const raw = (ceEl.textContent || "");
         const len = raw.length;
         ceEl._setSel?.(len, len);
         paintMirrorRange(raw, len, len);
         try { ceEl.focus(); } catch(_) {}
+        applyKeyboardPadding();
+        ensurePromptVisible("tap-right");
         focusWithKeyboard(ceEl, () => {});
       } else {
         try { ceEl.focus(); } catch(_) {}
+        applyKeyboardPadding();
+        ensurePromptVisible("region");
         focusWithKeyboard(ceEl, () => {});
       }
       ev.preventDefault();
@@ -799,5 +863,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
   if (!isIOSChrome) requestAnimationFrame(caretRAF); // CE paints for iOS Chrome
+  if (isIOSChrome) bindKeyboardAvoidance();
   if (DIAG) console.info("[gate] diagnostics mode ON");
 });
