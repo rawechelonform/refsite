@@ -23,11 +23,13 @@ const mlIframe = document.getElementById("ml_iframe");
 const UA = navigator.userAgent || "";
 const isAndroid    = /Android/i.test(UA);
 const isIOS        = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome  = /CriOS/i.test(UA);         // Chrome on iOS
+const isIOSChrome  = /CriOS/i.test(UA);                   // Chrome on iOS
+// Android Chrome only (exclude Edge, Samsung, Opera)
+const isAndroidChrome = isAndroid && /Chrome\/\d+/i.test(UA) && !/EdgA|SamsungBrowser|OPR\//i.test(UA);
 const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// Mark Android early so CSS can stabilize layout before any taps
-if (isAndroid) document.documentElement.classList.add('android-stable');
+// Only mark "android-stable" for non-Chrome Android browsers
+if (isAndroid && !isAndroidChrome) document.documentElement.classList.add('android-stable');
 
 // Desktop flag (unchanged behavior)
 const isDesktop = !isTouch;
@@ -64,7 +66,7 @@ function typeWriter(text, el, speed = 40, done){
 }
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
-// ===== DESKTOP MIRROR (unchanged paths) =====
+// ===== MIRROR RENDERING =====
 function htmlAtRange(a, b, raw){
   let out = "";
   for (let i = a; i < b; i++){
@@ -72,11 +74,16 @@ function htmlAtRange(a, b, raw){
   }
   return out;
 }
+
 function renderMirror(){
   if (submittedUI) return;
-  if (!typedEl || !inputEl || isAndroid) return;
+
+  // Skip only for non-Chrome Android (which uses native input path)
+  if (!typedEl || !inputEl) return;
+  if (isAndroid && !isAndroidChrome) return;
   if (isIOSChrome && iosChromeUsingCE) return; // iOS Chrome paints via CE path
 
+  // If not focused or locked, just show plain text
   if (document.activeElement !== inputEl || lockedOutput) {
     typedEl.textContent = inputEl.value || "";
     return;
@@ -88,13 +95,6 @@ function renderMirror(){
   const selMin = Math.min(start, end);
   const selMax = Math.max(start, end);
 
-  let html = "";
-  for (let i = 0; i < raw.length; i++){
-    const ch = escapeHTML(raw[i]);
-    const cls = (i >= selMin && i < selMax) ? "ch cursor-sel" : "ch";
-    html += `<span class="${cls}" data-i="${i}">${ch}</span>`;
-  }
-
   if (selMin === selMax) {
     const idx = selMin;
     const before = htmlAtRange(0, idx, raw);
@@ -102,13 +102,20 @@ function renderMirror(){
     const after  = htmlAtRange(idx + (raw[idx] ? 1 : 0), raw.length, raw);
     typedEl.innerHTML = before + `<span class="cursor-block">${atChar}</span>` + after;
   } else {
+    let html = "";
+    for (let i = 0; i < raw.length; i++){
+      const ch = escapeHTML(raw[i]);
+      const cls = (i >= selMin && i < selMax) ? "ch cursor-sel" : "ch";
+      html += `<span class="${cls}" data-i="${i}">${ch}</span>`;
+    }
     typedEl.innerHTML = html;
   }
 }
+
 function indexFromPoint(clientX){
   if (!typedEl) return 0;
   const boxes = typedEl.querySelectorAll('.ch');
-  if (!boxes.length) return 0;
+  if (!boxes.length) return Math.min((inputEl.value || "").length, 0);
   let bestI = 0, bestDist = Infinity;
   boxes.forEach((el) => {
     const rect = el.getBoundingClientRect();
@@ -119,10 +126,15 @@ function indexFromPoint(clientX){
   return bestI;
 }
 
-// ===== RAF (desktop + iOS Safari only) =====
+// ===== RAF (desktop + iOS Safari + Android Chrome) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
-  if (!inputEl || isAndroid || (isIOSChrome && iosChromeUsingCE)) { requestAnimationFrame(caretRAF); return; }
+  const skip =
+    (isAndroid && !isAndroidChrome) ||      // native input only for non-Chrome Android
+    (isIOSChrome && iosChromeUsingCE);      // CE handles paint on iOS Chrome
+
+  if (!inputEl || skip) { requestAnimationFrame(caretRAF); return; }
+
   if (!lockedOutput && !submittedUI) {
     const v = inputEl.value || "";
     const s = inputEl.selectionStart ?? v.length;
@@ -148,7 +160,6 @@ function ensureIOSChromeCE(){
   ceEl.autocapitalize = 'off';
   ceEl.autocorrect = 'off';
 
-  // Keep CE out of layout entirely; we mirror visuals in #typed
   Object.assign(ceEl.style, {
     position: 'absolute',
     left: '-9999px',
@@ -156,13 +167,12 @@ function ensureIOSChromeCE(){
     width: '1px',
     height: '1px',
     overflow: 'hidden',
-
     outline: 'none',
     border: '0',
     background: 'transparent',
     color: 'transparent',
-    caretColor: 'transparent',                 // hide native caret
-    WebkitUserModify: 'read-write-plaintext-only', // kills .com autolink
+    caretColor: 'transparent',
+    WebkitUserModify: 'read-write-plaintext-only',
     textDecoration: 'none',
     WebkitTextDecorationSkip: 'none',
     textDecorationColor: 'transparent',
@@ -170,10 +180,8 @@ function ensureIOSChromeCE(){
     letterSpacing: '0.08em'
   });
 
-  // seed CE with any existing value
   ceEl.textContent = (inputEl?.value || '');
 
-  // --- helpers
   const getNode = () => ceEl.firstChild || ceEl;
   const getText = () => (ceEl.textContent || '');
 
@@ -204,7 +212,6 @@ function ensureIOSChromeCE(){
   const paint = () => {
     if (submittedUI || !typedEl) return;
 
-    // mirror styling: no underline, wrap within viewport
     typedEl.style.textDecoration = 'none';
     typedEl.style.whiteSpace = 'pre-wrap';
     typedEl.style.wordBreak = 'break-word';
@@ -238,11 +245,10 @@ function ensureIOSChromeCE(){
 
   const syncFromCE = () => {
     if (!inputEl) return;
-    inputEl.value = getText().trim(); // keep real input for submit
+    inputEl.value = getText().trim();
     paint();
   };
 
-  // block accidental newlines (which could split lines)
   ceEl.addEventListener('beforeinput', (e) => {
     const t = e.inputType || "";
     if (t === 'insertLineBreak' || t === 'insertParagraph') e.preventDefault();
@@ -257,7 +263,7 @@ function ensureIOSChromeCE(){
     if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
   });
   ceEl.addEventListener('focus', () => {
-    const len = getText().length;
+    const len = (ceEl.textContent || '').length;
     setSel(len, len);
     paint();
   });
@@ -309,8 +315,8 @@ function enableMobileIME(){
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  // Do NOT show the prompt early on iOS Chrome; show after header finishes
-  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
+  // Show prompt early on Android non-Chrome path only
+  if (isAndroid && !isAndroidChrome && promptEl && !promptEl.classList.contains('show')) {
     promptEl.classList.add('show');
   }
 
@@ -319,7 +325,7 @@ function startTerminalSequence(){
       if (promptEl && !promptEl.classList.contains('show')) promptEl.classList.add("show");
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
-      if (!isAndroid) renderMirror();
+      if (!(isAndroid && !isAndroidChrome)) renderMirror();
     });
   }, 300);
 }
@@ -367,7 +373,65 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome: show green block cursor immediately on tap; support drag/highlight
+  // ANDROID CHROME: tap-to-place caret + drag to highlight using the mirror
+  if (isAndroidChrome) {
+    // Ensure mirror is visible on Android Chrome
+    if (typedEl) typedEl.style.display = 'inline';
+
+    // Help Android open keyboard when input is visually tiny/offscreen
+    const focusInputForIME = () => {
+      try { inputEl.focus({ preventScroll: true }); } catch(_) { try { inputEl.focus(); } catch(_) {} }
+    };
+
+    const handleDown = (clientX, e) => {
+      if (submittedUI) return;
+      const i = indexFromPoint(clientX);
+      dragging = true;
+      dragAnchorIdx = i;
+      focusInputForIME();
+      try { inputEl.setSelectionRange(i, i); } catch(_){}
+      renderMirror();
+      if (e) e.preventDefault();
+    };
+
+    const handleMove = (clientX, e) => {
+      if (!dragging || dragAnchorIdx == null || submittedUI) return;
+      const j = indexFromPoint(clientX);
+      const a = Math.min(dragAnchorIdx, j);
+      const b = Math.max(dragAnchorIdx, j) + 1;
+      try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch(_){}
+      renderMirror();
+      if (e) e.preventDefault();
+    };
+
+    const handleUp = () => {
+      dragging = false;
+      dragAnchorIdx = null;
+    };
+
+    if (typedEl) {
+      // Mouse (desktop Android emulators)
+      typedEl.addEventListener('mousedown', (e) => handleDown(e.clientX, e), { passive: false });
+      window.addEventListener('mousemove', (e) => handleMove(e.clientX, e), { passive: false });
+      window.addEventListener('mouseup', handleUp);
+
+      // Touch
+      typedEl.addEventListener('touchstart', (e) => {
+        const t = e.touches && e.touches[0];
+        if (t) handleDown(t.clientX, e);
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        const t = e.touches && e.touches[0];
+        if (t) handleMove(t.clientX, e);
+      }, { passive: false });
+
+      window.addEventListener('touchend', handleUp);
+      window.addEventListener('touchcancel', handleUp);
+    }
+  }
+
+  // iOS Chrome: CE shim path
   if (isIOSChrome) {
     const showCursorNow = () => {
       if (submittedUI) return;
@@ -381,7 +445,7 @@ function bindPrompt(){
     };
 
     promptEl.addEventListener('touchstart', (e) => {
-      e.preventDefault();   // prevents iOS from swallowing the first tap
+      e.preventDefault();
       showCursorNow();
     }, { passive: false });
     promptEl.addEventListener('click', showCursorNow, { passive: true });
@@ -437,8 +501,8 @@ function bindPrompt(){
     }, { passive: true });
   }
 
-  // Mirror updates (desktop + iOS Safari)
-  if (!(isAndroid || isIOSChrome)) {
+  // Mirror updates (desktop + iOS Safari + Android Chrome)
+  if (!(isAndroid && !isAndroidChrome) && !isIOSChrome) {
     ["input","focus","blur","keyup","select","click"].forEach(evt =>
       inputEl.addEventListener(evt, renderMirror)
     );
@@ -453,7 +517,7 @@ function bindPrompt(){
     e.preventDefault();
     const len = (inputEl.value || "").length;
     try { inputEl.setSelectionRange(0, len); } catch(_) {}
-    if (!(isAndroid || (isIOSChrome && iosChromeUsingCE))) renderMirror();
+    if (!((isAndroid && !isAndroidChrome) || (isIOSChrome && iosChromeUsingCE))) renderMirror();
   }, true);
 
   // Enter/Go to submit
@@ -532,7 +596,7 @@ function trySubmitEmail() {
     mlForm.appendChild(hiddenBtn);
   }
 
-  if (!isAndroid) showGO(email);
+  if (!(isAndroid && !isAndroidChrome)) showGO(email);
   hintEl && (hintEl.textContent = "");
   mlEmail.value = email.toLowerCase();
 
@@ -614,6 +678,7 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!(isAndroid)) requestAnimationFrame(caretRAF);
+  // run RAF for desktop, iOS Safari, and Android Chrome mirror
+  if (!((isAndroid && !isAndroidChrome))) requestAnimationFrame(caretRAF);
   if (DIAG) console.info("[gate] diagnostics mode ON");
 });
