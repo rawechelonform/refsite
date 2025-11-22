@@ -359,3 +359,31 @@ html.android-stable #cmd.cmd {
 
 #iosc-ce::selection { background: var(--crt) !important; color:#000 !important; -webkit-text-fill-color:#000 !important; }
 #iosc-ce { text-decoration:none !important; -webkit-text-decoration-skip:none !important; text-decoration-color:transparent !important; }
+
+
+
+/* === ANDROID CHROME-ONLY WRAP FIX ===
+   JS will add html.android-chrome
+   keeps long emails from widening the page and forces wrap at viewport edge
+*/
+html.android-chrome .terminal,
+html.android-chrome .wrap {
+  overflow-x: hidden;
+}
+
+html.android-chrome .prompt {
+  flex-wrap: wrap;         /* allow the typed line to wrap under the caret */
+}
+
+html.android-chrome .caret {
+  flex: 0 0 auto;          /* caret stays fixed width, never stretches */
+}
+
+html.android-chrome #typed {
+  display: inline-block;               /* participates in flex-wrapping */
+  max-width: calc(100% - 1.3ch);       /* space for the '>' caret */
+  white-space: pre-wrap;               /* preserve spaces, allow wrapping */
+  overflow-wrap: anywhere;             /* break long no-space strings (emails) */
+  word-break: break-word;              /* extra safety for long tokens */
+  line-height: 1.2;                    /* tiny bump helps readability on wrap */
+}

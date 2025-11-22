@@ -23,17 +23,28 @@ const mlIframe = document.getElementById("ml_iframe");
 const UA = navigator.userAgent || "";
 const isAndroid    = /Android/i.test(UA);
 const isIOS        = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome  = /CriOS/i.test(UA);                   // Chrome on iOS
+const isIOSChrome  = /CriOS/i.test(UA); // Chrome on iOS
+
 // Android Chrome only (exclude Edge, Samsung, Opera)
-const isAndroidChrome = isAndroid && /Chrome\/\d+/i.test(UA) && !/EdgA|SamsungBrowser|OPR\//i.test(UA);
-const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const isAndroidChrome =
+  isAndroid &&
+  /Chrome\/\d+/i.test(UA) &&
+  !/EdgA|SamsungBrowser|OPR\//i.test(UA);
 
-// Only mark "android-stable" for non-Chrome Android browsers
-if (isAndroid && !isAndroidChrome) document.documentElement.classList.add('android-stable');
+// Add classes:
+// - android-chrome → our mirror + wrapping rules
+// - android-stable → original Android fallback (non-Chrome)
+if (isAndroidChrome) {
+  document.documentElement.classList.add('android-chrome');
+} else if (isAndroid) {
+  document.documentElement.classList.add('android-stable');
+}
 
-// Desktop flag (unchanged behavior)
+// Desktop flag (unchanged)
+const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 const isDesktop = !isTouch;
 if (isDesktop) document.documentElement.classList.add('desktop');
+
 
 // ===== STATE =====
 let lockedOutput = false;     // freezes mirror during/after submit
