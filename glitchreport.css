@@ -392,3 +392,19 @@ html.ios-chrome #typed .cursor-block {
   white-space: normal;
   word-break: break-word;
 }
+
+
+
+/* iOS Chrome: prevent ".com" (etc) auto-link underline in the mirror + hidden input */
+html.ios-chrome #typed,
+html.ios-chrome #cmd,
+html.ios-chrome #iosc-ce {
+  -webkit-user-modify: read-write-plaintext-only;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-decoration-skip: none;
+  text-decoration: none !important;
+  text-decoration-color: transparent !important;
+  -webkit-text-fill-color: inherit !important;
+  -webkit-user-drag: none;
+  -webkit-user-select: text;
+}
