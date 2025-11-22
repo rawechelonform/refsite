@@ -69,7 +69,63 @@ function typeWriter(text, el, speed = 40, done){
     } else { done && done(); }
   })();
 }
-function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+// ===== STRICT WHITELIST VALIDATION (ONLY ALLOW THESE DOMAINS) =====
+const ALLOWED_EMAIL_DOMAINS = [
+  // Google
+  "gmail.com",
+  // Yahoo
+  "yahoo.com","ymail.com","rocketmail.com","yahoo.co.uk",
+  // Microsoft
+  "outlook.com","hotmail.com","live.com","msn.com",
+  "outlook.co.uk","live.co.uk","hotmail.co.uk",
+  // Apple
+  "icloud.com","me.com","mac.com",
+  // AOL / Verizon
+  "aol.com","verizon.net",
+  // ISP/common US
+  "comcast.net","att.net","sbcglobal.net","bellsouth.net","cox.net","charter.net",
+  // Privacy / alt providers
+  "proton.me","protonmail.com","tutanota.com","tuta.com","pm.me",
+  // Other popular
+  "gmx.com","mail.com","zoho.com","yandex.com","fastmail.com"
+];
+
+const ALLOWED_DOMAINS_RE = new RegExp(
+  "^([^\\s@]+)@(" + ALLOWED_EMAIL_DOMAINS.map(d => d.replace(/\./g, "\\.")).join("|") + ")$",
+  "i"
+);
+
+function isValidEmail(e){
+  const s = String(e || "").trim().toLowerCase();
+  // basic syntax first
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return false;
+  // then whitelist
+  return ALLOWED_DOMAINS_RE.test(s);
+}
+
+// Enforce same rule on hidden MailerLite input + hard stop at form level
+(function enforceHiddenFormWhitelist(){
+  if (!mlForm || !mlEmail) return;
+
+  const pattern = "^[^@]+@(" + ALLOWED_EMAIL_DOMAINS.map(d => d.replace(/\./g, "\\.")).join("|") + ")$";
+  mlEmail.setAttribute("pattern", pattern);
+
+  mlForm.addEventListener("submit", (ev) => {
+    const visibleValue =
+      (ceEl && ceEl.textContent ? ceEl.textContent : (inputEl?.value || ""));
+    if (!isValidEmail(visibleValue)) {
+      ev.preventDefault();
+      try {
+        mlEmail.setCustomValidity("invalid email.");
+        mlEmail.reportValidity();
+      } catch(_) {}
+      if (hintEl) hintEl.textContent = "invalid email.";
+    } else {
+      try { mlEmail.setCustomValidity(""); } catch(_) {}
+    }
+  }, true);
+})();
 
 // ===== MIRROR (non–iOS Chrome paths) =====
 function htmlAtRange(a, b, raw){
@@ -294,27 +350,22 @@ function keyboardInsetPX(){
   if (!window.visualViewport) return 0;
   if (vvBaseHeight == null) vvBaseHeight = window.visualViewport.height;
   const vv = window.visualViewport;
-  // how much shorter the viewport is vs baseline (approx keyboard height)
   return Math.max(0, Math.round(vvBaseHeight - vv.height));
 }
 function applyKeyboardPadding(){
   if (!isIOSChrome) return;
   const inset = keyboardInsetPX();
-  // add padding so there is space to scroll content above keyboard
   document.body.style.paddingBottom = inset > 0 ? (inset + 24) + "px" : "";
 }
-function ensurePromptVisible(reason){
-  if (!isIOSChrome || !promptEl || !typedEl) return;
-  // run in next frame to let layout settle after resize/focus
+function ensurePromptVisible(){
+  if (!isIOSChrome || !promptEl || !typedEl || !window.visualViewport) return;
   requestAnimationFrame(() => {
     const vv = window.visualViewport;
-    if (!vv) return;
     const tr = typedEl.getBoundingClientRect();
-    const safeBottom = vv.height - 10;        // bottom of visible viewport
-    const desiredGap = 20;                    // keep some space below text
+    const safeBottom = vv.height - 10;
+    const desiredGap = 20;
     const overflow = (tr.bottom + desiredGap) - safeBottom;
     if (overflow > 0) {
-      // scroll the page (layout viewport) upward by the overflow amount
       const targetY = Math.max(0, window.scrollY + overflow);
       window.scrollTo({ top: targetY, behavior: "auto" });
     }
@@ -326,7 +377,7 @@ function bindKeyboardAvoidance(){
 
   const onVV = () => {
     applyKeyboardPadding();
-    if (ceFocused) ensurePromptVisible("vv");
+    if (ceFocused) ensurePromptVisible();
   };
   window.visualViewport.addEventListener("resize", onVV);
   window.visualViewport.addEventListener("scroll", onVV);
@@ -455,14 +506,13 @@ function ensureIOSChromeCE(){
   ceEl.addEventListener("focus", () => {
     ceFocused = true;
     applyKeyboardPadding();
-    ensurePromptVisible("focus");
+    ensurePromptVisible();
     const len = (ceEl.textContent || "").length;
     setSel(len, len);
     paint();
   });
   ceEl.addEventListener("blur", () => {
     ceFocused = false;
-    // remove extra padding after keyboard hides
     setTimeout(() => { if (!ceFocused) document.body.style.paddingBottom = ""; }, 300);
   });
 
@@ -491,7 +541,7 @@ function focusWithKeyboard(el, onFail){
   const check = () => {
     const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const delta = baseH - nowH;
-    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 220)) { fired = true; ensurePromptVisible("focus-check"); return; }
+    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 220)) { fired = true; ensurePromptVisible(); return; }
     if (!fired && Date.now() - t0 > 260) { onFail && onFail(); }
   };
   try { el.focus(); } catch(_) {}
@@ -606,7 +656,7 @@ function bindPrompt(){
 
       try { ceEl.focus(); } catch(_) {}
       applyKeyboardPadding();
-      ensurePromptVisible("pointerdown");
+      ensurePromptVisible();
       focusWithKeyboard(ceEl, () => {});
       ev.preventDefault();
     };
@@ -657,12 +707,12 @@ function bindPrompt(){
         paintMirrorRange(raw, len, len);
         try { ceEl.focus(); } catch(_) {}
         applyKeyboardPadding();
-        ensurePromptVisible("tap-right");
+        ensurePromptVisible();
         focusWithKeyboard(ceEl, () => {});
       } else {
         try { ceEl.focus(); } catch(_) {}
         applyKeyboardPadding();
-        ensurePromptVisible("region");
+        ensurePromptVisible();
         focusWithKeyboard(ceEl, () => {});
       }
       ev.preventDefault();
@@ -744,20 +794,22 @@ function trySubmitEmail() {
   }
 
   const email = (inputEl.value || "").trim();
+
+  // HARD BLOCK here too
   if (!isValidEmail(email)){
-    hintEl && (hintEl.textContent = "invalid email.");
-    log("invalid email");
+    if (hintEl) hintEl.textContent = "invalid email.";
+    try { mlEmail && mlEmail.setCustomValidity("invalid email."); } catch(_) {}
     return;
   }
+  try { mlEmail && mlEmail.setCustomValidity(""); } catch(_) {}
 
   const honeypot = mlForm?.querySelector('input[name="website"]');
   if (honeypot && honeypot.value) {
-    log("honeypot filled; dropping");
-    hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
+    if (hintEl) hintEl.textContent = "hmm… couldn’t reach mail server. try again?";
     return;
   }
   if (!(mlForm && mlEmail && mlIframe)) {
-    hintEl && (hintEl.textContent = "form not ready");
+    if (hintEl) hintEl.textContent = "form not ready";
     return;
   }
 
@@ -781,7 +833,7 @@ function trySubmitEmail() {
   }
 
   if (!isAndroid) showGO(email);
-  hintEl && (hintEl.textContent = "");
+  if (hintEl) hintEl.textContent = "";
   mlEmail.value = email.toLowerCase();
 
   let finished = false;
@@ -794,7 +846,7 @@ function trySubmitEmail() {
     submittedUI = false;
     lockedOutput = false;
     try { inputEl.removeAttribute("disabled"); } catch(_) {}
-    hintEl && (hintEl.textContent = "hmm… couldn’t reach mail server. try again?");
+    if (hintEl) hintEl.textContent = "hmm… couldn’t reach mail server. try again?";
     renderMirror();
   };
 
