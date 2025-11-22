@@ -205,7 +205,7 @@ html, body {
   background: transparent;
   border: 0;
   padding: 0;
-  font-size: 16px;    /* prevents iOS zoom-on-focus */
+  font-size: 16px;
   z-index: 1;
   pointer-events: auto !important;
   caret-color: transparent;
@@ -301,23 +301,20 @@ html, body {
   }
 }
 
-
-/* desktop only: keep the real input offscreen so Chrome's suggestion UI is hidden */
+/* desktop only: keep the real input offscreen */
 html.desktop #cmd.cmd {
   left: -9999px !important;
   bottom: auto !important;
 }
 
-
-
-/* === ANDROID-ONLY OVERRIDES (JS adds html.android-stable) === */
+/* === ANDROID-ONLY OVERRIDES (unchanged) === */
 html.android-stable .typed { display: none !important; }
 html.android-stable #cmd.cmd {
   position: static !important;
   width: 100% !important;
   height: 1.9rem !important;
   line-height: 1.9rem !important;
-  margin-left: 1.3ch !important;   /* after ">" caret */
+  margin-left: 1.3ch !important;
   opacity: 1 !important;
   color: var(--crt) !important;
   caret-color: var(--crt) !important;
@@ -330,7 +327,6 @@ html.android-stable #cmd.cmd {
   pointer-events: auto !important;
 }
 
-
 /* Never underline anything inside the fake terminal line */
 .terminal, .terminal * {
   text-decoration: none !important;
@@ -338,52 +334,61 @@ html.android-stable #cmd.cmd {
   text-decoration-skip-ink: none !important;
 }
 
-
-
-
-/* Banner that appears after successful registration */
+/* Banner after successful registration */
 .reg-banner {
   position: relative;
   width: 100%;
-  background: #0a0;       /* green-ish; adjust to taste */
+  background: #0a0;
   color: #000;
   font-family: 'DotGothic16', system-ui, monospace;
   letter-spacing: 0.05em;
   padding: 10px 14px;
   border-bottom: 2px solid #030;
-  display: none;          /* default hidden; JS will show it */
-  z-index: 5;             /* above photo, below fixed menu if any */
+  display: none;
+  z-index: 5;
 }
 .reg-banner.show { display: block; }
-
 
 #iosc-ce::selection { background: var(--crt) !important; color:#000 !important; -webkit-text-fill-color:#000 !important; }
 #iosc-ce { text-decoration:none !important; -webkit-text-decoration-skip:none !important; text-decoration-color:transparent !important; }
 
 
 
-/* === ANDROID CHROME-ONLY WRAP FIX ===
-   JS will add html.android-chrome
-   keeps long emails from widening the page and forces wrap at viewport edge
-*/
-html.android-chrome .terminal,
-html.android-chrome .wrap {
+
+/* === CHROME ON iOS ONLY: pin caret to first line while #typed wraps === */
+html.ios-chrome .wrap,
+html.ios-chrome .terminal {
+  max-width: 100%;
   overflow-x: hidden;
 }
 
-html.android-chrome .prompt {
-  flex-wrap: wrap;         /* allow the typed line to wrap under the caret */
+html.ios-chrome .prompt {
+  display: flex;
+  flex-wrap: nowrap;          /* stay on one flex row */
+  align-items: flex-start;    /* caret sticks to top line */
+  min-width: 0;
 }
 
-html.android-chrome .caret {
-  flex: 0 0 auto;          /* caret stays fixed width, never stretches */
+html.ios-chrome .caret {
+  flex: 0 0 auto;             /* fixed width */
+  align-self: flex-start;     /* never vertically center when #typed is multi-line */
+  line-height: 1;             /* avoid extra vertical wiggle */
 }
 
-html.android-chrome #typed {
-  display: inline-block;               /* participates in flex-wrapping */
-  max-width: calc(100% - 1.3ch);       /* space for the '>' caret */
-  white-space: pre-wrap;               /* preserve spaces, allow wrapping */
-  overflow-wrap: anywhere;             /* break long no-space strings (emails) */
-  word-break: break-word;              /* extra safety for long tokens */
-  line-height: 1.2;                    /* tiny bump helps readability on wrap */
+html.ios-chrome #typed {
+  display: inline-block;
+  flex: 1 1 auto;             /* occupy the same row as the caret */
+  min-width: 0;
+  max-width: calc(100% - 1.3ch);  /* room for '>' */
+  white-space: normal;            /* wrap inside the element */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* per-char spans shouldn’t force no-wrap */
+html.ios-chrome #typed .ch,
+html.ios-chrome #typed .cursor-block {
+  white-space: normal;
+  word-break: break-word;
 }
