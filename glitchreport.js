@@ -23,36 +23,35 @@ const mlIframe = document.getElementById("ml_iframe");
 const UA = navigator.userAgent || "";
 const isAndroid    = /Android/i.test(UA);
 const isIOS        = /iPhone|iPad|iPod/i.test(UA);
-const isIOSChrome  = /CriOS/i.test(UA);         // Chrome on iOS
-const isTouch      = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const isIOSChrome  = /CriOS/i.test(UA);         // Chrome on iOS (WebKit)
+const isTouch      = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
 
-// tag only the browser we’re customizing
 if (isIOSChrome) {
-  document.documentElement.classList.add('ios-chrome');
+  document.documentElement.classList.add("ios-chrome");
 } else if (isAndroid) {
-  document.documentElement.classList.add('android-stable');
+  document.documentElement.classList.add("android-stable");
 }
 
-// Desktop flag
 const isDesktop = !isTouch;
-if (isDesktop) document.documentElement.classList.add('desktop');
+if (isDesktop) document.documentElement.classList.add("desktop");
 
 // ===== STATE =====
 let lockedOutput = false;
 let submittedUI  = false;
-let dragging = false;
-let dragAnchorIdx = null;
-let ceEl = null;
-let iosChromeUsingCE = false;
+let ceEl = null;              // iOS Chrome contenteditable shim
+let iosChromeUsingCE = false; // whether CE is active
+
+// Line map cache for robust hit-testing
+let _lineMap = null;     // [{top,bottom,midY,spans:[{i,left,midX,right}]}...]
 
 // ===== UTIL =====
 function log(...a){ if (DIAG) console.log("[gate]", ...a); }
 function escapeHTML(s){
   return String(s).replace(/[&<>\"']/g, c =>
-    c === '&' ? '&amp;' :
-    c === '<' ? '&lt;' :
-    c === '>' ? '&gt;' :
-    c === '\"' ? '&quot;' : '&#39;'
+    c === "&" ? "&amp;" :
+    c === "<" ? "&lt;" :
+    c === ">" ? "&gt;" :
+    c === "\"" ? "&quot;" : "&#39;"
   );
 }
 function typeWriter(text, el, speed = 40, done){
@@ -76,13 +75,41 @@ function htmlAtRange(a, b, raw){
   }
   return out;
 }
+
+// Paint the mirror using an explicit [start, end) range (used during drag)
+function paintMirrorRange(raw, start, end){
+  if (!typedEl) return;
+  const len = raw.length;
+  const a = Math.max(0, Math.min(start ?? 0, len));
+  const b = Math.max(0, Math.min(end   ?? a, len));
+
+  if (a === b) {
+    const before = htmlAtRange(0, a, raw);
+    const atChar = raw[a] ? escapeHTML(raw[a]) : "&nbsp;";
+    const after  = htmlAtRange(a + (raw[a] ? 1 : 0), len, raw);
+    typedEl.innerHTML = before + `<span class="cursor-block">${atChar}</span>` + after;
+    _lineMap = null;
+    return;
+  }
+
+  let html = "";
+  for (let i = 0; i < len; i++){
+    const ch = escapeHTML(raw[i]);
+    const cls = (i >= a && i < b) ? "ch cursor-sel" : "ch";
+    html += `<span class="${cls}" data-i="${i}">${ch}</span>`;
+  }
+  typedEl.innerHTML = html;
+  _lineMap = null;
+}
+
 function renderMirror(){
   if (submittedUI) return;
   if (!typedEl || !inputEl) return;
-  if (isIOSChrome && iosChromeUsingCE) return;
+  if (isIOSChrome && iosChromeUsingCE) return; // iOS Chrome paints via CE
 
   if (document.activeElement !== inputEl || lockedOutput) {
     typedEl.textContent = inputEl.value || "";
+    _lineMap = null;
     return;
   }
 
@@ -108,22 +135,141 @@ function renderMirror(){
   } else {
     typedEl.innerHTML = html;
   }
-}
-function indexFromPoint(clientX){
-  if (!typedEl) return 0;
-  const boxes = typedEl.querySelectorAll('.ch');
-  if (!boxes.length) return 0;
-  let bestI = 0, bestDist = Infinity;
-  boxes.forEach((el) => {
-    const rect = el.getBoundingClientRect();
-    const midX = rect.left + rect.width / 2;
-    const d = Math.abs(clientX - midX);
-    if (d < bestDist) { bestDist = d; bestI = Number(el.getAttribute('data-i')) || 0; }
-  });
-  return bestI;
+  _lineMap = null;
 }
 
-// ===== RAF (desktop + iOS Safari; iOS Chrome uses CE paint) =====
+// ===== ROW-AWARE HIT TEST =====
+function buildLineMap(){
+  if (!typedEl) return [];
+  const spans = typedEl.querySelectorAll(".ch");
+  if (!spans.length) return [];
+
+  const rows = new Map();
+  const tolerance = 3;
+
+  spans.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    let key = null;
+    for (const k of rows.keys()){
+      if (Math.abs(Number(k) - rect.top) <= tolerance) { key = k; break; }
+    }
+    if (key == null) key = String(rect.top);
+    const row = rows.get(key) || { topMin: rect.top, botMax: rect.bottom, spans: [] };
+    row.topMin = Math.min(row.topMin, rect.top);
+    row.botMax = Math.max(row.botMax, rect.bottom);
+    row.spans.push({
+      i: Number(el.getAttribute("data-i")) || 0,
+      left: rect.left,
+      right: rect.right,
+      midX: rect.left + rect.width/2
+    });
+    rows.set(key, row);
+  });
+
+  const list = Array.from(rows.values())
+    .map(r => {
+      r.spans.sort((a,b) => a.left - b.left);
+      return { top: r.topMin, bottom: r.botMax, midY: (r.topMin + r.botMax)/2, spans: r.spans };
+    })
+    .sort((a,b) => a.top - b.top);
+
+  return list;
+}
+
+function getLineMap(){
+  if (_lineMap) return _lineMap;
+  _lineMap = buildLineMap();
+  return _lineMap;
+}
+
+// Accurate caret index from a screen point, bottom-biased for easier low touches
+function indexFromPoint(clientX, clientY){
+  if (!typedEl) return 0;
+  const raw = (inputEl?.value || "");
+  if (!raw.length) return 0;
+
+  if (clientY == null) {
+    const tr = typedEl.getBoundingClientRect();
+    clientY = tr.top + tr.height / 2;
+  }
+
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
+  // Bottom-friendly vertical sampling for WebKit caretFromPoint
+  const cs = getComputedStyle(typedEl);
+  const lh = parseFloat(cs.lineHeight) || 20;
+  const band = Math.max(30, lh * 1.4);
+  const probe = [
+    0, band*0.25, band*0.5, band*0.75, band,
+    -band*0.25, -band*0.5, -band, band*1.25, -band*1.25
+  ];
+
+  const caretFromPoint = (x, y) =>
+    (document.caretPositionFromPoint && document.caretPositionFromPoint(x, y)) ||
+    (document.caretRangeFromPoint && document.caretRangeFromPoint(x, y));
+
+  const toIndexFromCaret = (node) => {
+    if (!node) return null;
+    if (node.nodeType === 3 && node.parentElement?.classList?.contains("ch")) {
+      const base = Number(node.parentElement.getAttribute("data-i")) || 0;
+      const r = node.parentElement.getBoundingClientRect();
+      return clamp(base + (clientX > (r.left + r.width/2) ? 1 : 0), 0, raw.length);
+    }
+    if (node.nodeType === 1) {
+      const el = node;
+      const hit = el.classList?.contains("ch") ? el : (el.closest?.(".ch") || el.querySelector?.(".ch"));
+      if (hit) {
+        const base = Number(hit.getAttribute("data-i")) || 0;
+        const r = hit.getBoundingClientRect();
+        return clamp(base + (clientX > (r.left + r.width/2) ? 1 : 0), 0, raw.length);
+      }
+    }
+    return null;
+  };
+
+  for (const dy of probe) {
+    const c = caretFromPoint(clientX, clientY + dy);
+    if (!c) continue;
+    const node = "offsetNode" in c ? c.offsetNode : c.startContainer;
+    const idx = toIndexFromCaret(node);
+    if (idx != null) return idx;
+  }
+
+  // Line-aware fallback with bottom bias
+  const lines = getLineMap();
+  if (!lines.length) return 0;
+
+  let bestLine = lines[0];
+  let bestScore = Infinity;
+  for (const line of lines) {
+    const dy = Math.abs(clientY - line.midY);
+    const belowBias = clientY >= line.midY ? 0.7 : 1.0;
+    const score = dy * belowBias;
+    if (score < bestScore) { bestScore = score; bestLine = line; }
+  }
+
+  const firstLine = lines[0], lastLine = lines[lines.length - 1];
+  if (clientY < firstLine.top - band) bestLine = firstLine;
+  else if (clientY > lastLine.bottom + band) bestLine = lastLine;
+
+  let bestIdx = bestLine.spans[0].i;
+  let bestDx = Infinity;
+  for (const ch of bestLine.spans) {
+    const dx = Math.abs(clientX - ch.midX);
+    if (dx < bestDx) { bestDx = dx; bestIdx = ch.i; }
+  }
+
+  // outside left → start of this line
+  if (clientX < bestLine.spans[0].left - 16) return clamp(bestLine.spans[0].i, 0, raw.length);
+
+  // outside right → ***END OF WHOLE STRING*** (requested behavior)
+  const lastCh = bestLine.spans[bestLine.spans.length - 1];
+  if (clientX > lastCh.right + 16) return raw.length;
+
+  return clamp(bestIdx, 0, raw.length);
+}
+
+// ===== RAF (desktop + iOS Safari; CE paints for iOS Chrome) =====
 let _v = null, _s = -1, _e = -1;
 function caretRAF(){
   if (!inputEl || (isIOSChrome && iosChromeUsingCE)) { requestAnimationFrame(caretRAF); return; }
@@ -143,39 +289,39 @@ function caretRAF(){
 function ensureIOSChromeCE(){
   if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
 
-  ceEl = document.createElement('span');
-  ceEl.id = 'iosc-ce';
-  ceEl.contentEditable = 'true';
-  ceEl.setAttribute('role','textbox');
-  ceEl.setAttribute('aria-label','email input');
+  ceEl = document.createElement("span");
+  ceEl.id = "iosc-ce";
+  ceEl.contentEditable = "true";
+  ceEl.setAttribute("role","textbox");
+  ceEl.setAttribute("aria-label","email input");
   ceEl.spellcheck = false;
-  ceEl.autocapitalize = 'off';
-  ceEl.autocorrect = 'off';
+  ceEl.autocapitalize = "off";
+  ceEl.autocorrect = "off";
 
   Object.assign(ceEl.style, {
-    position: 'absolute',
-    left: '-9999px',
-    top: '-9999px',
-    width: '1px',
-    height: '1px',
-    overflow: 'hidden',
-    outline: 'none',
-    border: '0',
-    background: 'transparent',
-    color: 'transparent',
-    caretColor: 'transparent',
-    WebkitUserModify: 'read-write-plaintext-only',
-    textDecoration: 'none',
-    WebkitTextDecorationSkip: 'none',
-    textDecorationColor: 'transparent',
-    WebkitTapHighlightColor: 'transparent',
-    letterSpacing: '0.08em'
+    position: "absolute",
+    left: "-9999px",
+    top: "-9999px",
+    width: "1px",
+    height: "1px",
+    overflow: "hidden",
+    outline: "none",
+    border: "0",
+    background: "transparent",
+    color: "transparent",
+    caretColor: "transparent",
+    WebkitUserModify: "read-write-plaintext-only",
+    textDecoration: "none",
+    WebkitTextDecorationSkip: "none",
+    textDecorationColor: "transparent",
+    WebkitTapHighlightColor: "transparent",
+    letterSpacing: "0.08em"
   });
 
-  ceEl.textContent = (inputEl?.value || '');
+  ceEl.textContent = (inputEl?.value || "");
 
   const getNode = () => ceEl.firstChild || ceEl;
-  const getText = () => (ceEl.textContent || '');
+  const getText = () => (ceEl.textContent || "");
 
   const setSel = (start, end) => {
     const len = getText().length;
@@ -204,18 +350,21 @@ function ensureIOSChromeCE(){
   const paint = () => {
     if (submittedUI || !typedEl) return;
 
-    /* wrap rules specific to iOS Chrome */
-    typedEl.style.textDecoration = 'none';
-    typedEl.style.whiteSpace = 'normal';      // allow breaks
-    typedEl.style.wordBreak = 'break-all';    // break inside long tokens
-    typedEl.style.overflowWrap = 'anywhere';
-    typedEl.style.maxWidth = '100%';
+    // iOS Chrome wrapping + gesture behavior
+    typedEl.style.textDecoration = "none";
+    typedEl.style.whiteSpace = "normal";
+    typedEl.style.wordBreak = "break-all";
+    typedEl.style.overflowWrap = "anywhere";
+    typedEl.style.maxWidth = "100%";
+    typedEl.style.touchAction = "none";
+    promptEl.style.touchAction = "none";
 
     const raw = getText();
     const sel = getSel();
 
     if (raw.length === 0) {
       typedEl.innerHTML = `<span class="cursor-block">&nbsp;</span>`;
+      _lineMap = null;
       return;
     }
 
@@ -234,6 +383,7 @@ function ensureIOSChromeCE(){
       }
       typedEl.innerHTML = html;
     }
+    _lineMap = null;
   };
 
   const syncFromCE = () => {
@@ -242,26 +392,26 @@ function ensureIOSChromeCE(){
     paint();
   };
 
-  ceEl.addEventListener('beforeinput', (e) => {
+  ceEl.addEventListener("beforeinput", (e) => {
     const t = e.inputType || "";
-    if (t === 'insertLineBreak' || t === 'insertParagraph') e.preventDefault();
+    if (t === "insertLineBreak" || t === "insertParagraph") e.preventDefault();
   });
 
-  ceEl.addEventListener('input', syncFromCE);
-  ceEl.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
+  ceEl.addEventListener("input", syncFromCE);
+  ceEl.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); trySubmitEmail(); return; }
     paint();
   });
-  ceEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); trySubmitEmail(); return; }
+  ceEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); trySubmitEmail(); return; }
   });
-  ceEl.addEventListener('focus', () => {
-    const len = (ceEl.textContent || '').length;
+  ceEl.addEventListener("focus", () => {
+    const len = (ceEl.textContent || "").length;
     setSel(len, len);
     paint();
   });
 
-  document.addEventListener('selectionchange', () => {
+  document.addEventListener("selectionchange", () => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const a = sel.anchorNode, f = sel.focusNode;
@@ -269,7 +419,7 @@ function ensureIOSChromeCE(){
   });
 
   promptEl.appendChild(ceEl);
-  if (typedEl) typedEl.style.display = 'inline';
+  if (typedEl) typedEl.style.display = "inline";
   paint();
 
   ceEl._setSel = setSel;
@@ -296,25 +446,25 @@ function focusWithKeyboard(el, onFail){
 // ===== MOBILE IME CONFIG =====
 function enableMobileIME(){
   if (!isTouch) return;
-  try { inputEl.type = 'text'; } catch(_) {}
-  inputEl.setAttribute('inputmode','email');
-  inputEl.setAttribute('autocomplete','email');
-  inputEl.setAttribute('autocapitalize','off');
-  inputEl.setAttribute('enterkeyhint','go');
-  if (isIOSChrome) typedEl && (typedEl.style.display = 'inline');
+  try { inputEl.type = "text"; } catch(_) {}
+  inputEl.setAttribute("inputmode","email");
+  inputEl.setAttribute("autocomplete","email");
+  inputEl.setAttribute("autocapitalize","off");
+  inputEl.setAttribute("enterkeyhint","go");
+  if (isIOSChrome) typedEl && (typedEl.style.display = "inline");
 }
 
 // ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
 
-  if (isAndroid && promptEl && !promptEl.classList.contains('show')) {
-    promptEl.classList.add('show');
+  if (isAndroid && promptEl && !promptEl.classList.contains("show")) {
+    promptEl.classList.add("show");
   }
 
   setTimeout(() => {
     typeWriter(" ENTER EMAIL FOR QUARTERLY GLITCH REPORT", typeEl, 50, () => {
-      if (promptEl && !promptEl.classList.contains('show')) promptEl.classList.add("show");
+      if (promptEl && !promptEl.classList.contains("show")) promptEl.classList.add("show");
       if (!isTouch) { inputEl && inputEl.focus(); }
       if (isTouch) enableMobileIME();
       if (!isAndroid) renderMirror();
@@ -328,16 +478,20 @@ function bindPrompt(){
 
   if (!isTouch) {
     try {
-      inputEl.setAttribute('autocomplete', 'off');
-      inputEl.setAttribute('autocorrect', 'off');
-      inputEl.setAttribute('autocapitalize', 'off');
+      inputEl.setAttribute("autocomplete", "off");
+      inputEl.setAttribute("autocorrect", "off");
+      inputEl.setAttribute("autocapitalize", "off");
     } catch (_) {}
   }
 
+  // Desktop + iOS Safari mirror interactions
   if (!isTouch || (isIOS && !isIOSChrome)) {
+    let dragging = false;
+    let dragAnchorIdx = null;
+
     typedEl && typedEl.addEventListener("mousedown", (e) => {
       if (submittedUI) return;
-      const i = indexFromPoint(e.clientX);
+      const i = indexFromPoint(e.clientX, e.clientY);
       dragging = true;
       dragAnchorIdx = i;
       try {
@@ -350,7 +504,7 @@ function bindPrompt(){
 
     window.addEventListener("mousemove", (e) => {
       if (!dragging || dragAnchorIdx == null || lockedOutput || submittedUI) return;
-      const j = indexFromPoint(e.clientX);
+      const j = indexFromPoint(e.clientX, e.clientY);
       const a = Math.min(dragAnchorIdx, j);
       const b = Math.max(dragAnchorIdx, j) + 1;
       try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch(_) {}
@@ -363,67 +517,103 @@ function bindPrompt(){
     });
   }
 
-  if (isIOSChrome) {
-    const showCursorNow = () => {
-      if (submittedUI) return;
-      ensureIOSChromeCE();
-      const len = (ceEl?.textContent || '').length;
-      ceEl?._setSel?.(len, len);
-      try { ceEl?.focus(); } catch (_) {}
-      focusWithKeyboard(ceEl, () => {});
-      ceEl?._paint?.();
-      if (typedEl) typedEl.style.display = 'inline';
+  // iOS Chrome ONLY: Pointer Events with capture for single-finger highlight
+  if (isIOSChrome && window.PointerEvent) {
+    typedEl.style.touchAction = "none";
+    promptEl.style.touchAction = "none";
+
+    const getXY = (ev) => {
+      if (ev.touches && ev.touches[0]) return [ev.touches[0].clientX, ev.touches[0].clientY];
+      return [ev.clientX, ev.clientY];
     };
 
-    promptEl.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      showCursorNow();
-    }, { passive: false });
-    promptEl.addEventListener('click', showCursorNow, { passive: true });
+    let peDragging = false;
+    let peAnchor = null;
 
-    const placeFromPoint = (clientX) => indexFromPoint(clientX);
-    let dragAnchor = null;
-
-    const handleDown = (clientX, e) => {
+    const peDown = (ev) => {
+      if (submittedUI) return;
+      if (ev.pointerType !== "touch" && ev.pointerType !== "pen") return;
       ensureIOSChromeCE();
       if (!ceEl) return;
-      const i = placeFromPoint(clientX);
-      dragAnchor = i;
+
+      typedEl.setPointerCapture?.(ev.pointerId);
+      peDragging = true;
+
+      const [x, y] = getXY(ev);
+      const i = indexFromPoint(x, y);
+      peAnchor = i;
+
       ceEl._setSel?.(i, i);
+      paintMirrorRange(ceEl.textContent || "", i, i);
+
+      try { ceEl.focus(); } catch(_) {}
       focusWithKeyboard(ceEl, () => {});
-      ceEl._paint?.();
-      if (e) e.preventDefault();
+      ev.preventDefault();
     };
 
-    const handleMove = (clientX, e) => {
-      if (dragAnchor == null || !ceEl) return;
-      const j = placeFromPoint(clientX);
-      const a = Math.min(dragAnchor, j);
-      const b = Math.max(dragAnchor, j);
+    const peMove = (ev) => {
+      if (!peDragging || peAnchor == null || !ceEl) return;
+      const [x, y] = getXY(ev);
+      const j = indexFromPoint(x, y);
+
+      const a = Math.min(peAnchor, j);
+      const b = Math.max(peAnchor, j) + 1; // inclusive end
+
       ceEl._setSel?.(a, b);
-      ceEl._paint?.();
-      if (e) e.preventDefault();
+      paintMirrorRange(ceEl.textContent || "", a, b);
+      ev.preventDefault();
     };
 
-    const handleUp = () => { dragAnchor = null; };
+    const peUp = (ev) => {
+      if (!peDragging) return;
+      peDragging = false;
+      peAnchor = null;
+      typedEl.releasePointerCapture?.(ev.pointerId);
+      ev.preventDefault();
+    };
 
-    if (typedEl) {
-      typedEl.addEventListener('mousedown', (e) => handleDown(e.clientX, e));
-      window.addEventListener('mousemove', (e) => handleMove(e.clientX, e), { passive: false });
-      window.addEventListener('mouseup', handleUp);
+    // Allow tapping in whole prompt region with asymmetric vertical padding
+    const regionDown = (ev) => {
+      if (submittedUI) return;
+      if (ev.pointerType !== "touch" && ev.pointerType !== "pen") return;
+      ensureIOSChromeCE();
+      if (!ceEl) return;
 
-      typedEl.addEventListener('touchstart', (e) => {
-        const t = e.touches && e.touches[0];
-        if (t) handleDown(t.clientX, e);
-      }, { passive: false });
-      window.addEventListener('touchmove', (e) => {
-        const t = e.touches && e.touches[0];
-        if (t) handleMove(t.clientX, e);
-      }, { passive: false });
-      window.addEventListener('touchend', handleUp);
-    }
+      const [x, y] = getXY(ev);
+      const tr = typedEl.getBoundingClientRect();
+
+      const V_PAD_TOP = 60;
+      const V_PAD_BOTTOM = 140; // larger bottom pad for easier low touches
+      const H_PAD = 40;
+
+      if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
+          x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
+        peDown(ev);
+      } else if (x > tr.right + H_PAD) {
+        // Tap far to the RIGHT of the text region → jump to END of whole string
+        const raw = (ceEl.textContent || "");
+        const len = raw.length;
+        ceEl._setSel?.(len, len);
+        paintMirrorRange(raw, len, len);
+        try { ceEl.focus(); } catch(_) {}
+        focusWithKeyboard(ceEl, () => {});
+      } else {
+        try { ceEl.focus(); } catch(_) {}
+        focusWithKeyboard(ceEl, () => {});
+      }
+      ev.preventDefault();
+    };
+
+    // Bind pointer events
+    typedEl.addEventListener("pointerdown", peDown, { passive: false });
+    typedEl.addEventListener("pointermove", peMove, { passive: false });
+    typedEl.addEventListener("pointerup",   peUp,   { passive: false });
+    typedEl.addEventListener("pointercancel", peUp, { passive: false });
+
+    promptEl.addEventListener("pointerdown", regionDown, { passive: false });
   }
 
+  // iOS Safari (not Chrome): tap to focus the real input
   if (isIOS && !isIOSChrome) {
     promptEl.addEventListener("touchstart", () => {
       if (submittedUI) return;
@@ -431,6 +621,7 @@ function bindPrompt(){
     }, { passive: true });
   }
 
+  // Mirror updates (desktop + iOS Safari)
   if (!(isAndroid || isIOSChrome)) {
     ["input","focus","blur","keyup","select","click"].forEach(evt =>
       inputEl.addEventListener(evt, renderMirror)
@@ -438,8 +629,9 @@ function bindPrompt(){
     inputEl.addEventListener("keydown", () => setTimeout(renderMirror, 0));
   }
 
+  // Cmd/Ctrl+A (desktop)
   document.addEventListener("keydown", (e) => {
-    const isA = (e.key === 'a' || e.key === 'A');
+    const isA = (e.key === "a" || e.key === "A");
     const withMeta = (e.metaKey || e.ctrlKey);
     if (!isA || !withMeta || lockedOutput || submittedUI) return;
     e.preventDefault();
@@ -448,6 +640,7 @@ function bindPrompt(){
     if (!(isAndroid || (isIOSChrome && iosChromeUsingCE))) renderMirror();
   }, true);
 
+  // Enter/Go to submit
   const isEnter = (e) => e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
   inputEl.addEventListener("keydown", (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("keyup",   (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
@@ -460,11 +653,12 @@ function bindPrompt(){
   });
 }
 
+// Small helper: render <GO> and permanently freeze the mirror
 function showGO(emailText){
   submittedUI = true;
   lockedOutput = true;
   if (typedEl) {
-    typedEl.style.display = 'inline';
+    typedEl.style.display = "inline";
     typedEl.innerHTML = `${escapeHTML(emailText)} <span class="go-pill">&lt;GO&gt;</span>`;
   }
   try { inputEl.setAttribute("disabled", "disabled"); } catch(_) {}
@@ -477,12 +671,12 @@ function showGO(emailText){
   } catch(_) {}
 }
 
-// ===== SUBMIT =====
+// ===== SUBMIT (iframe + JSONP fallback) =====
 function trySubmitEmail() {
   if (lockedOutput || submittedUI) return;
 
   if (isIOSChrome && iosChromeUsingCE && ceEl) {
-    inputEl.value = (ceEl.textContent || '').replace(/\r?\n/g, '').trim();
+    inputEl.value = (ceEl.textContent || "").replace(/\r?\n/g, "").trim();
   }
 
   const email = (inputEl.value || "").trim();
@@ -513,12 +707,12 @@ function trySubmitEmail() {
     if (!mlIframe.src) mlIframe.src = "about:blank";
   } catch(_) {}
 
-  let hiddenBtn = mlForm.querySelector('#ml-hidden-submit');
+  let hiddenBtn = mlForm.querySelector("#ml-hidden-submit");
   if (!hiddenBtn) {
-    hiddenBtn = document.createElement('button');
-    hiddenBtn.type = 'submit';
-    hiddenBtn.id = 'ml-hidden-submit';
-    hiddenBtn.style.display = 'none';
+    hiddenBtn = document.createElement("button");
+    hiddenBtn.type = "submit";
+    hiddenBtn.id = "ml-hidden-submit";
+    hiddenBtn.style.display = "none";
     mlForm.appendChild(hiddenBtn);
   }
 
@@ -556,7 +750,7 @@ function trySubmitEmail() {
   } catch (_) {}
 
   try {
-    const base = mlForm.getAttribute('action');
+    const base = mlForm.getAttribute("action");
     const cbName = "mlcb_" + Math.random().toString(36).slice(2);
     const url = `${base}?ml-submit=1&fields%5Bemail%5D=${encodeURIComponent(email)}&callback=${encodeURIComponent(cbName)}`;
 
@@ -565,7 +759,7 @@ function trySubmitEmail() {
       if (script && script.parentNode) script.parentNode.removeChild(script);
     };
 
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     window[cbName] = function jsonpOK(){
       cleanupJSONP(script);
       clearTimeout(jsonpTO);
@@ -604,6 +798,6 @@ function startAvatar(){
 document.addEventListener("DOMContentLoaded", () => {
   bindPrompt();
   startAvatar();
-  if (!(isIOSChrome)) requestAnimationFrame(caretRAF);
+  if (!isIOSChrome) requestAnimationFrame(caretRAF); // CE paints for iOS Chrome
   if (DIAG) console.info("[gate] diagnostics mode ON");
 });
