@@ -36,7 +36,6 @@
 
     <div id="reg-banner" class="reg-banner" aria-live="polite" role="status"></div>
 
-    
     <!-- shared header + reserved space -->
     <div data-menubar class="menubar-slot"></div>
 
@@ -80,20 +79,30 @@
 
   <script src="menubar.js?v=mb23" defer></script>
 
-  <!-- Bottom-of-page fade-away toast for registration complete -->
+  <!-- Bottom-of-page toast on desktop; top-under-menu on mobile -->
   <script>
   (function () {
     const params = new URLSearchParams(location.search);
     if (params.get('registration') !== 'complete') return;
 
+    const isMobile = window.matchMedia('(max-width:900px)').matches;
+
     const holder = document.createElement('div');
     Object.assign(holder.style, {
-      position: 'fixed', left: 0, right: 0, bottom: '16px',
+      position: 'fixed',
+      left: 0, right: 0,
       display: 'grid', placeItems: 'center',
       zIndex: '9999', pointerEvents: 'none',
       background: 'transparent', opacity: '0',
       transition: 'opacity 400ms ease'
     });
+
+    // desktop: unchanged bottom toast; mobile: top under menu
+    if (isMobile) {
+      holder.style.top = 'calc(var(--barh, 32px) + 12px)';
+    } else {
+      holder.style.bottom = '16px';
+    }
 
     const msg = document.createElement('div');
     msg.textContent = 'registration complete.';
@@ -101,7 +110,8 @@
     const cs = bio ? getComputedStyle(bio) : {};
     Object.assign(msg.style, {
       color: '#fff', background: 'transparent', border: 'none',
-      fontFamily: cs.fontFamily || 'inherit', fontSize: cs.fontSize || '18px',
+      fontFamily: cs.fontFamily || 'inherit',
+      fontSize: cs.fontSize || '18px',  // pulls 13px from .bio on both views
       fontStyle: 'italic', letterSpacing: cs.letterSpacing || '0.02em',
       transform: 'translateY(10px)', transition: 'transform 400ms ease'
     });
