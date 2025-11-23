@@ -584,11 +584,11 @@ function bindPrompt(){
 
   // ==== iOS Safari: single-finger highlight + tap-right→end ====
   if (isIOSSafari) {
-    // Make sure the text area captures touches and prevents native scroll/selection
+    // capture touches and prevent native selection
     if (typedEl) typedEl.style.touchAction = "none";
     if (promptEl) promptEl.style.touchAction = "none";
 
-    // Keep keyboard consistent
+    // focus the tiny input so IME opens
     promptEl.addEventListener("touchstart", () => {
       if (submittedUI) return;
       try { inputEl.focus(); } catch(_) {}
@@ -604,7 +604,7 @@ function bindPrompt(){
 
     const safariDown = (ev) => {
       if (submittedUI) return;
-      ev.preventDefault(); // we control selection
+      ev.preventDefault();
 
       try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
 
@@ -632,7 +632,8 @@ function bindPrompt(){
         sDragging = true;
         sAnchor = i;
         try { inputEl.setSelectionRange(i, i); } catch(_) {}
-        renderMirror();
+        // force-paint collapsed caret at touch start for immediate visual feedback
+        paintMirrorRange(inputEl.value || "", i, i);
         return;
       }
 
@@ -647,8 +648,11 @@ function bindPrompt(){
       const j = indexFromPoint(x, y);
       const a = Math.min(sAnchor, j);
       const b = Math.max(sAnchor, j) + 1; // inclusive end for paint
-      try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch(_) {}
-      renderMirror();
+      const raw = inputEl.value || "";
+      const end = Math.min(b, raw.length);
+      try { inputEl.setSelectionRange(a, end); } catch(_) {}
+      // force-paint selection during drag so it shows as the green rectangle
+      paintMirrorRange(raw, a, end);
     };
 
     const safariUp = () => {
@@ -656,7 +660,7 @@ function bindPrompt(){
       sAnchor = null;
     };
 
-    // Bind on #typed and also listen on window during drag so selection continues off element edges
+    // Bind on #typed and also on window during drag
     typedEl.addEventListener("touchstart", safariDown, { passive: false });
     typedEl.addEventListener("touchmove",  safariMove, { passive: false });
     typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
@@ -671,7 +675,7 @@ function bindPrompt(){
       safariUp();
     }, { passive: true });
 
-    // NEW: region handler so taps just to the right of the text also work
+    // Region handler so taps just to the right also work
     const regionTouchStart = (ev) => {
       if (submittedUI) return;
       const t = ev.touches && ev.touches[0];
@@ -705,7 +709,6 @@ function bindPrompt(){
     };
 
     if (promptEl) {
-      // catch touches slightly outside the mirrored text
       promptEl.addEventListener("touchstart", regionTouchStart, { passive: false });
     }
   }
@@ -1004,7 +1007,7 @@ function enableMobileIME(){
   if (isIOSChrome) typedEl && (typedEl.style.display = "inline");
 }
 
-/* ========= iOS SAFARI KEYBOARD AVOIDANCE (new, Safari-only) ========= */
+/* ========= iOS SAFARI KEYBOARD AVOIDANCE (Safari-only) ========= */
 let iosSafVvBase = null;
 
 function iosSafKeyboardInsetPX(){
