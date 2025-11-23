@@ -352,9 +352,6 @@ html.android-stable #cmd.cmd {
 #iosc-ce::selection { background: var(--crt) !important; color:#000 !important; -webkit-text-fill-color:#000 !important; }
 #iosc-ce { text-decoration:none !important; -webkit-text-decoration-skip:none !important; text-decoration-color:transparent !important; }
 
-
-
-
 /* === CHROME ON iOS ONLY: pin caret to first line while #typed wraps === */
 html.ios-chrome .wrap,
 html.ios-chrome .terminal {
@@ -393,8 +390,6 @@ html.ios-chrome #typed .cursor-block {
   word-break: break-word;
 }
 
-
-
 /* iOS Chrome: prevent ".com" (etc) auto-link underline in the mirror + hidden input */
 html.ios-chrome #typed,
 html.ios-chrome #cmd,
@@ -409,14 +404,24 @@ html.ios-chrome #iosc-ce {
   -webkit-user-select: text;
 }
 
-
+/* iOS Chrome: suppress intermittent blue focus ring */
+html.ios-chrome .prompt:focus,
+html.ios-chrome .prompt:focus-within,
+html.ios-chrome #typed:focus,
+html.ios-chrome #typed:focus-within,
+html.ios-chrome #iosc-ce:focus,
+html.ios-chrome #cmd:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+html.ios-chrome .prompt,
+html.ios-chrome .terminal {
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* iOS Safari: let JS handle touches over the mirror line */
 html.ios-safari #typed,
 html.ios-safari .prompt { touch-action: none; }
-
-
-
 
 /* === SAFARI ON iOS ONLY: wrap long input without horizontal expand === */
 html.ios-safari .wrap,
