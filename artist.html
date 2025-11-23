@@ -78,65 +78,42 @@
 
   <!-- Bottom-of-page fade-away toast for registration complete -->
   <script>
-(() => {
-  const params = new URLSearchParams(location.search);
-  if (params.get('registration') !== 'complete') return;
+  (function () {
+    const params = new URLSearchParams(location.search);
+    if (params.get('registration') !== 'complete') return;
 
-  // Fixed host at the very top of the viewport (above everything)
-  const host = document.createElement('div');
-  host.id = 'reg-toast-host';
-  Object.assign(host.style, {
-    position: 'fixed',
-    top: '0',
-    left: '0',
-    right: '0',
-    zIndex: '2147483647',   // max
-    pointerEvents: 'none'   // don’t block taps
-  });
-  document.body.appendChild(host);
+    const holder = document.createElement('div');
+    Object.assign(holder.style, {
+      position: 'fixed', left: 0, right: 0, bottom: '16px',
+      display: 'grid', placeItems: 'center',
+      zIndex: '9999', pointerEvents: 'none',
+      background: 'transparent', opacity: '0',
+      transition: 'opacity 400ms ease'
+    });
 
-  // Shadow DOM to isolate from site CSS so nothing can push it to the bottom
-  const shadow = host.attachShadow({ mode: 'open' });
-  shadow.innerHTML = `
-    <style>
-      :host { all: initial; }
-      .banner {
-        position: relative;
-        margin-top: var(--offset, 44px); /* sits just under your menubar */
-        background: #0a0;
-        color: #000;
-        border-bottom: 2px solid #030;
-        padding: 10px 14px;
-        font-family: var(--ui-mono, ui-monospace, system-ui, monospace);
-        letter-spacing: .05em;
-        box-shadow: 0 2px 0 rgba(0,0,0,.5);
-        pointer-events: none;
-      }
-    </style>
-    <div class="banner" id="b">registration complete</div>
-  `;
+    const msg = document.createElement('div');
+    msg.textContent = 'registration complete.';
+    const bio = document.querySelector('.bio');
+    const cs = bio ? getComputedStyle(bio) : {};
+    Object.assign(msg.style, {
+      color: '#fff', background: 'transparent', border: 'none',
+      fontFamily: cs.fontFamily || 'inherit', fontSize: cs.fontSize || '18px',
+      fontStyle: 'italic', letterSpacing: cs.letterSpacing || '0.02em',
+      transform: 'translateY(10px)', transition: 'transform 400ms ease'
+    });
 
-  // Compute offset under your menubar slot (fallback 44px)
-  function setOffset() {
-    const slot = document.querySelector('[data-menubar]');
-    const h = slot ? Math.ceil(slot.getBoundingClientRect().height) : 44;
-    host.style.setProperty('--offset', h + 'px');
-  }
-  setOffset();
-  addEventListener('resize', setOffset, { passive: true });
-  addEventListener('orientationchange', setOffset);
-
-  // Strip the query so it won’t re-show on refresh
-  try {
-    const url = new URL(location.href);
-    url.searchParams.delete('registration');
-    history.replaceState({}, '', url.toString());
-  } catch {}
-})();
-</script>
-
-
-
-
+    holder.appendChild(msg);
+    document.body.appendChild(holder);
+    requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
+    setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
+    setTimeout(() => {
+      holder.remove();
+      params.delete('registration');
+      const qs = params.toString();
+      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+      history.replaceState(null, '', newUrl);
+    }, 2100);
+  })();
+  </script>
 </body>
 </html>

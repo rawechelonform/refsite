@@ -349,107 +349,14 @@ html.android-stable #cmd.cmd {
 }
 .reg-banner.show { display: block; }
 
-/* === iOS Chrome: remove blue focus box on touch === */
-html.ios-chrome #typed:focus,
-html.ios-chrome #cmd:focus,
-html.ios-chrome #iosc-ce:focus {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* Selection color inside iOS Chrome CE */
-#iosc-ce::selection { background: var(--crt) !important; color:#000 !important; -webkit-text-fill-color:#000 !important; }
-#iosc-ce { text-decoration:none !important; -webkit-text-decoration-skip:none !important; text-decoration-color:transparent !important; }
-
-/* === CHROME ON iOS ONLY: pin caret to first line while #typed wraps === */
-html.ios-chrome .wrap,
-html.ios-chrome .terminal {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-html.ios-chrome .prompt {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  min-width: 0;
-}
-html.ios-chrome .caret {
-  flex: 0 0 auto;
-  align-self: flex-start;
-  line-height: 1;
-}
-html.ios-chrome #typed {
-  display: inline-block;
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: calc(100% - 1.3ch);
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  line-height: 1.2;
-}
-html.ios-chrome #typed .ch,
-html.ios-chrome #typed .cursor-block {
-  white-space: normal;
-  word-break: break-word;
-}
-/* iOS Chrome: prevent auto-link underline etc. */
-html.ios-chrome #typed,
-html.ios-chrome #cmd,
-html.ios-chrome #iosc-ce {
-  -webkit-user-modify: read-write-plaintext-only;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-text-decoration-skip: none;
-  text-decoration: none !important;
-  text-decoration-color: transparent !important;
-  -webkit-text-fill-color: inherit !important;
-  -webkit-user-drag: none;
-  -webkit-user-select: text;
-}
-
-/* iOS Safari: JS handles touches over the mirror line */
-html.ios-safari #typed,
-html.ios-safari .prompt { touch-action: none; }
-
-/* === SAFARI ON iOS ONLY: wrap long input without horizontal expand === */
-html.ios-safari .wrap,
-html.ios-safari .terminal {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-html.ios-safari .prompt {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  min-width: 0;
-}
-html.ios-safari .caret {
-  flex: 0 0 auto;
-  align-self: flex-start;
-  line-height: 1;
-}
-html.ios-safari #typed {
-  display: inline-block;
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: calc(100% - 1.3ch);
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  line-height: 1.2;
-}
-html.ios-safari #typed .ch,
-html.ios-safari #typed .cursor-block {
-  white-space: normal;
-  word-break: break-word;
-}
-
 /* === Mobile overlay position for success banner (no layout shift) === */
 @media (max-width: 600px) {
   :root {
     /* adjust to your header/menu height */
     --header-offset: calc(env(safe-area-inset-top) + 44px);
   }
+
+  
 /* Banner base (desktop) */
 .reg-banner {
   position: relative;
