@@ -26,6 +26,10 @@ const isIOS        = /iPhone|iPad|iPod/i.test(UA);
 const isIOSChrome  = /CriOS/i.test(UA);         // Chrome on iOS (WebKit)
 const isTouch      = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
 
+// add iOS Safari flag
+const isIOSSafari = isIOS && !isIOSChrome;
+if (isIOSSafari) document.documentElement.classList.add("ios-safari");
+
 if (isIOSChrome) {
   document.documentElement.classList.add("ios-chrome");
 } else if (isAndroid) {
@@ -72,22 +76,14 @@ function typeWriter(text, el, speed = 40, done){
 
 // ===== STRICT WHITELIST VALIDATION (ONLY ALLOW THESE DOMAINS) =====
 const ALLOWED_EMAIL_DOMAINS = [
-  // Google
   "gmail.com",
-  // Yahoo
   "yahoo.com","ymail.com","rocketmail.com","yahoo.co.uk",
-  // Microsoft
   "outlook.com","hotmail.com","live.com","msn.com",
   "outlook.co.uk","live.co.uk","hotmail.co.uk",
-  // Apple
   "icloud.com","me.com","mac.com",
-  // AOL / Verizon
   "aol.com","verizon.net",
-  // ISP/common US
   "comcast.net","att.net","sbcglobal.net","bellsouth.net","cox.net","charter.net",
-  // Privacy / alt providers
   "proton.me","protonmail.com","tutanota.com","tuta.com","pm.me",
-  // Other popular
   "gmx.com","mail.com","zoho.com","yandex.com","fastmail.com"
 ];
 
@@ -98,9 +94,7 @@ const ALLOWED_DOMAINS_RE = new RegExp(
 
 function isValidEmail(e){
   const s = String(e || "").trim().toLowerCase();
-  // basic syntax first
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return false;
-  // then whitelist
   return ALLOWED_DOMAINS_RE.test(s);
 }
 
@@ -165,7 +159,7 @@ function paintMirrorRange(raw, start, end){
 function renderMirror(){
   if (submittedUI) return;
   if (!typedEl || !inputEl) return;
-  if (isIOSChrome && iosChromeUsingCE) return; // iOS Chrome paints via CE
+  if (isIOSChrome && iosChromeUsingCE) return;
 
   if (document.activeElement !== inputEl || lockedOutput) {
     typedEl.textContent = inputEl.value || "";
@@ -322,7 +316,7 @@ function indexFromPoint(clientX, clientY){
   // outside left → start of this line
   if (clientX < bestLine.spans[0].left - 16) return clamp(bestLine.spans[0].i, 0, raw.length);
 
-  // outside right → END OF WHOLE STRING (requested behavior)
+  // outside right → END OF WHOLE STRING
   const lastCh = bestLine.spans[bestLine.spans.length - 1];
   if (clientX > lastCh.right + 16) return raw.length;
 
@@ -448,7 +442,6 @@ function ensureIOSChromeCE(){
   const paint = () => {
     if (submittedUI || !typedEl) return;
 
-    // iOS Chrome wrapping + gesture behavior
     typedEl.style.textDecoration = "none";
     typedEl.style.whiteSpace = "normal";
     typedEl.style.wordBreak = "break-all";
@@ -590,7 +583,7 @@ function bindPrompt(){
     } catch (_) {}
   }
 
-  // Desktop + iOS Safari mirror interactions
+  // Desktop + iOS Safari mirror interactions for desktop mouse
   if (!isTouch || (isIOS && !isIOSChrome)) {
     let dragging = false;
     let dragAnchorIdx = null;
@@ -623,7 +616,83 @@ function bindPrompt(){
     });
   }
 
-  // iOS Chrome ONLY: Pointer Events with capture for single-finger highlight + keyboard avoidance
+  // ==== iOS Safari: single-finger highlight + tap-right = move caret to end ====
+  if (isIOSSafari) {
+    // keep keyboard behavior consistent
+    promptEl.addEventListener("touchstart", (e) => {
+      if (submittedUI) return;
+      try { inputEl.focus(); } catch(_) {}
+    }, { passive: true });
+
+    let sDragging = false;
+    let sAnchor = null;
+
+    const getTouchXY = (ev) => {
+      const t = ev.touches && ev.touches[0];
+      return t ? [t.clientX, t.clientY] : [0, 0];
+    };
+
+    const safariDown = (ev) => {
+      if (submittedUI) return;
+      ev.preventDefault(); // we control selection
+
+      try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
+
+      const [x, y] = getTouchXY(ev);
+      const tr = typedEl.getBoundingClientRect();
+
+      const V_PAD_TOP = 60;
+      const V_PAD_BOTTOM = 140;
+      const H_PAD = 40;
+
+      // tap to the right of the mirror → jump to end
+      if (x > tr.right + H_PAD) {
+        const len = (inputEl.value || "").length;
+        try { inputEl.setSelectionRange(len, len); } catch(_) {}
+        renderMirror();
+        sDragging = false;
+        sAnchor = null;
+        return;
+      }
+
+      // inside the band → place caret and start drag selection
+      if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
+          x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
+        const i = indexFromPoint(x, y);
+        sDragging = true;
+        sAnchor = i;
+        try { inputEl.setSelectionRange(i, i); } catch(_) {}
+        renderMirror();
+        return;
+      }
+
+      sDragging = false;
+      sAnchor = null;
+    };
+
+    const safariMove = (ev) => {
+      if (!sDragging || sAnchor == null || submittedUI) return;
+      ev.preventDefault();
+      const [x, y] = getTouchXY(ev);
+      const j = indexFromPoint(x, y);
+      const a = Math.min(sAnchor, j);
+      const b = Math.max(sAnchor, j) + 1;
+      try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch(_) {}
+      renderMirror();
+    };
+
+    const safariUp = () => {
+      sDragging = false;
+      sAnchor = null;
+    };
+
+    typedEl.addEventListener("touchstart", safariDown, { passive: false });
+    typedEl.addEventListener("touchmove",  safariMove, { passive: false });
+    typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
+    typedEl.addEventListener("touchcancel",safariUp,   { passive: true  });
+  }
+
+  // iOS Chrome ONLY: pointer events shim already implemented above in earlier work
   if (isIOSChrome && window.PointerEvent) {
     bindKeyboardAvoidance();
 
@@ -665,10 +734,8 @@ function bindPrompt(){
       if (!peDragging || peAnchor == null || !ceEl) return;
       const [x, y] = getXY(ev);
       const j = indexFromPoint(x, y);
-
       const a = Math.min(peAnchor, j);
-      const b = Math.max(peAnchor, j) + 1; // inclusive end
-
+      const b = Math.max(peAnchor, j) + 1;
       ceEl._setSel?.(a, b);
       paintMirrorRange(ceEl.textContent || "", a, b);
       ev.preventDefault();
@@ -682,7 +749,6 @@ function bindPrompt(){
       ev.preventDefault();
     };
 
-    // Allow tapping in whole prompt region with asymmetric vertical padding
     const regionDown = (ev) => {
       if (submittedUI) return;
       if (ev.pointerType !== "touch" && ev.pointerType !== "pen") return;
@@ -693,14 +759,13 @@ function bindPrompt(){
       const tr = typedEl.getBoundingClientRect();
 
       const V_PAD_TOP = 60;
-      const V_PAD_BOTTOM = 140; // larger bottom pad for easier low touches
+      const V_PAD_BOTTOM = 140;
       const H_PAD = 40;
 
       if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
           x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
         peDown(ev);
       } else if (x > tr.right + H_PAD) {
-        // Far right → jump to END of whole string
         const raw = (ceEl.textContent || "");
         const len = raw.length;
         ceEl._setSel?.(len, len);
@@ -718,21 +783,12 @@ function bindPrompt(){
       ev.preventDefault();
     };
 
-    // Bind pointer events
     typedEl.addEventListener("pointerdown", peDown, { passive: false });
     typedEl.addEventListener("pointermove", peMove, { passive: false });
     typedEl.addEventListener("pointerup",   peUp,   { passive: false });
     typedEl.addEventListener("pointercancel", peUp, { passive: false });
 
     promptEl.addEventListener("pointerdown", regionDown, { passive: false });
-  }
-
-  // iOS Safari (not Chrome): tap to focus the real input
-  if (isIOS && !isIOSChrome) {
-    promptEl.addEventListener("touchstart", () => {
-      if (submittedUI) return;
-      try { inputEl.focus(); } catch(_) {}
-    }, { passive: true });
   }
 
   // Mirror updates (desktop + iOS Safari)
@@ -795,7 +851,6 @@ function trySubmitEmail() {
 
   const email = (inputEl.value || "").trim();
 
-  // HARD BLOCK here too
   if (!isValidEmail(email)){
     if (hintEl) hintEl.textContent = "invalid email.";
     try { mlEmail && mlEmail.setCustomValidity("invalid email."); } catch(_) {}
