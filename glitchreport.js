@@ -235,7 +235,6 @@ function getLineMap(){
   return _lineMap;
 }
 
-// Generic indexFromPoint (desktop + non-Safari mobile fallbacks)
 function indexFromPoint(clientX, clientY){
   if (!typedEl) return 0;
   const raw = (inputEl?.value || "");
@@ -590,132 +589,91 @@ function bindPrompt(){
     });
   }
 
-  // ==== iOS Safari: tap-right→end, reliable drag-to-select, keyboard avoidance ====
-  if (isIOSSafari) {
+  // ==== iOS Safari: Pointer Events path (mirrors Chrome logic), + keyboard avoidance ====
+  if (isIOSSafari && window.PointerEvent) {
     if (typedEl) typedEl.style.touchAction = "none";
     if (promptEl) promptEl.style.touchAction = "none";
 
-    // keep keyboard consistent
-    promptEl.addEventListener("touchstart", () => {
-      if (submittedUI) return;
-      try { inputEl.focus(); } catch(_) {}
-    }, { passive: true });
+    // Keyboard avoidance (Safari)
+    bindKeyboardAvoidanceIOSSafari();
 
-    // intention detection: favor drag quickly
-    const DRAG_PX = 2;
-    const DRAG_MS = 0;
-
-    let startX = 0, startY = 0, startT = 0;
-    let sAnchor = null;
-    let intent = "undecided"; // 'undecided' | 'dragging'
-
-    const getTouchXY = (ev) => {
-      const t = ev.touches && ev.touches[0];
-      return t ? [t.clientX, t.clientY] : [0, 0];
-    };
-
-    // wider vertical/side band
     const V_PAD_TOP = 80;
     const V_PAD_BOTTOM = 160;
     const H_PAD = 40;
 
+    let peDragging = false;
+    let peAnchor = null;
+
+    const getXY = (ev) => [ev.clientX, ev.clientY];
+
     const safariIndex = (x, y) => indexFromPointRowOnly(x, y);
 
-    const safariDown = (ev) => {
+    const peDown = (ev) => {
       if (submittedUI) return;
-      ev.preventDefault(); // fully own the gesture
+      if (ev.pointerType !== "touch" && ev.pointerType !== "pen") return;
 
-      try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
+      // ensure keyboard
+      try { inputEl.focus(); } catch(_) {}
 
-      const [x0, y0] = getTouchXY(ev);
-      startX = x0; startY = y0; startT = performance.now();
-      intent = "undecided";
-
+      const [x, y] = getXY(ev);
       const tr = typedEl.getBoundingClientRect();
 
-      // tap to the right → jump to end
-      if (x0 > tr.right + H_PAD) {
+      // right-of-text → jump to end
+      if (x > tr.right + H_PAD) {
         const len = (inputEl.value || "").length;
         try { inputEl.setSelectionRange(len, len); } catch(_) {}
         paintMirrorRange(inputEl.value || "", len, len);
-        sAnchor = null;
         return;
       }
 
-      // inside band → place caret + set anchor
-      if (y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
-          x0 >= tr.left - H_PAD && x0 <= tr.right + H_PAD) {
-        const i = safariIndex(x0, y0);
-        sAnchor = i;
-        // preview caret immediately
-        paintMirrorRange(inputEl.value || "", i, i);
-        return;
-      }
+      // inside wide band → start drag
+      if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
+          x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
+        peDragging = true;
+        peAnchor = safariIndex(x, y);
+        try { inputEl.setSelectionRange(peAnchor, peAnchor); } catch(_) {}
+        paintMirrorRange(inputEl.value || "", peAnchor, peAnchor);
 
-      sAnchor = null;
+        // capture movement like Chrome code
+        typedEl.setPointerCapture?.(ev.pointerId);
+        ev.preventDefault();
+      }
     };
 
-    const safariMove = (ev) => {
-      if (submittedUI || sAnchor == null) return;
-      ev.preventDefault();
-
-      const [x, y] = getTouchXY(ev);
-
-      if (intent === "undecided") {
-        const dt = performance.now() - startT;
-        const dist = Math.hypot(x - startX, y - startY);
-        if (dt < DRAG_MS && dist < DRAG_PX) {
-          paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
-          return;
-        }
-        if (dist >= DRAG_PX) intent = "dragging";
-      }
-
+    const peMove = (ev) => {
+      if (!peDragging || peAnchor == null || submittedUI) return;
+      const [x, y] = getXY(ev);
       const j = safariIndex(x, y);
-      const a = Math.min(sAnchor, j);
-      const b = Math.max(sAnchor, j) + 1; // inclusive paint end
+      const a = Math.min(peAnchor, j);
+      const b = Math.max(peAnchor, j) + 1;
       const raw = inputEl.value || "";
       const end = Math.min(b, raw.length);
       try { inputEl.setSelectionRange(a, end); } catch(_) {}
       paintMirrorRange(raw, a, end);
+      ev.preventDefault();
     };
 
-    const safariUp = () => {
-      if (intent === "undecided" && sAnchor != null) {
-        try { inputEl.setSelectionRange(sAnchor, sAnchor); } catch(_) {}
-        paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
-      }
-      sAnchor = null;
-      intent = "undecided";
+    const peUp = (ev) => {
+      if (!peDragging) return;
+      peDragging = false;
+      peAnchor = null;
+      typedEl.releasePointerCapture?.(ev.pointerId);
+      ev.preventDefault();
     };
 
-    // Bind on #typed and also mirror to window during drag
-    typedEl.addEventListener("touchstart", safariDown, { passive: false });
-    typedEl.addEventListener("touchmove",  safariMove, { passive: false });
-    typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
-    typedEl.addEventListener("touchcancel",safariUp,   { passive: true  });
+    typedEl.addEventListener("pointerdown", peDown, { passive: false });
+    typedEl.addEventListener("pointermove", peMove,   { passive: false });
+    typedEl.addEventListener("pointerup",   peUp,     { passive: false });
+    typedEl.addEventListener("pointercancel", peUp,   { passive: false });
 
-    window.addEventListener("touchmove", (ev) => {
-      if (intent !== "dragging") return;
-      safariMove(ev);
-    }, { passive: false });
-    window.addEventListener("touchend", () => {
-      if (intent === "dragging") safariUp();
-    }, { passive: true });
-
-    // Region handler so taps just to the right also work from the prompt zone
+    // Region handler from the prompt row to support tap-right → end
     if (promptEl) {
-      promptEl.addEventListener("touchstart", (ev) => {
+      promptEl.addEventListener("pointerdown", (ev) => {
         if (submittedUI) return;
-        const t = ev.touches && ev.touches[0];
-        if (!t || !typedEl) return;
+        if (ev.pointerType !== "touch" && ev.pointerType !== "pen") return;
 
-        const x = t.clientX, y = t.clientY;
+        const [x, y] = getXY(ev);
         const tr = typedEl.getBoundingClientRect();
-
-        const inBand =
-          y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
-          x >= tr.left - H_PAD && x <= tr.right + H_PAD;
 
         if (x > tr.right + H_PAD) {
           ev.preventDefault();
@@ -723,15 +681,16 @@ function bindPrompt(){
           const len = (inputEl.value || "").length;
           try { inputEl.setSelectionRange(len, len); } catch(_) {}
           paintMirrorRange(inputEl.value || "", len, len);
-        } else if (inBand) {
+        } else if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
+                   x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
           ev.preventDefault();
-          safariDown(ev);
+          peDown(ev);
         }
       }, { passive: false });
     }
   }
 
-  // iOS Chrome pointer shim remains as implemented earlier (unchanged)
+  // iOS Chrome pointer shim (unchanged)
   if (isIOSChrome && window.PointerEvent) {
     bindKeyboardAvoidance();
 
