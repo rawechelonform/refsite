@@ -602,17 +602,30 @@ function bindPrompt(){
       return t ? [t.clientX, t.clientY] : [0, 0];
     };
 
+    // --- NEW: snap Y to nearest rendered line so drags above/below still select ---
+    function snapToNearestLineY(y){
+      const lines = getLineMap();
+      if (!lines.length) return y;
+      let best = lines[0], bestDy = Math.abs(y - lines[0].midY);
+      for (let k = 1; k < lines.length; k++){
+        const dy = Math.abs(y - lines[k].midY);
+        if (dy < bestDy) { bestDy = dy; best = lines[k]; }
+      }
+      return best.midY;
+    }
+
     const safariDown = (ev) => {
       if (submittedUI) return;
       ev.preventDefault();
 
       try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
 
-      const [x, y] = getTouchXY(ev);
+      let [x, y] = getTouchXY(ev);
       const tr = typedEl.getBoundingClientRect();
 
-      const V_PAD_TOP = 60;
-      const V_PAD_BOTTOM = 140;
+      // widened vertical pads so it recognizes touches above/below the text
+      const V_PAD_TOP = 120;
+      const V_PAD_BOTTOM = 200;
       const H_PAD = 40;
 
       // tap to the right → jump to end
@@ -628,6 +641,7 @@ function bindPrompt(){
       // inside band → place caret + start drag
       if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
           x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
+        y = snapToNearestLineY(y);
         const i = indexFromPoint(x, y);
         sDragging = true;
         sAnchor = i;
@@ -644,7 +658,8 @@ function bindPrompt(){
     const safariMove = (ev) => {
       if (!sDragging || sAnchor == null || submittedUI) return;
       ev.preventDefault();
-      const [x, y] = getTouchXY(ev);
+      let [x, y] = getTouchXY(ev);
+      y = snapToNearestLineY(y);
       const j = indexFromPoint(x, y);
       const a = Math.min(sAnchor, j);
       const b = Math.max(sAnchor, j) + 1; // inclusive end for paint
@@ -681,15 +696,15 @@ function bindPrompt(){
       const t = ev.touches && ev.touches[0];
       if (!t || !typedEl) return;
 
-      const x = t.clientX, y = t.clientY;
+      const x = t.clientX, y0 = t.clientY;
       const tr = typedEl.getBoundingClientRect();
 
-      const V_PAD_TOP = 60;
-      const V_PAD_BOTTOM = 140;
+      const V_PAD_TOP = 120;
+      const V_PAD_BOTTOM = 200;
       const H_PAD = 40;
 
       const inBand =
-        y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
+        y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
         x >= tr.left - H_PAD && x <= tr.right + H_PAD;
 
       if (inBand) {
