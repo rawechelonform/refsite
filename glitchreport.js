@@ -582,34 +582,34 @@ function bindPrompt(){
     });
   }
 
-  // ==== iOS Safari: single-finger highlight + tap-right→end ====
+  // ==== iOS Safari: intention-aware tap vs drag highlighting ====
   if (isIOSSafari) {
-    // capture touches and prevent native selection
     if (typedEl) typedEl.style.touchAction = "none";
     if (promptEl) promptEl.style.touchAction = "none";
 
-    // focus the tiny input so IME opens
     promptEl.addEventListener("touchstart", () => {
       if (submittedUI) return;
       try { inputEl.focus(); } catch(_) {}
     }, { passive: true });
 
-    let sDragging = false;
     let sAnchor = null;
+    let intent = "undecided"; // 'undecided' | 'drag'
+    let startX = 0, startY = 0, startT = 0;
+    const DRAG_PX = 8;   // distance threshold to switch to drag
+    const DRAG_MS = 60;  // minimum time before we consider movement
 
     const getTouchXY = (ev) => {
       const t = ev.touches && ev.touches[0];
-      return t ? [t.clientX, t.clientY] : [0, 0];
+      return t ? [t.clientX, t.clientY] : [0,0];
     };
 
-    // --- NEW: snap Y to nearest rendered line so drags above/below still select ---
     function snapToNearestLineY(y){
       const lines = getLineMap();
       if (!lines.length) return y;
       let best = lines[0], bestDy = Math.abs(y - lines[0].midY);
-      for (let k = 1; k < lines.length; k++){
-        const dy = Math.abs(y - lines[k].midY);
-        if (dy < bestDy) { bestDy = dy; best = lines[k]; }
+      for (let i = 1; i < lines.length; i++){
+        const dy = Math.abs(y - lines[i].midY);
+        if (dy < bestDy) { bestDy = dy; best = lines[i]; }
       }
       return best.midY;
     }
@@ -618,90 +618,101 @@ function bindPrompt(){
       if (submittedUI) return;
       ev.preventDefault();
 
+      const [x0, y0] = getTouchXY(ev);
+      startX = x0; startY = y0; startT = performance.now();
+      intent = "undecided";
+
       try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
 
-      let [x, y] = getTouchXY(ev);
       const tr = typedEl.getBoundingClientRect();
+      const V_PAD_TOP = 120, V_PAD_BOTTOM = 200, H_PAD = 40;
 
-      // widened vertical pads so it recognizes touches above/below the text
-      const V_PAD_TOP = 120;
-      const V_PAD_BOTTOM = 200;
-      const H_PAD = 40;
-
-      // tap to the right → jump to end
-      if (x > tr.right + H_PAD) {
+      // tap to the right → jump end immediately
+      if (x0 > tr.right + H_PAD) {
         const len = (inputEl.value || "").length;
         try { inputEl.setSelectionRange(len, len); } catch(_) {}
         renderMirror();
-        sDragging = false;
         sAnchor = null;
+        intent = "undecided";
         return;
       }
 
-      // inside band → place caret + start drag
-      if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
-          x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
-        y = snapToNearestLineY(y);
-        const i = indexFromPoint(x, y);
-        sDragging = true;
-        sAnchor = i;
-        try { inputEl.setSelectionRange(i, i); } catch(_) {}
-        // force-paint collapsed caret at touch start for immediate visual feedback
-        paintMirrorRange(inputEl.value || "", i, i);
+      // inside text band: record anchor but do NOT commit selection yet
+      if (y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
+          x0 >= tr.left - H_PAD && x0 <= tr.right + H_PAD) {
+        const yi = snapToNearestLineY(y0);
+        sAnchor = indexFromPoint(x0, yi);
+        // show a caret preview for feedback, but we may upgrade to drag later
+        paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
         return;
       }
 
-      sDragging = false;
       sAnchor = null;
     };
 
     const safariMove = (ev) => {
-      if (!sDragging || sAnchor == null || submittedUI) return;
+      if (submittedUI || sAnchor == null) return;
       ev.preventDefault();
-      let [x, y] = getTouchXY(ev);
-      y = snapToNearestLineY(y);
-      const j = indexFromPoint(x, y);
-      const a = Math.min(sAnchor, j);
-      const b = Math.max(sAnchor, j) + 1; // inclusive end for paint
-      const raw = inputEl.value || "";
-      const end = Math.min(b, raw.length);
-      try { inputEl.setSelectionRange(a, end); } catch(_) {}
-      // force-paint selection during drag so it shows as the green rectangle
-      paintMirrorRange(raw, a, end);
+
+      const [x, yRaw] = getTouchXY(ev);
+      const y = snapToNearestLineY(yRaw);
+
+      // decide intent
+      if (intent === "undecided") {
+        const dt = performance.now() - startT;
+        const dx = x - startX, dy = y - startY;
+        const dist = Math.hypot(dx, dy);
+        if (dt >= DRAG_MS && dist >= DRAG_PX) {
+          intent = "drag";
+        } else {
+          // keep caret preview only
+          paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
+          return;
+        }
+      }
+
+      if (intent === "drag") {
+        const j = indexFromPoint(x, y);
+        const a = Math.min(sAnchor, j);
+        const b = Math.max(sAnchor, j) + 1;
+        const raw = inputEl.value || "";
+        const end = Math.min(b, raw.length);
+        try { inputEl.setSelectionRange(a, end); } catch(_){}
+        paintMirrorRange(raw, a, end);
+      }
     };
 
-    const safariUp = () => {
-      sDragging = false;
+    const safariUp = (ev) => {
+      if (submittedUI) return;
+
+      // if we never switched to drag, treat as a tap/caret place at anchor
+      if (intent === "undecided" && sAnchor != null) {
+        try { inputEl.setSelectionRange(sAnchor, sAnchor); } catch(_){}
+        paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
+      }
       sAnchor = null;
+      intent = "undecided";
     };
 
-    // Bind on #typed and also on window during drag
     typedEl.addEventListener("touchstart", safariDown, { passive: false });
     typedEl.addEventListener("touchmove",  safariMove, { passive: false });
     typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
     typedEl.addEventListener("touchcancel",safariUp,   { passive: true  });
 
     window.addEventListener("touchmove", (ev) => {
-      if (!sDragging) return;
+      if (intent !== "drag") return;
       safariMove(ev);
     }, { passive: false });
-    window.addEventListener("touchend", () => {
-      if (!sDragging) return;
-      safariUp();
-    }, { passive: true });
+    window.addEventListener("touchend", () => { safariUp(); }, { passive: true });
 
-    // Region handler so taps just to the right also work
+    // also allow tapping just to the right on the whole prompt area
     const regionTouchStart = (ev) => {
       if (submittedUI) return;
       const t = ev.touches && ev.touches[0];
       if (!t || !typedEl) return;
-
       const x = t.clientX, y0 = t.clientY;
       const tr = typedEl.getBoundingClientRect();
-
-      const V_PAD_TOP = 120;
-      const V_PAD_BOTTOM = 200;
-      const H_PAD = 40;
+      const V_PAD_TOP = 120, V_PAD_BOTTOM = 200, H_PAD = 40;
 
       const inBand =
         y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
@@ -712,8 +723,6 @@ function bindPrompt(){
         safariDown(ev);
         return;
       }
-
-      // clearly to the right → jump caret to end
       if (x > tr.right + H_PAD) {
         ev.preventDefault();
         try { inputEl.focus(); } catch(_) {}
@@ -722,13 +731,10 @@ function bindPrompt(){
         renderMirror();
       }
     };
-
-    if (promptEl) {
-      promptEl.addEventListener("touchstart", regionTouchStart, { passive: false });
-    }
+    if (promptEl) promptEl.addEventListener("touchstart", regionTouchStart, { passive: false });
   }
 
-  // iOS Chrome pointer shim remains as implemented earlier (unchanged)
+  // iOS Chrome pointer shim (unchanged)
   if (isIOSChrome && window.PointerEvent) {
     bindKeyboardAvoidance();
 
