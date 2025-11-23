@@ -408,3 +408,10 @@ html.ios-chrome #iosc-ce {
   -webkit-user-drag: none;
   -webkit-user-select: text;
 }
+
+
+
+/* iOS Safari: let JS handle touches over the mirror line */
+html.ios-safari #typed,
+html.ios-safari .prompt { touch-action: none; }
+

@@ -26,7 +26,7 @@ const isIOS        = /iPhone|iPad|iPod/i.test(UA);
 const isIOSChrome  = /CriOS/i.test(UA);         // Chrome on iOS (WebKit)
 const isTouch      = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
 
-// add iOS Safari flag
+// iOS Safari flag + classes
 const isIOSSafari = isIOS && !isIOSChrome;
 if (isIOSSafari) document.documentElement.classList.add("ios-safari");
 
@@ -45,8 +45,8 @@ let submittedUI  = false;
 let ceEl = null;              // iOS Chrome contenteditable shim
 let iosChromeUsingCE = false; // whether CE is active
 
-// Line map cache for robust hit-testing
-let _lineMap = null;     // [{top,bottom,midY,spans:[{i,left,midX,right}]}...]
+// Line map cache for hit-testing
+let _lineMap = null;
 
 // Keyboard avoidance (iOS Chrome small screens)
 let vvBaseHeight = null;
@@ -121,7 +121,7 @@ function isValidEmail(e){
   }, true);
 })();
 
-// ===== MIRROR (non–iOS Chrome paths) =====
+// ===== MIRROR (non–iOS Chrome) =====
 function htmlAtRange(a, b, raw){
   let out = "";
   for (let i = a; i < b; i++){
@@ -130,7 +130,6 @@ function htmlAtRange(a, b, raw){
   return out;
 }
 
-// Paint the mirror using an explicit [start, end) range (used during drag)
 function paintMirrorRange(raw, start, end){
   if (!typedEl) return;
   const len = raw.length;
@@ -159,7 +158,7 @@ function paintMirrorRange(raw, start, end){
 function renderMirror(){
   if (submittedUI) return;
   if (!typedEl || !inputEl) return;
-  if (isIOSChrome && iosChromeUsingCE) return;
+  if (isIOSChrome && iosChromeUsingCE) return; // Chrome on iOS paints via CE
 
   if (document.activeElement !== inputEl || lockedOutput) {
     typedEl.textContent = inputEl.value || "";
@@ -236,7 +235,6 @@ function getLineMap(){
   return _lineMap;
 }
 
-// Accurate caret index from a screen point, bottom-biased for easier low touches
 function indexFromPoint(clientX, clientY){
   if (!typedEl) return 0;
   const raw = (inputEl?.value || "");
@@ -249,14 +247,11 @@ function indexFromPoint(clientX, clientY){
 
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
-  // Bottom-friendly vertical sampling for WebKit caretFromPoint
+  // WebKit caret probing
   const cs = getComputedStyle(typedEl);
   const lh = parseFloat(cs.lineHeight) || 20;
   const band = Math.max(30, lh * 1.4);
-  const probe = [
-    0, band*0.25, band*0.5, band*0.75, band,
-    -band*0.25, -band*0.5, -band, band*1.25, -band*1.25
-  ];
+  const probe = [0, band*0.25, band*0.5, band*0.75, band, -band*0.25, -band*0.5, -band, band*1.25, -band*1.25];
 
   const caretFromPoint = (x, y) =>
     (document.caretPositionFromPoint && document.caretPositionFromPoint(x, y)) ||
@@ -289,7 +284,7 @@ function indexFromPoint(clientX, clientY){
     if (idx != null) return idx;
   }
 
-  // Line-aware fallback with bottom bias
+  // Line-aware fallback
   const lines = getLineMap();
   if (!lines.length) return 0;
 
@@ -313,10 +308,8 @@ function indexFromPoint(clientX, clientY){
     if (dx < bestDx) { bestDx = dx; bestIdx = ch.i; }
   }
 
-  // outside left → start of this line
   if (clientX < bestLine.spans[0].left - 16) return clamp(bestLine.spans[0].i, 0, raw.length);
 
-  // outside right → END OF WHOLE STRING
   const lastCh = bestLine.spans[bestLine.spans.length - 1];
   if (clientX > lastCh.right + 16) return raw.length;
 
@@ -339,7 +332,7 @@ function caretRAF(){
   requestAnimationFrame(caretRAF);
 }
 
-// ===== iOS CHROME: keyboard avoidance =====
+// ===== iOS CHROME: keyboard avoidance (unchanged) =====
 function keyboardInsetPX(){
   if (!window.visualViewport) return 0;
   if (vvBaseHeight == null) vvBaseHeight = window.visualViewport.height;
@@ -377,7 +370,7 @@ function bindKeyboardAvoidance(){
   window.visualViewport.addEventListener("scroll", onVV);
 }
 
-// ===== iOS CHROME CE SHIM =====
+// ===== iOS CHROME CE SHIM (unchanged) =====
 function ensureIOSChromeCE(){
   if (!isIOSChrome || iosChromeUsingCE || !promptEl) return;
 
@@ -526,33 +519,6 @@ function ensureIOSChromeCE(){
   iosChromeUsingCE = true;
 }
 
-// Keep CE focused and move keyboard reliably
-function focusWithKeyboard(el, onFail){
-  const baseH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  let fired = false;
-  const t0 = Date.now();
-  const check = () => {
-    const nowH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const delta = baseH - nowH;
-    if (document.activeElement === el && (delta > 40 || Date.now() - t0 > 220)) { fired = true; ensurePromptVisible(); return; }
-    if (!fired && Date.now() - t0 > 260) { onFail && onFail(); }
-  };
-  try { el.focus(); } catch(_) {}
-  setTimeout(check, 180);
-  setTimeout(check, 280);
-}
-
-// ===== MOBILE IME CONFIG =====
-function enableMobileIME(){
-  if (!isTouch) return;
-  try { inputEl.type = "text"; } catch(_) {}
-  inputEl.setAttribute("inputmode","email");
-  inputEl.setAttribute("autocomplete","email");
-  inputEl.setAttribute("autocapitalize","off");
-  inputEl.setAttribute("enterkeyhint","go");
-  if (isIOSChrome) typedEl && (typedEl.style.display = "inline");
-}
-
 // ===== TERMINAL =====
 function startTerminalSequence(){
   if (staticEl) staticEl.textContent = "REGISTRATION TERMINAL //";
@@ -583,7 +549,7 @@ function bindPrompt(){
     } catch (_) {}
   }
 
-  // Desktop + iOS Safari mirror interactions for desktop mouse
+  // Desktop mouse (unchanged)
   if (!isTouch || (isIOS && !isIOSChrome)) {
     let dragging = false;
     let dragAnchorIdx = null;
@@ -616,10 +582,14 @@ function bindPrompt(){
     });
   }
 
-  // ==== iOS Safari: single-finger highlight + tap-right = move caret to end ====
+  // ==== iOS Safari: single-finger highlight + tap-right→end ====
   if (isIOSSafari) {
-    // keep keyboard behavior consistent
-    promptEl.addEventListener("touchstart", (e) => {
+    // Make sure the text area captures touches and prevents native scroll/selection
+    if (typedEl) typedEl.style.touchAction = "none";
+    if (promptEl) promptEl.style.touchAction = "none";
+
+    // Keep keyboard consistent
+    promptEl.addEventListener("touchstart", () => {
       if (submittedUI) return;
       try { inputEl.focus(); } catch(_) {}
     }, { passive: true });
@@ -645,7 +615,7 @@ function bindPrompt(){
       const V_PAD_BOTTOM = 140;
       const H_PAD = 40;
 
-      // tap to the right of the mirror → jump to end
+      // tap to the right → jump to end
       if (x > tr.right + H_PAD) {
         const len = (inputEl.value || "").length;
         try { inputEl.setSelectionRange(len, len); } catch(_) {}
@@ -655,7 +625,7 @@ function bindPrompt(){
         return;
       }
 
-      // inside the band → place caret and start drag selection
+      // inside band → place caret + start drag
       if (y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
           x >= tr.left - H_PAD && x <= tr.right + H_PAD) {
         const i = indexFromPoint(x, y);
@@ -676,7 +646,7 @@ function bindPrompt(){
       const [x, y] = getTouchXY(ev);
       const j = indexFromPoint(x, y);
       const a = Math.min(sAnchor, j);
-      const b = Math.max(sAnchor, j) + 1;
+      const b = Math.max(sAnchor, j) + 1; // inclusive end for paint
       try { inputEl.setSelectionRange(a, Math.min(b, (inputEl.value || "").length)); } catch(_) {}
       renderMirror();
     };
@@ -686,13 +656,23 @@ function bindPrompt(){
       sAnchor = null;
     };
 
+    // Bind on #typed and also listen on window during drag so selection continues off element edges
     typedEl.addEventListener("touchstart", safariDown, { passive: false });
     typedEl.addEventListener("touchmove",  safariMove, { passive: false });
     typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
     typedEl.addEventListener("touchcancel",safariUp,   { passive: true  });
+
+    window.addEventListener("touchmove", (ev) => {
+      if (!sDragging) return;
+      safariMove(ev);
+    }, { passive: false });
+    window.addEventListener("touchend", () => {
+      if (!sDragging) return;
+      safariUp();
+    }, { passive: true });
   }
 
-  // iOS Chrome ONLY: pointer events shim already implemented above in earlier work
+  // iOS Chrome pointer shim remains as implemented earlier (unchanged)
   if (isIOSChrome && window.PointerEvent) {
     bindKeyboardAvoidance();
 
@@ -973,3 +953,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isIOSChrome) bindKeyboardAvoidance();
   if (DIAG) console.info("[gate] diagnostics mode ON");
 });
+
+// ===== MOBILE IME CONFIG =====
+function enableMobileIME(){
+  if (!isTouch) return;
+  try { inputEl.type = "text"; } catch(_) {}
+  inputEl.setAttribute("inputmode","email");
+  inputEl.setAttribute("autocomplete","email");
+  inputEl.setAttribute("autocapitalize","off");
+  inputEl.setAttribute("enterkeyhint","go");
+  if (isIOSChrome) typedEl && (typedEl.style.display = "inline");
+}
