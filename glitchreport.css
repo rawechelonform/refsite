@@ -415,3 +415,43 @@ html.ios-chrome #iosc-ce {
 html.ios-safari #typed,
 html.ios-safari .prompt { touch-action: none; }
 
+
+
+
+/* === SAFARI ON iOS ONLY: wrap long input without horizontal expand === */
+html.ios-safari .wrap,
+html.ios-safari .terminal {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+html.ios-safari .prompt {
+  display: flex;
+  flex-wrap: nowrap;          /* stay on one row with caret */
+  align-items: flex-start;    /* caret sticks to first line like Chrome block */
+  min-width: 0;
+}
+
+html.ios-safari .caret {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+html.ios-safari #typed {
+  display: inline-block;
+  flex: 1 1 auto;                 /* share the row with caret */
+  min-width: 0;                   /* allow shrinking instead of expanding page */
+  max-width: calc(100% - 1.3ch);  /* room for '>' caret block */
+  white-space: normal;            /* allow wrapping */
+  overflow-wrap: anywhere;        /* wrap mid-word if needed (long emails) */
+  word-break: break-word;         /* safety for very long tokens */
+  line-height: 1.2;
+}
+
+/* per-char spans shouldn’t force no-wrap on iOS Safari either */
+html.ios-safari #typed .ch,
+html.ios-safari #typed .cursor-block {
+  white-space: normal;
+  word-break: break-word;
+}
