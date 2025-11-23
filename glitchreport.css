@@ -450,16 +450,36 @@ html.ios-safari #typed .cursor-block {
     /* adjust to your header/menu height */
     --header-offset: calc(env(safe-area-inset-top) + 44px);
   }
-  .reg-banner {
-    position: fixed;
-    top: var(--header-offset);
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    margin: 0;
-    display: none;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
-    pointer-events: none; /* don’t block taps */
+/* Banner base (desktop) */
+.reg-banner {
+  position: relative;
+  width: 100%;
+  background: #0a0;
+  color: #000;
+  font-family: 'DotGothic16', system-ui, monospace;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border-bottom: 2px solid #030;
+  display: none;
+  z-index: 5;
+}
+.reg-banner.show { display: block; }
+
+/* Mobile overlay position for success banner (no layout shift) */
+@media (max-width: 600px) {
+  :root {
+    /* adjust to your header/menu height if needed */
+    --header-offset: calc(env(safe-area-inset-top) + 44px);
   }
-  .reg-banner.show { display: block; }
+  .reg-banner {
+    position: fixed !important;          /* force overlay */
+    top: var(--header-offset) !important;/* pin under header */
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;            /* above photo & content */
+    margin: 0 !important;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    pointer-events: none;                /* don’t block taps */
+  }
+  .reg-banner.show { display: block !important; }
 }
