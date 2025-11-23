@@ -167,3 +167,35 @@ body.debug .about-grid{ outline:2px dashed #00ffff; }
 body.debug .about-blurb{ outline:2px dashed #ff00ff; }
 body.debug .about-photo{ outline:2px solid #ff8800; }
 body.debug .right-col{ outline:2px dashed #00ff00; }
+
+
+/* === Registration-complete banner (overlay, no layout shift) === */
+#reg-banner{
+  position: fixed !important;
+  /* below your fixed menubar; menubar.js/menubar.css should set --barh */
+  top: calc(var(--barh, 32px) + env(safe-area-inset-top, 0px)) !important;
+  left: 0 !important;
+  right: 0 !important;
+
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 10px 14px !important;
+
+  background: #0a0 !important;
+  color: #000 !important;
+  font-family: var(--ui-mono, ui-monospace) !important;
+  letter-spacing: .05em !important;
+  border-bottom: 2px solid #030 !important;
+  box-shadow: 0 2px 0 rgba(0,0,0,.5);
+
+  display: none;                 /* shown via .show */
+  z-index: 10000 !important;     /* above photo/content */
+  pointer-events: none !important; /* don’t block taps */
+  bottom: auto !important;       /* hard-reset any bottom anchoring */
+}
+#reg-banner.show{ display: block; }
+
+/* Fallback if env() isn’t supported */
+@supports not (top: env(safe-area-inset-top)) {
+  #reg-banner { top: var(--barh, 32px) !important; }
+}

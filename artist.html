@@ -78,11 +78,12 @@
 
   <!-- Bottom-of-page fade-away toast for registration complete -->
   <script>
-  (function(){
+  (function () {
     const params = new URLSearchParams(location.search);
     const isComplete = params.get('registration') === 'complete';
     if (!isComplete) return;
 
+    // ensure the element exists (top of <body> is best)
     let b = document.getElementById('reg-banner');
     if (!b) {
       b = document.createElement('div');
@@ -91,59 +92,42 @@
       document.body.insertBefore(b, document.body.firstChild);
     }
 
-    // Set text and show
-    b.textContent = "registration complete";
+    b.textContent = 'registration complete';
     b.classList.add('show');
 
-    // iOS-only detection (Safari & Chrome both use WebKit, but we only force on Safari)
-    const UA = navigator.userAgent || '';
-    const isiOS = /iPhone|iPad|iPod/i.test(UA);
-    const isCriOS = /CriOS/i.test(UA);
-    const isIOSSafari = isiOS && !isCriOS;
-
-    // Only force overlay on iOS Safari (leave Chrome/desktop as-is)
-    if (!isIOSSafari) return;
-
-    // Move banner to <body> root to avoid ancestor stacking/position quirks
-    if (b.parentNode !== document.body) {
-      document.body.insertBefore(b, document.body.firstChild);
+    // Compute offset just below your fixed "back" link (fallback 44px)
+    function headerOffset() {
+      const header = document.querySelector('.back-fixed');
+      const r = header ? header.getBoundingClientRect() : null;
+      return (r ? Math.ceil(r.bottom) : 44) + 8; // 8px breathing room
     }
 
+    // FORCE overlay with !important so CSS/cache cannot override it
     function pinBanner() {
-      // Find your fixed header/menu (the back link)
-      const header = document.querySelector('.back-fixed');
-
-      // Where is its bottom edge in the viewport?
-      const rect = header ? header.getBoundingClientRect() : null;
-      const headerBottom = rect ? Math.ceil(rect.bottom) : 44; // fallback ~44px
-      const gap = 8; // small breathing room under the menu
-
-      // Force fixed overlay below the menu, above content
-      Object.assign(b.style, {
-        position: 'fixed',
-        top: (headerBottom + gap) + 'px',
-        left: '0',
-        right: '0',
-        margin: '0',
-        // keep it under the menu but above the photo
-        zIndex: '90',
-        pointerEvents: 'none'
-      });
-
-      // Ensure it spans viewport width without causing layout shift
-      b.style.width = '100vw';
+      const top = headerOffset();
+      const s = b.style;
+      s.setProperty('position', 'fixed', 'important');
+      s.setProperty('top', top + 'px', 'important');
+      s.setProperty('left', '0', 'important');
+      s.setProperty('right', '0', 'important');
+      s.setProperty('width', '100vw', 'important');
+      s.setProperty('margin', '0', 'important');
+      s.setProperty('z-index', '1000', 'important');
+      s.setProperty('pointer-events', 'none', 'important');
+      // kill any bottom anchoring coming from CSS
+      s.setProperty('bottom', 'auto', 'important');
     }
 
     pinBanner();
     window.addEventListener('resize', pinBanner);
     window.addEventListener('orientationchange', pinBanner);
 
-    // Optional: remove the query param so refresh doesn’t keep the banner
+    // optional: strip the query so it doesn't persist on reload
     try {
       const url = new URL(location.href);
       url.searchParams.delete('registration');
-      window.history.replaceState({}, "", url.toString());
-    } catch(_) {}
+      history.replaceState({}, '', url.toString());
+    } catch (_) {}
   })();
 </script>
 
