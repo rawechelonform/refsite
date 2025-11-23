@@ -78,58 +78,78 @@
 
   <!-- Bottom-of-page fade-away toast for registration complete -->
   <script>
-  (function () {
-    const params = new URLSearchParams(location.search);
-    const isComplete = params.get('registration') === 'complete';
-    if (!isComplete) return;
+(() => {
+  const params = new URLSearchParams(location.search);
+  if (params.get('registration') !== 'complete') return;
 
-    // ensure the element exists (top of <body> is best)
-    let b = document.getElementById('reg-banner');
-    if (!b) {
-      b = document.createElement('div');
-      b.id = 'reg-banner';
-      b.className = 'reg-banner';
-      document.body.insertBefore(b, document.body.firstChild);
-    }
-
+  // Create or reuse the banner element
+  let b = document.getElementById('reg-banner');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'reg-banner';
+    b.className = 'reg-banner';
     b.textContent = 'registration complete';
+  } else {
+    b.textContent = 'registration complete';
+  }
+
+  // Make sure it's a direct child of <body> and not inside any grid/flex container
+  try { b.remove(); } catch (_) {}
+  document.body.appendChild(b);
+
+  // Compute an offset under your menubar
+  function computeTop() {
+    // If your header is rendered via menubar.js, it should be in this slot
+    const slot = document.querySelector('[data-menubar]');
+    const slotRect = slot ? slot.getBoundingClientRect() : null;
+    const barH = slotRect ? Math.ceil(slotRect.height) : 32;
+
+    // Account for safe area on iOS
+    const safe = (window.CSS && CSS.supports('top: env(safe-area-inset-top)')) ? 0 : 0;
+
+    return barH + safe;
+  }
+
+  function pin() {
+    const topPx = computeTop();
+
+    // Nuke any bottom anchoring and hard-pin to the top with inline styles
+    const s = b.style;
+    s.setProperty('position', 'fixed', 'important');
+    s.setProperty('top', topPx + 'px', 'important');
+    s.setProperty('left', '0', 'important');
+    s.setProperty('right', '0', 'important');
+    s.setProperty('bottom', 'auto', 'important');
+    s.setProperty('width', '100vw', 'important');
+    s.setProperty('margin', '0', 'important');
+    s.setProperty('z-index', '20000', 'important');      // above photo/content
+    s.setProperty('pointer-events', 'none', 'important'); // don’t block taps
+
+    // Basic visuals (kept here so they can’t be overridden by older CSS)
+    s.setProperty('background', '#0a0', 'important');
+    s.setProperty('color', '#000', 'important');
+    s.setProperty('border-bottom', '2px solid #030', 'important');
+    s.setProperty('padding', '10px 14px', 'important');
+    s.setProperty('font-family', 'var(--ui-mono, ui-monospace)', 'important');
+    s.setProperty('letter-spacing', '.05em', 'important');
+    s.setProperty('box-shadow', '0 2px 0 rgba(0,0,0,.5)', 'important');
+
     b.classList.add('show');
+  }
 
-    // Compute offset just below your fixed "back" link (fallback 44px)
-    function headerOffset() {
-      const header = document.querySelector('.back-fixed');
-      const r = header ? header.getBoundingClientRect() : null;
-      return (r ? Math.ceil(r.bottom) : 44) + 8; // 8px breathing room
-    }
+  pin();
+  window.addEventListener('resize', pin);
+  window.addEventListener('orientationchange', pin);
 
-    // FORCE overlay with !important so CSS/cache cannot override it
-    function pinBanner() {
-      const top = headerOffset();
-      const s = b.style;
-      s.setProperty('position', 'fixed', 'important');
-      s.setProperty('top', top + 'px', 'important');
-      s.setProperty('left', '0', 'important');
-      s.setProperty('right', '0', 'important');
-      s.setProperty('width', '100vw', 'important');
-      s.setProperty('margin', '0', 'important');
-      s.setProperty('z-index', '1000', 'important');
-      s.setProperty('pointer-events', 'none', 'important');
-      // kill any bottom anchoring coming from CSS
-      s.setProperty('bottom', 'auto', 'important');
-    }
-
-    pinBanner();
-    window.addEventListener('resize', pinBanner);
-    window.addEventListener('orientationchange', pinBanner);
-
-    // optional: strip the query so it doesn't persist on reload
-    try {
-      const url = new URL(location.href);
-      url.searchParams.delete('registration');
-      history.replaceState({}, '', url.toString());
-    } catch (_) {}
-  })();
+  // Strip the query so it won’t re-show on refresh
+  try {
+    const url = new URL(location.href);
+    url.searchParams.delete('registration');
+    history.replaceState({}, '', url.toString());
+  } catch (_) {}
+})();
 </script>
+
 
 
 </body>
