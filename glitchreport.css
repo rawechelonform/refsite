@@ -81,7 +81,7 @@ html, body {
   font-size: 16px;
   color: var(--crt);
   text-decoration: none;
-  z-index: 99;
+  z-index: 1100;
   opacity: .9;
 }
 .back-fixed .back-label { text-decoration: none; }
@@ -334,7 +334,7 @@ html.android-stable #cmd.cmd {
   text-decoration-skip-ink: none !important;
 }
 
-/* Banner after successful registration */
+/* Banner base (desktop) */
 .reg-banner {
   position: relative;
   width: 100%;
@@ -349,6 +349,15 @@ html.android-stable #cmd.cmd {
 }
 .reg-banner.show { display: block; }
 
+/* === iOS Chrome: remove blue focus box on touch === */
+html.ios-chrome #typed:focus,
+html.ios-chrome #cmd:focus,
+html.ios-chrome #iosc-ce:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Selection color inside iOS Chrome CE */
 #iosc-ce::selection { background: var(--crt) !important; color:#000 !important; -webkit-text-fill-color:#000 !important; }
 #iosc-ce { text-decoration:none !important; -webkit-text-decoration-skip:none !important; text-decoration-color:transparent !important; }
 
@@ -358,39 +367,33 @@ html.ios-chrome .terminal {
   max-width: 100%;
   overflow-x: hidden;
 }
-
 html.ios-chrome .prompt {
   display: flex;
-  flex-wrap: nowrap;          /* stay on one flex row */
-  align-items: flex-start;    /* caret sticks to top line */
+  flex-wrap: nowrap;
+  align-items: flex-start;
   min-width: 0;
 }
-
 html.ios-chrome .caret {
-  flex: 0 0 auto;             /* fixed width */
-  align-self: flex-start;     /* never vertically center when #typed is multi-line */
-  line-height: 1;             /* avoid extra vertical wiggle */
+  flex: 0 0 auto;
+  align-self: flex-start;
+  line-height: 1;
 }
-
 html.ios-chrome #typed {
   display: inline-block;
-  flex: 1 1 auto;             /* occupy the same row as the caret */
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: calc(100% - 1.3ch);  /* room for '>' */
-  white-space: normal;            /* wrap inside the element */
+  max-width: calc(100% - 1.3ch);
+  white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
   line-height: 1.2;
 }
-
-/* per-char spans shouldn’t force no-wrap */
 html.ios-chrome #typed .ch,
 html.ios-chrome #typed .cursor-block {
   white-space: normal;
   word-break: break-word;
 }
-
-/* iOS Chrome: prevent ".com" (etc) auto-link underline in the mirror + hidden input */
+/* iOS Chrome: prevent auto-link underline etc. */
 html.ios-chrome #typed,
 html.ios-chrome #cmd,
 html.ios-chrome #iosc-ce {
@@ -404,22 +407,7 @@ html.ios-chrome #iosc-ce {
   -webkit-user-select: text;
 }
 
-/* iOS Chrome: suppress intermittent blue focus ring */
-html.ios-chrome .prompt:focus,
-html.ios-chrome .prompt:focus-within,
-html.ios-chrome #typed:focus,
-html.ios-chrome #typed:focus-within,
-html.ios-chrome #iosc-ce:focus,
-html.ios-chrome #cmd:focus {
-  outline: none !important;
-  box-shadow: none !important;
-}
-html.ios-chrome .prompt,
-html.ios-chrome .terminal {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* iOS Safari: let JS handle touches over the mirror line */
+/* iOS Safari: JS handles touches over the mirror line */
 html.ios-safari #typed,
 html.ios-safari .prompt { touch-action: none; }
 
@@ -429,34 +417,49 @@ html.ios-safari .terminal {
   max-width: 100%;
   overflow-x: hidden;
 }
-
 html.ios-safari .prompt {
   display: flex;
-  flex-wrap: nowrap;          /* stay on one row with caret */
-  align-items: flex-start;    /* caret sticks to first line like Chrome block */
+  flex-wrap: nowrap;
+  align-items: flex-start;
   min-width: 0;
 }
-
 html.ios-safari .caret {
   flex: 0 0 auto;
   align-self: flex-start;
   line-height: 1;
 }
-
 html.ios-safari #typed {
   display: inline-block;
-  flex: 1 1 auto;                 /* share the row with caret */
-  min-width: 0;                   /* allow shrinking instead of expanding page */
-  max-width: calc(100% - 1.3ch);  /* room for '>' caret block */
-  white-space: normal;            /* allow wrapping */
-  overflow-wrap: anywhere;        /* wrap mid-word if needed (long emails) */
-  word-break: break-word;         /* safety for very long tokens */
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 1.3ch);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   line-height: 1.2;
 }
-
-/* per-char spans shouldn’t force no-wrap on iOS Safari either */
 html.ios-safari #typed .ch,
 html.ios-safari #typed .cursor-block {
   white-space: normal;
   word-break: break-word;
+}
+
+/* === Mobile overlay position for success banner (no layout shift) === */
+@media (max-width: 600px) {
+  :root {
+    /* adjust to your header/menu height */
+    --header-offset: calc(env(safe-area-inset-top) + 44px);
+  }
+  .reg-banner {
+    position: fixed;
+    top: var(--header-offset);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin: 0;
+    display: none;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    pointer-events: none; /* don’t block taps */
+  }
+  .reg-banner.show { display: block; }
 }

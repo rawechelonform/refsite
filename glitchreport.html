@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>REF // Gate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
-<meta name="format-detection" content="telephone=no,email=no,url=no">
+  <meta name="format-detection" content="telephone=no,email=no,url=no">
 
   <link rel="preload" as="image" href="avatar/avatar_intro.png">
   <link rel="stylesheet" href="glitchreport.css?v=306">
@@ -14,6 +14,9 @@
   <a href="artist.html" class="back-fixed" aria-label="Back to artist">
     &lt; <span class="back-label">back</span> &gt;
   </a>
+
+  <!-- Success banner (overlay on mobile; no layout shift) -->
+  <div id="reg-banner" class="reg-banner" aria-live="polite" role="status"></div>
 
   <div class="wrap">
     <div class="stage">
@@ -65,25 +68,23 @@
   </div>
 
   <script src="glitchreport.js?v=304"></script>
-<script>
-  (function(){
-    const params = new URLSearchParams(location.search);
-    const isComplete = params.get('registration') === 'complete';
-    if (!isComplete) return;
-    const b = document.getElementById('reg-banner');
-    if (!b) return;
-    b.textContent = "registration complete";
-    b.classList.add('show');
+  <script>
+    (function(){
+      const params = new URLSearchParams(location.search);
+      const isComplete = params.get('registration') === 'complete';
+      if (!isComplete) return;
+      const b = document.getElementById('reg-banner');
+      if (!b) return;
+      b.textContent = "registration complete";
+      b.classList.add('show');
 
-    // Optional: remove the query param so refresh doesn’t keep the banner
-    try {
-      const url = new URL(location.href);
-      url.searchParams.delete('registration');
-      window.history.replaceState({}, "", url.toString());
-    } catch(_) {}
-  })();
-</script>
-
-
+      // Optional: remove the query param so refresh doesn’t keep the banner
+      try {
+        const url = new URL(location.href);
+        url.searchParams.delete('registration');
+        window.history.replaceState({}, "", url.toString());
+      } catch(_) {}
+    })();
+  </script>
 </body>
 </html>
