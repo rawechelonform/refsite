@@ -79,7 +79,7 @@
 
   <script src="menubar.js?v=mb23" defer></script>
 
-  <!-- Bottom-of-page toast on desktop; top-under-menu on mobile -->
+  <!-- Success toast: desktop = original bottom; mobile = top under menu; same font as .bio -->
   <script>
   (function () {
     const params = new URLSearchParams(location.search);
@@ -87,6 +87,7 @@
 
     const isMobile = window.matchMedia('(max-width:900px)').matches;
 
+    // Create the same holder you had before
     const holder = document.createElement('div');
     Object.assign(holder.style, {
       position: 'fixed',
@@ -97,27 +98,39 @@
       transition: 'opacity 400ms ease'
     });
 
-    // desktop: unchanged bottom toast; mobile: top under menu
+    // Desktop: original bottom placement
+    // Mobile: compute top offset under the menubar without shifting layout
     if (isMobile) {
-      holder.style.top = 'calc(var(--barh, 32px) + 12px)';
+      // try the menubar slot height; fall back to 32px
+      const bar = document.querySelector('[data-menubar]');
+      const barH = (bar && bar.getBoundingClientRect().height) || 32;
+      const safeTop = (window.visualViewport && window.visualViewport.pageTop) ? window.visualViewport.pageTop : 0;
+      holder.style.top = (barH + 12 + safeTop) + 'px';
     } else {
       holder.style.bottom = '16px';
     }
 
+    // Message element styled from the first .bio so font-size stays identical (13px)
     const msg = document.createElement('div');
     msg.textContent = 'registration complete.';
     const bio = document.querySelector('.bio');
     const cs = bio ? getComputedStyle(bio) : {};
     Object.assign(msg.style, {
-      color: '#fff', background: 'transparent', border: 'none',
+      color: '#fff',
+      background: 'transparent',
+      border: 'none',
       fontFamily: cs.fontFamily || 'inherit',
-      fontSize: cs.fontSize || '18px',  // pulls 13px from .bio on both views
-      fontStyle: 'italic', letterSpacing: cs.letterSpacing || '0.02em',
-      transform: 'translateY(10px)', transition: 'transform 400ms ease'
+      fontSize: cs.fontSize || '13px',  // pulls 13px from .bio
+      letterSpacing: cs.letterSpacing || '0.02em',
+      fontStyle: 'italic',
+      transform: 'translateY(10px)',
+      transition: 'transform 400ms ease',
+      textAlign: 'center'
     });
 
     holder.appendChild(msg);
     document.body.appendChild(holder);
+
     requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
     setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
     setTimeout(() => {

@@ -167,35 +167,3 @@ body.debug .about-grid{ outline:2px dashed #00ffff; }
 body.debug .about-blurb{ outline:2px dashed #ff00ff; }
 body.debug .about-photo{ outline:2px solid #ff8800; }
 body.debug .right-col{ outline:2px dashed #00ff00; }
-
-/* === Registration-complete banner (overlay, no layout shift) === */
-/* Keeping this block harmless: it does nothing unless .show is added, which we don't do here */
-#reg-banner{
-  position: fixed !important;
-  top: calc(var(--barh, 32px) + env(safe-area-inset-top, 0px)) !important;
-  left: 0 !important;
-  right: 0 !important;
-
-  width: 100vw !important;
-  margin: 0 !important;
-  padding: 10px 14px !important;
-
-  background: transparent !important;
-  color: #fff !important;
-  font-family: var(--ui-mono, ui-monospace) !important;
-  font-style: italic !important;
-  letter-spacing: .02em !important;
-  border: none !important;
-  box-shadow: none !important;
-  text-align: center !important;
-
-  display: none;                 /* only shows if .show is added */
-  z-index: 10000 !important;
-  pointer-events: none !important;
-  bottom: auto !important;
-}
-#reg-banner.show{ display: block; }
-
-@supports not (top: env(safe-area-inset-top)) {
-  #reg-banner { top: var(--barh, 32px) !important; }
-}
