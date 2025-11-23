@@ -74,6 +74,9 @@ function typeWriter(text, el, speed = 40, done){
   })();
 }
 
+// small no-op helper used in iOS Chrome path
+function focusWithKeyboard(_el, cb){ try { cb && cb(); } catch(_) {} }
+
 // ===== STRICT WHITELIST VALIDATION (ONLY ALLOW THESE DOMAINS) =====
 const ALLOWED_EMAIL_DOMAINS = [
   "gmail.com",
@@ -582,32 +585,40 @@ function bindPrompt(){
     });
   }
 
-  // ==== iOS Safari: intention-aware tap vs drag highlighting ====
+  // ==== iOS Safari: tap-right→end, drag-to-select, keyboard avoidance ====
   if (isIOSSafari) {
     if (typedEl) typedEl.style.touchAction = "none";
     if (promptEl) promptEl.style.touchAction = "none";
 
+    // keep IME consistent
     promptEl.addEventListener("touchstart", () => {
       if (submittedUI) return;
       try { inputEl.focus(); } catch(_) {}
     }, { passive: true });
 
-    let sAnchor = null;
-    let intent = "undecided"; // 'undecided' | 'drag'
+    // intention detection: tap vs drag
+    const DRAG_PX = 8;
+    const DRAG_MS = 60;
     let startX = 0, startY = 0, startT = 0;
-    const DRAG_PX = 8;   // distance threshold to switch to drag
-    const DRAG_MS = 60;  // minimum time before we consider movement
+    let sAnchor = null;
+    let intent = "undecided"; // 'undecided' | 'dragging'
 
     const getTouchXY = (ev) => {
       const t = ev.touches && ev.touches[0];
-      return t ? [t.clientX, t.clientY] : [0,0];
+      return t ? [t.clientX, t.clientY] : [0, 0];
     };
 
-    function snapToNearestLineY(y){
+    // widen vertical band so slight above/below still selects
+    const V_PAD_TOP = 80;
+    const V_PAD_BOTTOM = 160;
+    const H_PAD = 40;
+
+    // snap Y to nearest line midpoint for steadier selection
+    function snapY(y) {
       const lines = getLineMap();
       if (!lines.length) return y;
       let best = lines[0], bestDy = Math.abs(y - lines[0].midY);
-      for (let i = 1; i < lines.length; i++){
+      for (let i = 1; i < lines.length; i++) {
         const dy = Math.abs(y - lines[i].midY);
         if (dy < bestDy) { bestDy = dy; best = lines[i]; }
       }
@@ -616,34 +627,33 @@ function bindPrompt(){
 
     const safariDown = (ev) => {
       if (submittedUI) return;
-      ev.preventDefault();
-
-      const [x0, y0] = getTouchXY(ev);
-      startX = x0; startY = y0; startT = performance.now();
-      intent = "undecided";
+      ev.preventDefault(); // JS controls selection
 
       try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
 
-      const tr = typedEl.getBoundingClientRect();
-      const V_PAD_TOP = 120, V_PAD_BOTTOM = 200, H_PAD = 40;
+      const [x0, y0Raw] = getTouchXY(ev);
+      const y0 = snapY(y0Raw);
+      startX = x0; startY = y0; startT = performance.now();
+      intent = "undecided";
 
-      // tap to the right → jump end immediately
+      const tr = typedEl.getBoundingClientRect();
+
+      // tap to the right → jump to end
       if (x0 > tr.right + H_PAD) {
         const len = (inputEl.value || "").length;
         try { inputEl.setSelectionRange(len, len); } catch(_) {}
         renderMirror();
         sAnchor = null;
-        intent = "undecided";
         return;
       }
 
-      // inside text band: record anchor but do NOT commit selection yet
+      // inside widened band → place caret + set anchor
       if (y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
           x0 >= tr.left - H_PAD && x0 <= tr.right + H_PAD) {
-        const yi = snapToNearestLineY(y0);
-        sAnchor = indexFromPoint(x0, yi);
-        // show a caret preview for feedback, but we may upgrade to drag later
-        paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
+        const i = indexFromPoint(x0, y0);
+        sAnchor = i;
+        // show caret immediately
+        paintMirrorRange(inputEl.value || "", i, i);
         return;
       }
 
@@ -655,86 +665,80 @@ function bindPrompt(){
       ev.preventDefault();
 
       const [x, yRaw] = getTouchXY(ev);
-      const y = snapToNearestLineY(yRaw);
+      const y = snapY(yRaw);
 
-      // decide intent
       if (intent === "undecided") {
         const dt = performance.now() - startT;
-        const dx = x - startX, dy = y - startY;
-        const dist = Math.hypot(dx, dy);
-        if (dt >= DRAG_MS && dist >= DRAG_PX) {
-          intent = "drag";
-        } else {
+        const dist = Math.hypot(x - startX, y - startY);
+        if (dt < DRAG_MS || dist < DRAG_PX) {
           // keep caret preview only
           paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
           return;
         }
+        intent = "dragging";
       }
 
-      if (intent === "drag") {
-        const j = indexFromPoint(x, y);
-        const a = Math.min(sAnchor, j);
-        const b = Math.max(sAnchor, j) + 1;
-        const raw = inputEl.value || "";
-        const end = Math.min(b, raw.length);
-        try { inputEl.setSelectionRange(a, end); } catch(_){}
-        paintMirrorRange(raw, a, end);
-      }
+      const j = indexFromPoint(x, y);
+      const a = Math.min(sAnchor, j);
+      const b = Math.max(sAnchor, j) + 1; // inclusive paint end
+      const raw = inputEl.value || "";
+      const end = Math.min(b, raw.length);
+      try { inputEl.setSelectionRange(a, end); } catch(_) {}
+      paintMirrorRange(raw, a, end);
     };
 
-    const safariUp = (ev) => {
-      if (submittedUI) return;
-
-      // if we never switched to drag, treat as a tap/caret place at anchor
+    const safariUp = () => {
       if (intent === "undecided" && sAnchor != null) {
-        try { inputEl.setSelectionRange(sAnchor, sAnchor); } catch(_){}
+        try { inputEl.setSelectionRange(sAnchor, sAnchor); } catch(_) {}
         paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
       }
       sAnchor = null;
       intent = "undecided";
     };
 
+    // Bind on #typed and mirror to window during drag
     typedEl.addEventListener("touchstart", safariDown, { passive: false });
     typedEl.addEventListener("touchmove",  safariMove, { passive: false });
     typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
     typedEl.addEventListener("touchcancel",safariUp,   { passive: true  });
 
     window.addEventListener("touchmove", (ev) => {
-      if (intent !== "drag") return;
+      if (intent !== "dragging") return;
       safariMove(ev);
     }, { passive: false });
-    window.addEventListener("touchend", () => { safariUp(); }, { passive: true });
+    window.addEventListener("touchend", () => {
+      if (intent === "dragging") safariUp();
+    }, { passive: true });
 
-    // also allow tapping just to the right on the whole prompt area
-    const regionTouchStart = (ev) => {
-      if (submittedUI) return;
-      const t = ev.touches && ev.touches[0];
-      if (!t || !typedEl) return;
-      const x = t.clientX, y0 = t.clientY;
-      const tr = typedEl.getBoundingClientRect();
-      const V_PAD_TOP = 120, V_PAD_BOTTOM = 200, H_PAD = 40;
+    // Region handler so taps just to the right on the prompt also work
+    if (promptEl) {
+      promptEl.addEventListener("touchstart", (ev) => {
+        if (submittedUI) return;
+        const t = ev.touches && ev.touches[0];
+        if (!t || !typedEl) return;
 
-      const inBand =
-        y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
-        x >= tr.left - H_PAD && x <= tr.right + H_PAD;
+        const x = t.clientX, y0 = snapY(t.clientY);
+        const tr = typedEl.getBoundingClientRect();
 
-      if (inBand) {
-        ev.preventDefault();
-        safariDown(ev);
-        return;
-      }
-      if (x > tr.right + H_PAD) {
-        ev.preventDefault();
-        try { inputEl.focus(); } catch(_) {}
-        const len = (inputEl.value || "").length;
-        try { inputEl.setSelectionRange(len, len); } catch(_) {}
-        renderMirror();
-      }
-    };
-    if (promptEl) promptEl.addEventListener("touchstart", regionTouchStart, { passive: false });
+        const inBand =
+          y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
+          x  >= tr.left - H_PAD && x  <= tr.right + H_PAD;
+
+        if (x > tr.right + H_PAD) {
+          ev.preventDefault();
+          try { inputEl.focus(); } catch(_) {}
+          const len = (inputEl.value || "").length;
+          try { inputEl.setSelectionRange(len, len); } catch(_) {}
+          renderMirror();
+        } else if (inBand) {
+          ev.preventDefault();
+          safariDown(ev);
+        }
+      }, { passive: false });
+    }
   }
 
-  // iOS Chrome pointer shim (unchanged)
+  // iOS Chrome pointer shim remains as implemented earlier (unchanged)
   if (isIOSChrome && window.PointerEvent) {
     bindKeyboardAvoidance();
 
@@ -1035,7 +1039,7 @@ function iosSafKeyboardInsetPX(){
   if (!window.visualViewport) return 0;
   if (iosSafVvBase == null) iosSafVvBase = window.visualViewport.height;
   const vv = window.visualViewport;
-  return Math.max(0, Math.round(iosSafVvBase - vv.height));
+  return Math.max(0, Math.round(vvBaseHeight = vv.height, 0) || Math.max(0, Math.round(iosSafVvBase - vv.height)));
 }
 
 function ensurePromptVisibleIOSSafari(){
@@ -1056,7 +1060,8 @@ function bindKeyboardAvoidanceIOSSafari(){
   if (!isIOSSafari || !window.visualViewport) return;
   iosSafVvBase = window.visualViewport.height;
   const onVV = () => {
-    const inset = iosSafKeyboardInsetPX();
+    const vv = window.visualViewport;
+    const inset = Math.max(0, Math.round(iosSafVvBase - vv.height));
     document.body.style.paddingBottom = inset > 0 ? (inset + 24) + "px" : "";
     ensurePromptVisibleIOSSafari();
   };
