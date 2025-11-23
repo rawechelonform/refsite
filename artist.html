@@ -82,73 +82,59 @@
   const params = new URLSearchParams(location.search);
   if (params.get('registration') !== 'complete') return;
 
-  // Create or reuse the banner element
-  let b = document.getElementById('reg-banner');
-  if (!b) {
-    b = document.createElement('div');
-    b.id = 'reg-banner';
-    b.className = 'reg-banner';
-    b.textContent = 'registration complete';
-  } else {
-    b.textContent = 'registration complete';
-  }
+  // Fixed host at the very top of the viewport (above everything)
+  const host = document.createElement('div');
+  host.id = 'reg-toast-host';
+  Object.assign(host.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    right: '0',
+    zIndex: '2147483647',   // max
+    pointerEvents: 'none'   // don’t block taps
+  });
+  document.body.appendChild(host);
 
-  // Make sure it's a direct child of <body> and not inside any grid/flex container
-  try { b.remove(); } catch (_) {}
-  document.body.appendChild(b);
+  // Shadow DOM to isolate from site CSS so nothing can push it to the bottom
+  const shadow = host.attachShadow({ mode: 'open' });
+  shadow.innerHTML = `
+    <style>
+      :host { all: initial; }
+      .banner {
+        position: relative;
+        margin-top: var(--offset, 44px); /* sits just under your menubar */
+        background: #0a0;
+        color: #000;
+        border-bottom: 2px solid #030;
+        padding: 10px 14px;
+        font-family: var(--ui-mono, ui-monospace, system-ui, monospace);
+        letter-spacing: .05em;
+        box-shadow: 0 2px 0 rgba(0,0,0,.5);
+        pointer-events: none;
+      }
+    </style>
+    <div class="banner" id="b">registration complete</div>
+  `;
 
-  // Compute an offset under your menubar
-  function computeTop() {
-    // If your header is rendered via menubar.js, it should be in this slot
+  // Compute offset under your menubar slot (fallback 44px)
+  function setOffset() {
     const slot = document.querySelector('[data-menubar]');
-    const slotRect = slot ? slot.getBoundingClientRect() : null;
-    const barH = slotRect ? Math.ceil(slotRect.height) : 32;
-
-    // Account for safe area on iOS
-    const safe = (window.CSS && CSS.supports('top: env(safe-area-inset-top)')) ? 0 : 0;
-
-    return barH + safe;
+    const h = slot ? Math.ceil(slot.getBoundingClientRect().height) : 44;
+    host.style.setProperty('--offset', h + 'px');
   }
-
-  function pin() {
-    const topPx = computeTop();
-
-    // Nuke any bottom anchoring and hard-pin to the top with inline styles
-    const s = b.style;
-    s.setProperty('position', 'fixed', 'important');
-    s.setProperty('top', topPx + 'px', 'important');
-    s.setProperty('left', '0', 'important');
-    s.setProperty('right', '0', 'important');
-    s.setProperty('bottom', 'auto', 'important');
-    s.setProperty('width', '100vw', 'important');
-    s.setProperty('margin', '0', 'important');
-    s.setProperty('z-index', '20000', 'important');      // above photo/content
-    s.setProperty('pointer-events', 'none', 'important'); // don’t block taps
-
-    // Basic visuals (kept here so they can’t be overridden by older CSS)
-    s.setProperty('background', '#0a0', 'important');
-    s.setProperty('color', '#000', 'important');
-    s.setProperty('border-bottom', '2px solid #030', 'important');
-    s.setProperty('padding', '10px 14px', 'important');
-    s.setProperty('font-family', 'var(--ui-mono, ui-monospace)', 'important');
-    s.setProperty('letter-spacing', '.05em', 'important');
-    s.setProperty('box-shadow', '0 2px 0 rgba(0,0,0,.5)', 'important');
-
-    b.classList.add('show');
-  }
-
-  pin();
-  window.addEventListener('resize', pin);
-  window.addEventListener('orientationchange', pin);
+  setOffset();
+  addEventListener('resize', setOffset, { passive: true });
+  addEventListener('orientationchange', setOffset);
 
   // Strip the query so it won’t re-show on refresh
   try {
     const url = new URL(location.href);
     url.searchParams.delete('registration');
     history.replaceState({}, '', url.toString());
-  } catch (_) {}
+  } catch {}
 })();
 </script>
+
 
 
 
