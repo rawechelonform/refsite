@@ -78,42 +78,63 @@
 
   <!-- Bottom-of-page fade-away toast for registration complete -->
   <script>
-  (function () {
+  (function(){
     const params = new URLSearchParams(location.search);
-    if (params.get('registration') !== 'complete') return;
+    const isComplete = params.get('registration') === 'complete';
+    if (!isComplete) return;
 
-    const holder = document.createElement('div');
-    Object.assign(holder.style, {
-      position: 'fixed', left: 0, right: 0, bottom: '16px',
-      display: 'grid', placeItems: 'center',
-      zIndex: '9999', pointerEvents: 'none',
-      background: 'transparent', opacity: '0',
-      transition: 'opacity 400ms ease'
-    });
+    const b = document.getElementById('reg-banner');
+    if (!b) return;
 
-    const msg = document.createElement('div');
-    msg.textContent = 'registration complete.';
-    const bio = document.querySelector('.bio');
-    const cs = bio ? getComputedStyle(bio) : {};
-    Object.assign(msg.style, {
-      color: '#fff', background: 'transparent', border: 'none',
-      fontFamily: cs.fontFamily || 'inherit', fontSize: cs.fontSize || '18px',
-      fontStyle: 'italic', letterSpacing: cs.letterSpacing || '0.02em',
-      transform: 'translateY(10px)', transition: 'transform 400ms ease'
-    });
+    // Set text and show the banner
+    b.textContent = "registration complete";
+    b.classList.add('show');
 
-    holder.appendChild(msg);
-    document.body.appendChild(holder);
-    requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
-    setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
-    setTimeout(() => {
-      holder.remove();
-      params.delete('registration');
-      const qs = params.toString();
-      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
-      history.replaceState(null, '', newUrl);
-    }, 2100);
+    // Force overlay-at-top on small screens (ignores any stale CSS)
+    function pinBanner() {
+      const isSmall = window.matchMedia('(max-width: 600px)').matches;
+      if (!isSmall) {
+        // Desktop/tablet: let your CSS control layout
+        b.style.position = '';
+        b.style.top = '';
+        b.style.left = '';
+        b.style.right = '';
+        b.style.zIndex = '';
+        b.style.margin = '';
+        b.style.pointerEvents = '';
+        return;
+      }
+
+      // Find your fixed menu/back link to anchor just below it
+      const header = document.querySelector('.back-fixed');
+      const rect = header ? header.getBoundingClientRect() : null;
+
+      // Use the visual height of the header (falls back to ~44px) + a small gap
+      const offset = (rect ? Math.ceil(rect.bottom) : 44) + 8;
+
+      Object.assign(b.style, {
+        position: 'fixed',
+        top: offset + 'px',
+        left: '0',
+        right: '0',
+        zIndex: '1000',
+        margin: '0',
+        pointerEvents: 'none'   // don’t block taps behind it
+      });
+    }
+
+    pinBanner();
+    window.addEventListener('resize', pinBanner);
+    window.addEventListener('orientationchange', pinBanner);
+
+    // Optional: remove the query param so refresh doesn’t keep the banner
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('registration');
+      window.history.replaceState({}, "", url.toString());
+    } catch(_) {}
   })();
-  </script>
+</script>
+
 </body>
 </html>
