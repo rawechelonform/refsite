@@ -83,44 +83,55 @@
     const isComplete = params.get('registration') === 'complete';
     if (!isComplete) return;
 
-    const b = document.getElementById('reg-banner');
-    if (!b) return;
+    let b = document.getElementById('reg-banner');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'reg-banner';
+      b.className = 'reg-banner';
+      document.body.insertBefore(b, document.body.firstChild);
+    }
 
-    // Set text and show the banner
+    // Set text and show
     b.textContent = "registration complete";
     b.classList.add('show');
 
-    // Force overlay-at-top on small screens (ignores any stale CSS)
+    // iOS-only detection (Safari & Chrome both use WebKit, but we only force on Safari)
+    const UA = navigator.userAgent || '';
+    const isiOS = /iPhone|iPad|iPod/i.test(UA);
+    const isCriOS = /CriOS/i.test(UA);
+    const isIOSSafari = isiOS && !isCriOS;
+
+    // Only force overlay on iOS Safari (leave Chrome/desktop as-is)
+    if (!isIOSSafari) return;
+
+    // Move banner to <body> root to avoid ancestor stacking/position quirks
+    if (b.parentNode !== document.body) {
+      document.body.insertBefore(b, document.body.firstChild);
+    }
+
     function pinBanner() {
-      const isSmall = window.matchMedia('(max-width: 600px)').matches;
-      if (!isSmall) {
-        // Desktop/tablet: let your CSS control layout
-        b.style.position = '';
-        b.style.top = '';
-        b.style.left = '';
-        b.style.right = '';
-        b.style.zIndex = '';
-        b.style.margin = '';
-        b.style.pointerEvents = '';
-        return;
-      }
-
-      // Find your fixed menu/back link to anchor just below it
+      // Find your fixed header/menu (the back link)
       const header = document.querySelector('.back-fixed');
+
+      // Where is its bottom edge in the viewport?
       const rect = header ? header.getBoundingClientRect() : null;
+      const headerBottom = rect ? Math.ceil(rect.bottom) : 44; // fallback ~44px
+      const gap = 8; // small breathing room under the menu
 
-      // Use the visual height of the header (falls back to ~44px) + a small gap
-      const offset = (rect ? Math.ceil(rect.bottom) : 44) + 8;
-
+      // Force fixed overlay below the menu, above content
       Object.assign(b.style, {
         position: 'fixed',
-        top: offset + 'px',
+        top: (headerBottom + gap) + 'px',
         left: '0',
         right: '0',
-        zIndex: '1000',
         margin: '0',
-        pointerEvents: 'none'   // don’t block taps behind it
+        // keep it under the menu but above the photo
+        zIndex: '90',
+        pointerEvents: 'none'
       });
+
+      // Ensure it spans viewport width without causing layout shift
+      b.style.width = '100vw';
     }
 
     pinBanner();
@@ -135,6 +146,7 @@
     } catch(_) {}
   })();
 </script>
+
 
 </body>
 </html>
