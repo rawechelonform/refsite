@@ -74,9 +74,6 @@ function typeWriter(text, el, speed = 40, done){
   })();
 }
 
-// small no-op helper used in iOS Chrome path
-function focusWithKeyboard(_el, cb){ try { cb && cb(); } catch(_) {} }
-
 // ===== STRICT WHITELIST VALIDATION (ONLY ALLOW THESE DOMAINS) =====
 const ALLOWED_EMAIL_DOMAINS = [
   "gmail.com",
@@ -238,6 +235,7 @@ function getLineMap(){
   return _lineMap;
 }
 
+// Generic indexFromPoint (desktop + non-Safari mobile fallbacks)
 function indexFromPoint(clientX, clientY){
   if (!typedEl) return 0;
   const raw = (inputEl?.value || "");
@@ -248,14 +246,7 @@ function indexFromPoint(clientX, clientY){
     clientY = tr.top + tr.height / 2;
   }
 
-  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-
-  // WebKit caret probing
-  const cs = getComputedStyle(typedEl);
-  const lh = parseFloat(cs.lineHeight) || 20;
-  const band = Math.max(30, lh * 1.4);
-  const probe = [0, band*0.25, band*0.5, band*0.75, band, -band*0.25, -band*0.5, -band, band*1.25, -band*1.25];
-
+  // WebKit caret probing first
   const caretFromPoint = (x, y) =>
     (document.caretPositionFromPoint && document.caretPositionFromPoint(x, y)) ||
     (document.caretRangeFromPoint && document.caretRangeFromPoint(x, y));
@@ -265,7 +256,7 @@ function indexFromPoint(clientX, clientY){
     if (node.nodeType === 3 && node.parentElement?.classList?.contains("ch")) {
       const base = Number(node.parentElement.getAttribute("data-i")) || 0;
       const r = node.parentElement.getBoundingClientRect();
-      return clamp(base + (clientX > (r.left + r.width/2) ? 1 : 0), 0, raw.length);
+      return Math.max(0, Math.min(raw.length, base + (clientX > (r.left + r.width/2) ? 1 : 0)));
     }
     if (node.nodeType === 1) {
       const el = node;
@@ -273,11 +264,17 @@ function indexFromPoint(clientX, clientY){
       if (hit) {
         const base = Number(hit.getAttribute("data-i")) || 0;
         const r = hit.getBoundingClientRect();
-        return clamp(base + (clientX > (r.left + r.width/2) ? 1 : 0), 0, raw.length);
+        return Math.max(0, Math.min(raw.length, base + (clientX > (r.left + r.width/2) ? 1 : 0)));
       }
     }
     return null;
   };
+
+  // small vertical probe
+  const cs = getComputedStyle(typedEl);
+  const lh = parseFloat(cs.lineHeight) || 20;
+  const band = Math.max(30, lh * 1.4);
+  const probe = [0, band*0.25, -band*0.25, band*0.5, -band*0.5];
 
   for (const dy of probe) {
     const c = caretFromPoint(clientX, clientY + dy);
@@ -287,36 +284,44 @@ function indexFromPoint(clientX, clientY){
     if (idx != null) return idx;
   }
 
-  // Line-aware fallback
+  // Fallback to row map
+  return indexFromPointRowOnly(clientX, clientY);
+}
+
+// Safari-stable row-only indexer (no caret API reliance)
+function indexFromPointRowOnly(clientX, clientY){
+  const raw = (inputEl?.value || "");
   const lines = getLineMap();
-  if (!lines.length) return 0;
+  if (!raw.length || !lines.length) return 0;
+
+  const cs = getComputedStyle(typedEl);
+  const lh = parseFloat(cs.lineHeight) || 20;
+  const band = Math.max(30, lh * 1.4);
 
   let bestLine = lines[0];
   let bestScore = Infinity;
   for (const line of lines) {
-    const dy = Math.abs(clientY - line.midY);
-    const belowBias = clientY >= line.midY ? 0.7 : 1.0;
-    const score = dy * belowBias;
-    if (score < bestScore) { bestScore = score; bestLine = line; }
+    const midY = (line.top + line.bottom) / 2;
+    const dy = Math.abs(clientY - midY);
+    if (dy < bestScore) { bestScore = dy; bestLine = line; }
   }
 
   const firstLine = lines[0], lastLine = lines[lines.length - 1];
   if (clientY < firstLine.top - band) bestLine = firstLine;
   else if (clientY > lastLine.bottom + band) bestLine = lastLine;
 
-  let bestIdx = bestLine.spans[0].i;
-  let bestDx = Infinity;
+  // left/right clamps
+  if (clientX <= bestLine.spans[0].left - 16) return bestLine.spans[0].i;
+  const lastCh = bestLine.spans[bestLine.spans.length - 1];
+  if (clientX >= lastCh.right + 16) return raw.length;
+
+  // nearest midX
+  let bestIdx = lastCh.i, bestDx = Infinity;
   for (const ch of bestLine.spans) {
     const dx = Math.abs(clientX - ch.midX);
     if (dx < bestDx) { bestDx = dx; bestIdx = ch.i; }
   }
-
-  if (clientX < bestLine.spans[0].left - 16) return clamp(bestLine.spans[0].i, 0, raw.length);
-
-  const lastCh = bestLine.spans[bestLine.spans.length - 1];
-  if (clientX > lastCh.right + 16) return raw.length;
-
-  return clamp(bestIdx, 0, raw.length);
+  return Math.max(0, Math.min(raw.length, bestIdx));
 }
 
 // ===== RAF (desktop + iOS Safari; CE paints for iOS Chrome) =====
@@ -585,20 +590,21 @@ function bindPrompt(){
     });
   }
 
-  // ==== iOS Safari: tap-right→end, drag-to-select, keyboard avoidance ====
+  // ==== iOS Safari: tap-right→end, reliable drag-to-select, keyboard avoidance ====
   if (isIOSSafari) {
     if (typedEl) typedEl.style.touchAction = "none";
     if (promptEl) promptEl.style.touchAction = "none";
 
-    // keep IME consistent
+    // keep keyboard consistent
     promptEl.addEventListener("touchstart", () => {
       if (submittedUI) return;
       try { inputEl.focus(); } catch(_) {}
     }, { passive: true });
 
-    // intention detection: tap vs drag
-    const DRAG_PX = 8;
-    const DRAG_MS = 60;
+    // intention detection: favor drag quickly
+    const DRAG_PX = 2;
+    const DRAG_MS = 0;
+
     let startX = 0, startY = 0, startT = 0;
     let sAnchor = null;
     let intent = "undecided"; // 'undecided' | 'dragging'
@@ -608,31 +614,20 @@ function bindPrompt(){
       return t ? [t.clientX, t.clientY] : [0, 0];
     };
 
-    // widen vertical band so slight above/below still selects
+    // wider vertical/side band
     const V_PAD_TOP = 80;
     const V_PAD_BOTTOM = 160;
     const H_PAD = 40;
 
-    // snap Y to nearest line midpoint for steadier selection
-    function snapY(y) {
-      const lines = getLineMap();
-      if (!lines.length) return y;
-      let best = lines[0], bestDy = Math.abs(y - lines[0].midY);
-      for (let i = 1; i < lines.length; i++) {
-        const dy = Math.abs(y - lines[i].midY);
-        if (dy < bestDy) { bestDy = dy; best = lines[i]; }
-      }
-      return best.midY;
-    }
+    const safariIndex = (x, y) => indexFromPointRowOnly(x, y);
 
     const safariDown = (ev) => {
       if (submittedUI) return;
-      ev.preventDefault(); // JS controls selection
+      ev.preventDefault(); // fully own the gesture
 
       try { if (document.activeElement !== inputEl) inputEl.focus(); } catch(_) {}
 
-      const [x0, y0Raw] = getTouchXY(ev);
-      const y0 = snapY(y0Raw);
+      const [x0, y0] = getTouchXY(ev);
       startX = x0; startY = y0; startT = performance.now();
       intent = "undecided";
 
@@ -642,17 +637,17 @@ function bindPrompt(){
       if (x0 > tr.right + H_PAD) {
         const len = (inputEl.value || "").length;
         try { inputEl.setSelectionRange(len, len); } catch(_) {}
-        renderMirror();
+        paintMirrorRange(inputEl.value || "", len, len);
         sAnchor = null;
         return;
       }
 
-      // inside widened band → place caret + set anchor
+      // inside band → place caret + set anchor
       if (y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
           x0 >= tr.left - H_PAD && x0 <= tr.right + H_PAD) {
-        const i = indexFromPoint(x0, y0);
+        const i = safariIndex(x0, y0);
         sAnchor = i;
-        // show caret immediately
+        // preview caret immediately
         paintMirrorRange(inputEl.value || "", i, i);
         return;
       }
@@ -664,21 +659,19 @@ function bindPrompt(){
       if (submittedUI || sAnchor == null) return;
       ev.preventDefault();
 
-      const [x, yRaw] = getTouchXY(ev);
-      const y = snapY(yRaw);
+      const [x, y] = getTouchXY(ev);
 
       if (intent === "undecided") {
         const dt = performance.now() - startT;
         const dist = Math.hypot(x - startX, y - startY);
-        if (dt < DRAG_MS || dist < DRAG_PX) {
-          // keep caret preview only
+        if (dt < DRAG_MS && dist < DRAG_PX) {
           paintMirrorRange(inputEl.value || "", sAnchor, sAnchor);
           return;
         }
-        intent = "dragging";
+        if (dist >= DRAG_PX) intent = "dragging";
       }
 
-      const j = indexFromPoint(x, y);
+      const j = safariIndex(x, y);
       const a = Math.min(sAnchor, j);
       const b = Math.max(sAnchor, j) + 1; // inclusive paint end
       const raw = inputEl.value || "";
@@ -696,7 +689,7 @@ function bindPrompt(){
       intent = "undecided";
     };
 
-    // Bind on #typed and mirror to window during drag
+    // Bind on #typed and also mirror to window during drag
     typedEl.addEventListener("touchstart", safariDown, { passive: false });
     typedEl.addEventListener("touchmove",  safariMove, { passive: false });
     typedEl.addEventListener("touchend",   safariUp,   { passive: true  });
@@ -710,26 +703,26 @@ function bindPrompt(){
       if (intent === "dragging") safariUp();
     }, { passive: true });
 
-    // Region handler so taps just to the right on the prompt also work
+    // Region handler so taps just to the right also work from the prompt zone
     if (promptEl) {
       promptEl.addEventListener("touchstart", (ev) => {
         if (submittedUI) return;
         const t = ev.touches && ev.touches[0];
         if (!t || !typedEl) return;
 
-        const x = t.clientX, y0 = snapY(t.clientY);
+        const x = t.clientX, y = t.clientY;
         const tr = typedEl.getBoundingClientRect();
 
         const inBand =
-          y0 >= tr.top - V_PAD_TOP && y0 <= tr.bottom + V_PAD_BOTTOM &&
-          x  >= tr.left - H_PAD && x  <= tr.right + H_PAD;
+          y >= tr.top - V_PAD_TOP && y <= tr.bottom + V_PAD_BOTTOM &&
+          x >= tr.left - H_PAD && x <= tr.right + H_PAD;
 
         if (x > tr.right + H_PAD) {
           ev.preventDefault();
           try { inputEl.focus(); } catch(_) {}
           const len = (inputEl.value || "").length;
           try { inputEl.setSelectionRange(len, len); } catch(_) {}
-          renderMirror();
+          paintMirrorRange(inputEl.value || "", len, len);
         } else if (inBand) {
           ev.preventDefault();
           safariDown(ev);
@@ -772,7 +765,6 @@ function bindPrompt(){
       try { ceEl.focus(); } catch(_) {}
       applyKeyboardPadding();
       ensurePromptVisible();
-      focusWithKeyboard(ceEl, () => {});
       ev.preventDefault();
     };
 
@@ -819,12 +811,10 @@ function bindPrompt(){
         try { ceEl.focus(); } catch(_) {}
         applyKeyboardPadding();
         ensurePromptVisible();
-        focusWithKeyboard(ceEl, () => {});
       } else {
         try { ceEl.focus(); } catch(_) {}
         applyKeyboardPadding();
         ensurePromptVisible();
-        focusWithKeyboard(ceEl, () => {});
       }
       ev.preventDefault();
     };
@@ -857,7 +847,7 @@ function bindPrompt(){
   }, true);
 
   // Enter/Go to submit
-  const isEnter = (e) => e && (e.key === "Enter" || e.key === "Go" || e.keyCode === 13);
+  const isEnter = (e) => e && (e.key === "Enter") || e?.key === "Go" || e?.keyCode === 13;
   inputEl.addEventListener("keydown", (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("keyup",   (e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
   inputEl.addEventListener("keypress",(e) => { if (isEnter(e)) { e.preventDefault(); trySubmitEmail(); } });
@@ -1034,13 +1024,6 @@ function enableMobileIME(){
 
 /* ========= iOS SAFARI KEYBOARD AVOIDANCE (Safari-only) ========= */
 let iosSafVvBase = null;
-
-function iosSafKeyboardInsetPX(){
-  if (!window.visualViewport) return 0;
-  if (iosSafVvBase == null) iosSafVvBase = window.visualViewport.height;
-  const vv = window.visualViewport;
-  return Math.max(0, Math.round(vvBaseHeight = vv.height, 0) || Math.max(0, Math.round(iosSafVvBase - vv.height)));
-}
 
 function ensurePromptVisibleIOSSafari(){
   if (!isIOSSafari || !promptEl || !typedEl || !window.visualViewport) return;
