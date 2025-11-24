@@ -168,7 +168,7 @@ body.debug .about-blurb{ outline:2px dashed #ff00ff; }
 body.debug .about-photo{ outline:2px solid #ff8800; }
 body.debug .right-col{ outline:2px dashed #00ff00; }
 
-/* === Registration-complete overlay (no layout shift) === */
+/* === Registration-complete overlay (no layout shift) === */ 
 /* Base (desktop): fixed at bottom, centered */
 #reg-banner{
   position: fixed;
