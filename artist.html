@@ -128,25 +128,15 @@ if (isMobile) {
     holder.appendChild(msg);
     document.body.appendChild(holder);
 
-   requestAnimationFrame(() => {
-  holder.style.opacity = '1';
-  msg.style.transform = 'translateY(0)';
-});
-
-// start fade-out later so it holds longer
-setTimeout(() => {
-  holder.style.opacity = '0';
-  msg.style.transform = 'translateY(10px)';
-}, 2200);  // was 1600
-
-setTimeout(() => {
-  holder.remove();
-  params.delete('registration');
-  const qs = params.toString();
-  const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
-  history.replaceState(null, '', newUrl);
-}, 2600);  // was 2100
-
+    requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
+    setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
+    setTimeout(() => {
+      holder.remove();
+      params.delete('registration');
+      const qs = params.toString();
+      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+      history.replaceState(null, '', newUrl);
+    }, 2100);
   })();
   </script>
 </body>
