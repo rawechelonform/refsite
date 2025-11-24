@@ -168,5 +168,41 @@ body.debug .about-blurb{ outline:2px dashed #ff00ff; }
 body.debug .about-photo{ outline:2px solid #ff8800; }
 body.debug .right-col{ outline:2px dashed #00ff00; }
 
-/* (reg-banner CSS from your earlier version can stay or be removed;
-   it is not used by the current script) */
+/* === Registration-complete overlay (no layout shift) === */
+/* Base (desktop): fixed at bottom, centered */
+#reg-banner{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+
+  padding: 8px 14px;
+  background: transparent;
+  color: #fff;
+
+  font-family: var(--ui-mono, ui-monospace);
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: .02em;
+  text-align: center;
+
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  z-index: 9999;
+
+  display: none;  /* only shown when .show added */
+}
+
+#reg-banner.show{
+  display: block;
+  opacity: 1;
+}
+
+/* Mobile: move banner below menubar, above photo */
+@media (max-width:900px){
+  #reg-banner{
+    top: calc(var(--barh, 32px) + 80px); /* push well below the menu button */
+    bottom: auto;
+  }
+}

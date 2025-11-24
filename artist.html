@@ -20,7 +20,7 @@
   <!-- Page CSS -->
   <link rel="stylesheet" href="sadgirls.css" />
   <link rel="stylesheet" href="menubar.css?v=mb9">
-  <link rel="stylesheet" href="artist.css?v=43">
+  <link rel="stylesheet" href="artist.css?v=44">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
@@ -34,6 +34,7 @@
 
   <div class="page">
 
+    <!-- This is the overlay container we’ll use -->
     <div id="reg-banner" class="reg-banner" aria-live="polite" role="status"></div>
 
     <!-- shared header + reserved space -->
@@ -79,79 +80,40 @@
 
   <script src="menubar.js?v=mb23" defer></script>
 
-  <!-- Registration complete toast:
-       - Desktop: bottom (original behavior)
-       - Mobile: fixed near top, below menu button, above photo, no layout shift
-  -->
+  <!-- Registration-complete overlay using #reg-banner -->
   <script>
   (function () {
     const params = new URLSearchParams(location.search);
     if (params.get('registration') !== 'complete') return;
 
-    const isMobile = window.matchMedia('(max-width:900px)').matches;
+    const banner = document.getElementById('reg-banner');
+    if (!banner) return;
 
-    const holder = document.createElement('div');
-    Object.assign(holder.style, {
-      position: 'fixed',
-      left: 0,
-      right: 0,
-      display: 'grid',
-      placeItems: 'center',
-      zIndex: '9999',
-      pointerEvents: 'none',
-      background: 'transparent',
-      opacity: '0',
-      transition: 'opacity 400ms ease'
-    });
+    banner.textContent = 'registration complete.';
 
-    if (isMobile) {
-      // push down from very top so it sits under the menu button
-      // tweak this number if you want it higher/lower
-      holder.style.top = '110px';
-    } else {
-      // original desktop placement
-      holder.style.bottom = '16px';
+    // Match font to .bio (13px, same family)
+    const bio = document.querySelector('.bio');
+    if (bio) {
+      const cs = getComputedStyle(bio);
+      banner.style.fontFamily = cs.fontFamily || '';
+      banner.style.fontSize   = cs.fontSize   || '';
+      banner.style.letterSpacing = cs.letterSpacing || '';
     }
 
-    const msg = document.createElement('div');
-    msg.textContent = 'registration complete.';
-    const bio = document.querySelector('.bio');
-    const cs = bio ? getComputedStyle(bio) : {};
-    Object.assign(msg.style, {
-      color: '#fff',
-      background: 'transparent',
-      border: 'none',
-      fontFamily: cs.fontFamily || 'inherit',
-      fontSize: cs.fontSize || '13px',  // matches .bio on both views
-      fontStyle: 'italic',
-      letterSpacing: cs.letterSpacing || '0.02em',
-      transform: 'translateY(10px)',
-      transition: 'transform 400ms ease',
-      textAlign: 'center'
-    });
+    banner.classList.add('show');
 
-    holder.appendChild(msg);
-    document.body.appendChild(holder);
-
-    // fade in
-    requestAnimationFrame(() => {
-      holder.style.opacity = '1';
-      msg.style.transform = 'translateY(0)';
-    });
-
-    // stay visible a bit longer, then fade out (same timing mobile + desktop)
+    // Hold time (same for mobile + desktop)
     setTimeout(() => {
-      holder.style.opacity = '0';
-      msg.style.transform = 'translateY(10px)';
-    }, 2200);  // visible ~2.2s before fade
+      banner.classList.remove('show');
+    }, 2200);
 
+    // Then clean the query string
     setTimeout(() => {
-      holder.remove();
       params.delete('registration');
       const qs = params.toString();
       const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
       history.replaceState(null, '', newUrl);
-    }, 2600);  // fully gone shortly after fade
+    }, 2600);
   })();
   </script>
 </body>
