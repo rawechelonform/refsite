@@ -79,7 +79,10 @@
 
   <script src="menubar.js?v=mb23" defer></script>
 
-  <!-- Success toast: desktop = original bottom; mobile = top under menu; same font as .bio -->
+  <!-- Registration complete toast:
+       - Desktop: bottom (original behavior)
+       - Mobile: fixed near top, below menu button, above photo, no layout shift
+  -->
   <script>
   (function () {
     const params = new URLSearchParams(location.search);
@@ -87,27 +90,29 @@
 
     const isMobile = window.matchMedia('(max-width:900px)').matches;
 
-    // Create the same holder you had before
     const holder = document.createElement('div');
     Object.assign(holder.style, {
       position: 'fixed',
-      left: 0, right: 0,
-      display: 'grid', placeItems: 'center',
-      zIndex: '9999', pointerEvents: 'none',
-      background: 'transparent', opacity: '0',
+      left: 0,
+      right: 0,
+      display: 'grid',
+      placeItems: 'center',
+      zIndex: '9999',
+      pointerEvents: 'none',
+      background: 'transparent',
+      opacity: '0',
       transition: 'opacity 400ms ease'
     });
 
+    if (isMobile) {
+      // push down from very top so it sits under the menu button
+      // tweak this number if you want it higher/lower
+      holder.style.top = '110px';
+    } else {
+      // original desktop placement
+      holder.style.bottom = '16px';
+    }
 
-   // Mobile: place it just BELOW the menu bar, not on top of it
-if (isMobile) {
-  holder.style.top = 'calc(var(--barh, 32px) + 70px)';
-} else {
-  holder.style.bottom = '16px';   // desktop unchanged
-}
-
-
-    // Message element styled from the first .bio so font-size stays identical (13px)
     const msg = document.createElement('div');
     msg.textContent = 'registration complete.';
     const bio = document.querySelector('.bio');
@@ -117,9 +122,9 @@ if (isMobile) {
       background: 'transparent',
       border: 'none',
       fontFamily: cs.fontFamily || 'inherit',
-      fontSize: cs.fontSize || '13px',  // pulls 13px from .bio
-      letterSpacing: cs.letterSpacing || '0.02em',
+      fontSize: cs.fontSize || '13px',  // matches .bio on both views
       fontStyle: 'italic',
+      letterSpacing: cs.letterSpacing || '0.02em',
       transform: 'translateY(10px)',
       transition: 'transform 400ms ease',
       textAlign: 'center'
@@ -128,15 +133,25 @@ if (isMobile) {
     holder.appendChild(msg);
     document.body.appendChild(holder);
 
-    requestAnimationFrame(() => { holder.style.opacity = '1'; msg.style.transform = 'translateY(0)'; });
-    setTimeout(() => { holder.style.opacity = '0'; msg.style.transform = 'translateY(10px)'; }, 1600);
+    // fade in
+    requestAnimationFrame(() => {
+      holder.style.opacity = '1';
+      msg.style.transform = 'translateY(0)';
+    });
+
+    // stay visible a bit longer, then fade out (same timing mobile + desktop)
+    setTimeout(() => {
+      holder.style.opacity = '0';
+      msg.style.transform = 'translateY(10px)';
+    }, 2200);  // visible ~2.2s before fade
+
     setTimeout(() => {
       holder.remove();
       params.delete('registration');
       const qs = params.toString();
       const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
       history.replaceState(null, '', newUrl);
-    }, 2100);
+    }, 2600);  // fully gone shortly after fade
   })();
   </script>
 </body>

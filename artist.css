@@ -167,3 +167,6 @@ body.debug .about-grid{ outline:2px dashed #00ffff; }
 body.debug .about-blurb{ outline:2px dashed #ff00ff; }
 body.debug .about-photo{ outline:2px solid #ff8800; }
 body.debug .right-col{ outline:2px dashed #00ff00; }
+
+/* (reg-banner CSS from your earlier version can stay or be removed;
+   it is not used by the current script) */
