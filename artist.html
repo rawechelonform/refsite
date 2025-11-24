@@ -98,17 +98,14 @@
       transition: 'opacity 400ms ease'
     });
 
-    // Desktop: original bottom placement
-    // Mobile: compute top offset under the menubar without shifting layout
-    if (isMobile) {
-      // try the menubar slot height; fall back to 32px
-      const bar = document.querySelector('[data-menubar]');
-      const barH = (bar && bar.getBoundingClientRect().height) || 32;
-      const safeTop = (window.visualViewport && window.visualViewport.pageTop) ? window.visualViewport.pageTop : 0;
-      holder.style.top = (barH + 12 + safeTop) + 'px';
-    } else {
-      holder.style.bottom = '16px';
-    }
+
+   // Mobile: place it just BELOW the menu bar, not on top of it
+if (isMobile) {
+  holder.style.top = 'calc(var(--barh, 32px) + 40px)';
+} else {
+  holder.style.bottom = '16px';   // desktop unchanged
+}
+
 
     // Message element styled from the first .bio so font-size stays identical (13px)
     const msg = document.createElement('div');
