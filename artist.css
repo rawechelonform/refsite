@@ -199,10 +199,10 @@ body.debug .right-col{ outline:2px dashed #00ff00; }
   opacity: 1;
 }
 
-/* Mobile: move banner below menubar, above photo */
+/* Mobile: JS sets the exact top;
+   we just clear bottom so it won't stick to bottom */
 @media (max-width:900px){
   #reg-banner{
-    top: calc(var(--barh, 32px) + 80px); /* push well below the menu button */
     bottom: auto;
   }
 }
