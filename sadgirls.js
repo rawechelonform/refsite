@@ -180,10 +180,23 @@
     preload(IMAGES[prevI].src);
   }
 
-  stage.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") { go(current + 1); e.preventDefault(); }
-    else if (e.key === "ArrowLeft") { go(current - 1); e.preventDefault(); }
-  });
+ document.addEventListener("keydown", (e) => {
+  const tag = e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
+
+  if (e.key === "ArrowRight") {
+    if (IMAGES.length > 0) {
+      go(current + 1);
+      e.preventDefault();
+    }
+  } else if (e.key === "ArrowLeft") {
+    if (IMAGES.length > 0) {
+      go(current - 1);
+      e.preventDefault();
+    }
+  }
+});
+
 
   // ==== Mobile portrait: zero-shift loader ================================
   async function renderMobilePortraitNoShift() {
