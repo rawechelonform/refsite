@@ -1,6 +1,6 @@
 // menubar.js  (use on every page as: <script src="menubar.js?v=mb25" defer></script>)
 (function () {
-  const VER = 'mb25';
+  const VER = 'mb26';
 
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
