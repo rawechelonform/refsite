@@ -2,34 +2,20 @@ name: Deploy to Neocities
 
 on:
   push:
-    branches: [ main ]  # change if your default branch isn’t main
-
-concurrency:
-  group: neocities-deploy
-  cancel-in-progress: true
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Deploy to Neocities
+        uses: bcomnes/deploy-to-neocities@v3
         with:
-          ruby-version: '3.2'
-
-      - name: Install neocities CLI
-        run: gem install neocities --no-document
-
-      - name: Upload site to Neocities
-        env:
-          NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_TOKEN }}
-        run: |
-          if [ -z "$NEOCITIES_API_KEY" ]; then
-            echo "NEOCITIES_API_KEY is empty — check repo secret NEOCITIES_API_TOKEN"
-            exit 1
-          fi
-          neocities --version || { echo "neocities CLI not found"; exit 1; }
-          neocities push . --api-key "$NEOCITIES_API_KEY"
+          api_token: ${{ secrets.NEOCITIES_API_TOKEN }}
+          dist_dir: .
+          cleanup: false
