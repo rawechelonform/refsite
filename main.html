@@ -1,67 +1,67 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-   <meta name="color-scheme" content="dark">
-  <title>REF · Main</title> 
+  <!doctype html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark">
+    <title>REF · Main</title> 
 
-  <!-- Fonts (match Machines) -->
-  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
+    <!-- Fonts (match Machines) -->
+    <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Hover label font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+    <!-- Hover label font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
 
-  <!-- Page CSS first, then shared menubar (cache-busted) -->
-  <link rel="stylesheet" href="main.css?v=mb7" />
-  <link rel="stylesheet" href="menubar.css?v=mb10">
-</head>
+    <!-- Page CSS first, then shared menubar (cache-busted) -->
+    <link rel="stylesheet" href="main.css?v=mb7" />
+    <link rel="stylesheet" href="menubar.css?v=mb10">
+  </head>
 
-<body>
-  <!-- avoid FOUT while Coral Pixels loads -->
-  <script>
-    document.documentElement.classList.add('fonts-loading');
-    Promise.all([document.fonts.load('1em "Coral Pixels"')])
-      .then(() => document.documentElement.classList.remove('fonts-loading'));
-  </script>
+  <body>
+    <!-- avoid FOUT while Coral Pixels loads -->
+    <script>
+      document.documentElement.classList.add('fonts-loading');
+      Promise.all([document.fonts.load('1em "Coral Pixels"')])
+        .then(() => document.documentElement.classList.remove('fonts-loading'));
+    </script>
 
-  <div class="page">
-    <!-- shared header + reserved space (menubar.js injects here) -->
-    <div data-menubar class="menubar-slot"></div>
+    <div class="page">
+      <!-- shared header + reserved space (menubar.js injects here) -->
+      <div data-menubar class="menubar-slot"></div>
 
-    <!-- main hub -->
-    <main class="hub" id="hub" aria-label="Site hub">
-      <!-- LEFT: sadgirls -->
-      <a class="tile" href="sadgirls.html" data-label="sad girls">
-        <img
-          class="swap-on-hover"
-          src="assets/main/girl8_neon.png"
-          data-src="assets/main/girl8_neon.png"
-          data-hover-src="assets/main/girl8_halftoneinverted.png"
-          alt="enter: sadgirls"
-          width="640" height="640"
-        />
-      </a>
+      <!-- main hub -->
+      <main class="hub" id="hub" aria-label="Site hub">
+        <!-- LEFT: sadgirls -->
+        <a class="tile" href="sadgirls.html" data-label="sad girls">
+          <img
+            class="swap-on-hover"
+            src="assets/main/girl8_neon.png"
+            data-src="assets/main/girl8_neon.png"
+            data-hover-src="assets/main/girl8_halftoneinverted.png"
+            alt="enter: sadgirls"
+            width="640" height="640"
+          />
+        </a>
 
-      <!-- RIGHT: machines -->
-      <a class="tile" href="machines.html" data-label="machines">
-        <img
-          class="swap-on-hover"
-          src="assets/main/commodore_neon.png"
-          data-src="assets/main/commodore_neon.png"
-          data-hover-src="assets/main/commodore_halftoneinverted.png"
-          alt="enter: machines"
-          width="640" height="640"
-        />
-      </a>
-    </main>
-  </div>
+        <!-- RIGHT: machines -->
+        <a class="tile" href="machines.html" data-label="machines">
+          <img
+            class="swap-on-hover"
+            src="assets/main/commodore_neon.png"
+            data-src="assets/main/commodore_neon.png"
+            data-hover-src="assets/main/commodore_halftoneinverted.png"
+            alt="enter: machines"
+            width="640" height="640"
+          />
+        </a>
+      </main>
+    </div>
 
-  <!-- scripts: shared menubar first, then page JS (both cache-busted) -->
-  <script src="menubar.js?v=mb22" defer></script>
-  <script src="main.js?v=mb8" defer></script>
-</body>
-</html>
+    <!-- scripts: shared menubar first, then page JS (both cache-busted) -->
+    <script src="menubar.js?v=mb22" defer></script>
+    <script src="main.js?v=mb8" defer></script>
+  </body>
+  </html>

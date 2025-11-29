@@ -1,4 +1,5 @@
 // menubar.js  (use on every page as: <script src="menubar.js?v=mb25" defer></script>)
+// menubar.js
 (function () {
   const VER = 'mb26';
 
