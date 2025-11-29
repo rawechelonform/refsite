@@ -3,9 +3,21 @@
    ========================= */
 
 /* ===== Local font faces (optional, keeps site consistent) ===== */
-@font-face { font-family: 'Pixel Warden'; src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype'); font-display: block; }
-@font-face { font-family: 'FS TI-92 ENO C'; src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype'); font-display: swap; }
-@font-face { font-family: 'RetroByte'; src: url('fonts/retrobyte/RetroByte.ttf') format('truetype'); font-display: block; }
+@font-face {
+  font-family: 'Pixel Warden';
+  src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'FS TI-92 ENO C';
+  src: url('fonts/fs-ti-92-eno-c/fs-ti-92-eno-c.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'RetroByte';
+  src: url('fonts/retrobyte/RetroByte.ttf') format('truetype');
+  font-display: block;
+}
 
 /* ===== Tokens ===== */
 :root {
@@ -24,6 +36,7 @@
 
 /* ===== Base ===== */
 html, body { height: 100%; }
+
 body {
   margin: 0;
   color: var(--fg);
@@ -33,7 +46,10 @@ body {
 }
 
 /* Reserve space for the menu bar (fallback to 32px if var not present) */
-.menubar-slot { display: block; height: var(--barh, 32px); }
+.menubar-slot {
+  display: block;
+  height: var(--barh, 32px);
+}
 
 /* Page wrapper — add top padding to match other pages */
 .page {
@@ -46,7 +62,10 @@ body {
 }
 
 /* Remove any old section header/underline if present */
-.section-title { display: none; border: none; }
+.section-title {
+  display: none;
+  border: none;
+}
 
 /* ===== Full-page overlay text ===== */
 .coming-soon {
@@ -57,6 +76,7 @@ body {
   z-index: 999;               /* over EVERYTHING, including menubar */
   pointer-events: none;       /* don't block clicks */
 }
+
 .coming-soon > span {
   font-family: 'RetroByte', monospace;
   font-size: var(--soon-size);
@@ -64,11 +84,22 @@ body {
   text-transform: uppercase;
   color: rgba(255,255,255,var(--soon-alpha));
   text-shadow: 0 2px 6px rgba(0,0,0,.45);
+  white-space: nowrap; /* keep "C O M I N G  S O O N" on one line */
 }
 
 /* ===== Shop grid (3 columns) ===== */
-.shop { width: 100%; display: flex; justify-content: center; }
-.shop-inner { width: 100%; max-width: var(--maxw); padding: 0 var(--grid-pad); }
+.shop {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.shop-inner {
+  width: 100%;
+  max-width: var(--maxw);
+  padding: 0 var(--grid-pad);
+}
+
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -85,6 +116,7 @@ body {
   border-radius: 0;                 /* sharp edges */
   overflow: hidden;
 }
+
 .item img {
   display: block;
   width: 100%;
@@ -93,7 +125,11 @@ body {
 }
 
 /* Optional label area (hidden for now) */
-.item .meta { display: none; color: var(--muted); padding: 8px 10px; }
+.item .meta {
+  display: none;
+  color: var(--muted);
+  padding: 8px 10px;
+}
 
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
@@ -104,13 +140,19 @@ body {
 }
 
 @media (max-width: 600px) {
-  .shop-inner { padding: 0 10px; }
+  .shop-inner {
+    padding: 0 10px;
+  }
+
   .shop-grid {
     grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 12vh; /* mobile push (adjust as needed) */
   }
-  .coming-soon > span { font-size: clamp(24px, 10vw, 52px); }
+
+  .coming-soon > span {
+    font-size: clamp(24px, 10vw, 52px);
+  }
 }
 
 /* Make the "She's So Lucky" image semi-transparent */
@@ -118,17 +160,26 @@ body {
   opacity: 0.7;          /* tweak: 0.5–0.9 */
 }
 
-/* ===== Menubar: Cafeteria-only styles ===== */
+/* =========================
+   Menubar: Cafeteria-only
+   ========================= */
+
 /* Lighter line/text color for this page */
-body.menu-transparent { --chrome: rgba(255,255,255,0.70); }
+body.menu-transparent {
+  --chrome: rgba(255,255,255,0.70);
+}
 
-/* Fully transparent menubar (no tint, no lines, no separators) */
-body.menu-transparent .top-margin { background: transparent !important; }
+/* No background fill behind the menu bar wrapper */
+body.menu-transparent .top-margin {
+  background: transparent !important;
+}
 
-/* menubar.css draws borders with header backgrounds; kill them here */
-body.menu-transparent .site-header { background: none !important; }
+/* Base reset: remove any default menubar background from menubar.css */
+body.menu-transparent .site-header {
+  background: none !important;
+}
 
-/* Keep text fully clear (no hover tint) and legible over photo */
+/* Base link style on this page */
 body.menu-transparent .menu-link,
 body.menu-transparent .menu-link:link,
 body.menu-transparent .menu-link:visited,
@@ -137,21 +188,18 @@ body.menu-transparent .brand-link {
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,.45);
 }
+
+/* Cafeteria-only hover: soft white glass, keep text white */
 body.menu-transparent .menu-link:hover,
 body.menu-transparent .menu-link.is-current:hover,
 body.menu-transparent .brand-link:hover,
 body.menu-transparent .menu-link:focus,
 body.menu-transparent .brand-link:focus {
-  background: transparent !important;
+  background: rgba(255,255,255,0.18) !important; /* light, see-through white */
   color: #fff;
 }
 
-/* ===== Cafeteria-only: transparent fill BUT keep grey borders ===== */
-
-/* No background fill behind the menu */
-body.menu-transparent .top-margin { background: transparent !important; }
-
-/* Repaint the top/bottom/left/right borders + separators, no tint fill */
+/* Repaint the top/bottom/left/right borders + 6 separators, no tint fill */
 body.menu-transparent .site-header {
   background:
     /* top */
@@ -162,41 +210,12 @@ body.menu-transparent .site-header {
     linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
     /* right edge */
     linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
-    /* vertical separators between 5 items → 20% steps */
+    /* vertical separators between 6 items → ~16.6667% steps */
     repeating-linear-gradient(
       to right,
       transparent 0,
-      transparent calc(20% - var(--linew)),
-      var(--chrome) calc(20% - var(--linew)),
-      var(--chrome) 20%
-    ) !important;   /* ← note: no final "var(--bg)" layer = fully transparent fill */
-}
-
-/* Keep the text fully clear (no hover tint) and legible over photo */
-body.menu-transparent { --chrome: rgba(255,255,255,0.70); } /* grey line color here */
-body.menu-transparent .menu-link,
-body.menu-transparent .menu-link:link,
-body.menu-transparent .menu-link:visited,
-body.menu-transparent .brand-link {
-  background: transparent !important;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,.45);
-}
-body.menu-transparent .menu-link:hover,
-body.menu-transparent .menu-link.is-current:hover,
-body.menu-transparent .brand-link:hover,
-body.menu-transparent .menu-link:focus,
-body.menu-transparent .brand-link:focus {
-  background: transparent !important;
-  color: #fff;
-}
-
-.coming-soon > span {
-  font-family: 'RetroByte', monospace;
-  font-size: var(--soon-size);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,var(--soon-alpha));
-  text-shadow: 0 2px 6px rgba(0,0,0,.45);
-  white-space: nowrap; /* ← keep "C O M I N G  S O O N" on one line */
+      transparent calc(16.6667% - var(--linew)),
+      var(--chrome) calc(16.6667% - var(--linew)),
+      var(--chrome) 16.6667%
+    ) !important;   /* no final "var(--bg)" layer = fully transparent fill */
 }
