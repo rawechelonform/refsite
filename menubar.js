@@ -9,7 +9,7 @@
     if (!slot) return;
 
     try {
-      const res = await fetch(`menubar.html?v=${VER}&t=${Date.now()}`, { cache: 'no-cache' });
+      const res = await fetch(`menubar_x.html?v=${VER}&t=${Date.now()}`, { cache: 'no-cache' });
       if (!res.ok) return;
 
       const tmp = document.createElement('div');
