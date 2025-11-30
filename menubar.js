@@ -1,9 +1,8 @@
 // menubar.js  
-// menubar.js  
 
 
 (function () {
-  const VER = 'mb26';
+  const VER = 'mb27';
 
   async function injectMenu() {
     const slot = document.querySelector('[data-menubar]');
