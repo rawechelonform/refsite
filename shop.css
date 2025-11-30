@@ -176,7 +176,22 @@ body.menu-transparent .top-margin {
 
 /* Base reset: remove any default menubar background from menubar.css */
 body.menu-transparent .site-header {
-  background: none !important;
+  /* keep only the outer frame; no fake inner separators */
+  background:
+    /* top */
+    linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
+    /* bottom */
+    linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
+    /* left edge */
+    linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
+    /* right edge */
+    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
+    transparent !important;
+}
+
+/* Use the white-ish chrome for the built-in separators */
+body.menu-transparent .menu > li {
+  border-left-color: var(--chrome);
 }
 
 /* Base link style on this page */
@@ -197,25 +212,4 @@ body.menu-transparent .menu-link:focus,
 body.menu-transparent .brand-link:focus {
   background: rgba(255,255,255,0.18) !important; /* light, see-through white */
   color: #fff;
-}
-
-/* Repaint the top/bottom/left/right borders + 6 separators, no tint fill */
-body.menu-transparent .site-header {
-  background:
-    /* top */
-    linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
-    /* bottom */
-    linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
-    /* left edge */
-    linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
-    /* right edge */
-    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
-    /* vertical separators between 6 items → ~16.6667% steps */
-    repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc(16.6667% - var(--linew)),
-      var(--chrome) calc(16.6667% - var(--linew)),
-      var(--chrome) 16.6667%
-    ) !important;   /* no final "var(--bg)" layer = fully transparent fill */
 }
