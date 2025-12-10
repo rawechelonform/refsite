@@ -7,7 +7,7 @@
   ];
 
   // ===== CSV config (same format as Sad Girls) =====
-  const SHEET_CSV_URL = "artdescriptions/REFsiteartdescriptions.csv";
+  const SHEET_CSV_URL = "assets/artdescriptions/REFsiteartdescriptions.csv";
   const PAGE_SLUG     = "machines";
   const DEFAULT_EXT   = "png";
 

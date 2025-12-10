@@ -1,6 +1,6 @@
 (() => {
   // ==== CONFIG ==============================================================
-  const SHEET_CSV_URL = "artdescriptions/REFsiteartdescriptions.csv";
+  const SHEET_CSV_URL = "assets/artdescriptions/REFsiteartdescriptions.csv";
   const PAGE_SLUG = "sadgirls";
   const IMG_ROOT = "assets";
   const DEFAULT_EXT = "png";

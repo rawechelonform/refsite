@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>REF favicon source</title>
+
+  <style>
+    /* Load Pixel Warden from your repo */
+    @font-face {
+      font-family: 'Pixel Warden';
+      src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --chrome: rgb(143, 143, 143);
+      --bg: #000000;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ref-icon {
+      font-family: 'Pixel Warden'; /* force this font */
+      font-size: 64px;
+      color: var(--chrome);
+      text-transform: uppercase;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      transform: translateY(-0.5px); /* tiny nudge like your menubar */
+    }
+  </style>
+</head>
+<body>
+  <!-- This is what you screenshot and resize to 32x32 / 16x16 -->
+  <span class="ref-icon">R</span>
+</body>
+</html>
