@@ -10,23 +10,24 @@
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Shared menubar CSS (load BEFORE page CSS) -->
+  <!-- Shared CSS (load FIRST) -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
-  <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8" />
+  <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
 
-  <!-- Page CSS LAST so it overrides everything -->
-  <link rel="stylesheet" href="shop.css?v=mb9" />
+  <!-- PAGE CSS LAST so nothing overrides it -->
+  <link rel="stylesheet" href="shop.css?v=mb12">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
-<body class="menu-transparent">
+<body class="menu-transparent shop-font">
   <script>
     document.documentElement.classList.add('fonts-loading');
-    Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
+    Promise.all([ document.fonts.load('1em \"Coral Pixels\"') ])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
   </script>
 
+  <!-- Overlay -->
   <div class="coming-soon" aria-hidden="true">
     <span>C O M I N G&nbsp;&nbsp;S O O N</span>
   </div>

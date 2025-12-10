@@ -1,8 +1,8 @@
 /* =========================
-   SHOP.CSS — Cafeteria page
+   PRODUCT.CSS — Single product page
    ========================= */
 
-/* ===== Local font faces ===== */
+/* ===== Local font faces (match shop.css) ===== */
 @font-face {
   font-family: 'Pixel Warden';
   src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype');
@@ -19,21 +19,16 @@
   font-display: block;
 }
 
-/* ===== Tokens ===== */
+/* ===== Tokens (reuse from shop) ===== */
 :root {
   --bg: #000;
   --fg: #fff;
   --muted: #aaa;
   --maxw: 1200px;
-
-  --grid-gap: 50px;  /* spacing between shirts */
   --grid-pad: 24px;
-
-  --soon-size: clamp(28px, 7vw, 72px);
-  --soon-alpha: 0.78;
 }
 
-/* ===== Base ===== */
+/* ===== Base (same background + base font as shop) ===== */
 html, body { height: 100%; }
 
 body {
@@ -43,109 +38,129 @@ body {
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
 }
 
+/* menubar slot (same as shop) */
 .menubar-slot {
   display: block;
   height: var(--barh, 32px);
 }
 
+/* page wrapper */
 .page {
   padding: 24px 0 48px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 24px;
 }
 
-/* ===== Overlay ===== */
-.coming-soon {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  z-index: 999;
-  pointer-events: none;
-}
+/* =========================
+   PRODUCT LAYOUT
+   ========================= */
 
-.coming-soon > span {
-  font-family: 'RetroByte', monospace;
-  font-size: var(--soon-size);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: rgba(255,255,255,var(--soon-alpha));
-  text-shadow: 0 2px 6px rgba(0,0,0,.45);
-  white-space: nowrap;
-}
-
-/* ===== Shop grid ===== */
-.shop {
+.product-shell {
   width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.shop-inner {
-  width: 100%;
-  max-width: var(--maxw);
+  max-width: 960px;
   padding: 0 var(--grid-pad);
-}
-
-.shop-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--grid-gap);
-  margin-top: 65vh; /* push shirts lower */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+  gap: 32px;
 }
 
-/* ===== Item card ===== */
-.item {
+/* main image panel */
+.product-main {
   background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.12);
-  overflow: hidden;
+  padding: 16px;
 }
 
-.item img {
+.product-main img {
+  display: block;
   width: 100%;
   height: auto;
+  image-rendering: crisp-edges;
+}
+
+/* thumbs (optional – populated by JS later if you want) */
+.thumbs {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.thumbs img {
+  width: 90px;
+  height: auto;
   display: block;
-  opacity: 1;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: #000;
+  cursor: pointer;
 }
 
-/* ===== Shirt labels (default before override) ===== */
-.item .meta {
-  display: block;
-  padding: 8px 10px;
-  text-align: center;
-  color: var(--muted);
+.thumbs img.active {
+  border-color: #fff;
 }
 
-.meta-name {
-  margin-bottom: 2px;
+/* info panel */
+.product-info {
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.meta-price {
-  font-weight: 600;
+/* title uses RetroByte like other headings */
+.product-title {
+  margin: 0;
+  font-family: 'RetroByte', monospace;
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* price in OCR font like grid labels */
+.product-price {
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+.product-desc {
+  font-size: 14px;
+  color: #ddd;
+}
+
+/* fake button for now */
+.buy-button {
+  margin-top: 8px;
+  align-self: flex-start;
+  padding: 8px 16px;
+  border: 1px solid #fff;
+  background: transparent;
   color: #fff;
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.buy-button:hover {
+  background: rgba(255,255,255,0.18);
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 1024px) {
-  .shop-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 45vh;
-  }
-}
-
-@media (max-width: 600px) {
-  .shop-grid {
+@media (max-width: 800px) {
+  .product-shell {
     grid-template-columns: 1fr;
-    gap: 20px;
-    margin-top: 35vh;
   }
 }
 
 /* =========================
-   MENUBAR OVERRIDES
+   MENUBAR OVERRIDES (copied from shop.css)
    ========================= */
 
 body.menu-transparent {
@@ -179,21 +194,4 @@ body.menu-transparent .brand-link {
 body.menu-transparent .menu-link:hover,
 body.menu-transparent .brand-link:hover {
   background: rgba(255,255,255,0.18) !important;
-}
-
-/* ==========================================================
-   === FONT OVERRIDE: USE SADGIRLS OCR-A FONT FOR LABELS ===
-   ========================================================== */
-
-.shop-font .item .meta,
-.shop-font .item .meta-name,
-.shop-font .item .meta-price,
-.shop-font .item *,
-.shop-font .meta *,
-.shop-font .meta-name *,
-.shop-font .meta-price * {
-  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace !important;
-  font-size: 11px !important;
-  line-height: 1.5 !important;
-  text-transform: none !important;
 }

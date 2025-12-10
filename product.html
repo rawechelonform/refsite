@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REF · Product</title>
+
+  <!-- Fonts / shared styles -->
+  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
+        as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
+
+  <!-- Shared menubar CSS (same as shop) -->
+  <link rel="stylesheet" href="menubar.css?v=mb11">
+  <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
+
+  <!-- Product page CSS -->
+  <link rel="stylesheet" href="product.css?v=p3">
+
+  <style>html,body{margin:0;padding:0}</style>
+</head>
+
+<!-- menu-transparent so the white frame style applies -->
+<body class="menu-transparent">
+  <script>
+    document.documentElement.classList.add('fonts-loading');
+    Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
+      .then(() => document.documentElement.classList.remove('fonts-loading'));
+  </script>
+
+  <div class="page">
+    <!-- same menubar slot as shop -->
+    <div data-menubar class="menubar-slot"></div>
+
+    <main class="product-shell" aria-label="Product page">
+      <section class="product-main">
+        <!-- main image is set by product.js based on ?file=shirt1.png -->
+        <img id="mainImage" src="" alt="" />
+        <div class="thumbs" id="thumbStrip"></div>
+      </section>
+
+      <aside class="product-info">
+        <h1 class="product-title" id="prodTitle">Loading…</h1>
+        <div class="product-price" id="prodPrice"></div>
+        <p class="product-desc" id="prodDesc"></p>
+
+        <button class="buy-button" type="button">
+          add to cart
+        </button>
+      </aside>
+    </main>
+  </div>
+
+  <!-- shared menubar JS -->
+  <script src="menubar.js?v=mb27" defer></script>
+
+  <!-- dynamic product loader (uses ?file=shirt1.png + CSV) -->
+  <script src="product.js?v=1" defer></script>
+</body>
+</html>
