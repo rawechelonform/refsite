@@ -2,7 +2,7 @@
    SHOP.CSS — Cafeteria page
    ========================= */
 
-/* ===== Local font faces (optional, keeps site consistent) ===== */
+/* ===== Local font faces ===== */
 @font-face {
   font-family: 'Pixel Warden';
   src: url('fonts/pixelwarden/PixelWarden.ttf') format('truetype');
@@ -26,10 +26,9 @@
   --muted: #aaa;
   --maxw: 1200px;
 
-  --grid-gap: 16px;
+  --grid-gap: 50px;  /* ← spacing you asked for */
   --grid-pad: 24px;
 
-  /* Overlay title style */
   --soon-size: clamp(28px, 7vw, 72px);
   --soon-alpha: 0.78;
 }
@@ -40,18 +39,15 @@ html, body { height: 100%; }
 body {
   margin: 0;
   color: var(--fg);
-  /* Full-page background image */
-  background: var(--bg) url('shop/cafeteria.jpeg') center / cover no-repeat fixed;
+  background: var(--bg) url('assets/shop/refcafeteria.png') center / cover no-repeat fixed;
   font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
-/* Reserve space for the menu bar (fallback to 32px if var not present) */
 .menubar-slot {
   display: block;
   height: var(--barh, 32px);
 }
 
-/* Page wrapper — add top padding to match other pages */
 .page {
   padding: 24px 0 48px;
   min-height: 100vh;
@@ -61,33 +57,27 @@ body {
   gap: 18px;
 }
 
-/* Remove any old section header/underline if present */
-.section-title {
-  display: none;
-  border: none;
-}
-
-/* ===== Full-page overlay text ===== */
+/* ===== Overlay text ===== */
 .coming-soon {
   position: fixed;
   inset: 0;
   display: grid;
   place-items: center;
-  z-index: 999;               /* over EVERYTHING, including menubar */
-  pointer-events: none;       /* don't block clicks */
+  z-index: 999;
+  pointer-events: none;
 }
 
 .coming-soon > span {
   font-family: 'RetroByte', monospace;
   font-size: var(--soon-size);
   letter-spacing: .06em;
-  text-transform: uppercase;
   color: rgba(255,255,255,var(--soon-alpha));
   text-shadow: 0 2px 6px rgba(0,0,0,.45);
-  white-space: nowrap; /* keep "C O M I N G  S O O N" on one line */
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-/* ===== Shop grid (3 columns) ===== */
+/* ===== Shop grid ===== */
 .shop {
   width: 100%;
   display: flex;
@@ -103,17 +93,18 @@ body {
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  /* restored but adjustable spacing */
   gap: var(--grid-gap);
 
-  /* Push the grid down so the single item sits lower on the page (desktop) */
-  margin-top: 16vh; /* increase to move lower; decrease to move higher */
+  /* push grid lower */
+  margin-top: 65vh;
 }
 
-/* Item card */
+/* ===== Item cards ===== */
 .item {
-  background: rgba(0,0,0,0.55);    /* translucent so bg photo shows through */
+  background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 0;                 /* sharp edges */
   overflow: hidden;
 }
 
@@ -121,95 +112,89 @@ body {
   display: block;
   width: 100%;
   height: auto;
-  image-rendering: crisp-edges;
+  opacity: 1;
 }
 
-/* Optional label area (hidden for now) */
+/* ===== Shirt labels ===== */
 .item .meta {
-  display: none;
-  color: var(--muted);
+  display: block;
   padding: 8px 10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.meta-name {
+  margin-bottom: 2px;
+}
+
+.meta-price {
+  font-weight: 600;
+  color: #fff;
 }
 
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
   .shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 14vh; /* tablet push (adjust as needed) */
+    margin-top: 45vh;
   }
 }
 
 @media (max-width: 600px) {
-  .shop-inner {
-    padding: 0 10px;
-  }
-
+  .shop-inner { padding: 0 10px; }
   .shop-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
-    margin-top: 12vh; /* mobile push (adjust as needed) */
+    gap: 20px;
+    margin-top: 35vh;
   }
-
-  .coming-soon > span {
-    font-size: clamp(24px, 10vw, 52px);
-  }
-}
-
-/* Make the "She's So Lucky" image semi-transparent */
-.shop-grid img[src$="shessolucky.png"] {
-  opacity: 0.7;          /* tweak: 0.5–0.9 */
 }
 
 /* =========================
-   Menubar: Cafeteria-only
+   Menubar overrides
    ========================= */
-
-/* Lighter line/text color for this page */
 body.menu-transparent {
   --chrome: rgba(255,255,255,0.70);
 }
 
-/* No background fill behind the menu bar wrapper */
 body.menu-transparent .top-margin {
   background: transparent !important;
 }
 
-/* Base reset: remove any default menubar background from menubar.css */
 body.menu-transparent .site-header {
-  /* keep only the outer frame; no fake inner separators */
   background:
-    /* top */
     linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
-    /* bottom */
     linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
-    /* left edge */
     linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
-    /* right edge */
-    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
+    linear-gradient(to left, var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
     transparent !important;
 }
 
-/* Use the white-ish chrome for the built-in separators */
 body.menu-transparent .menu > li {
   border-left-color: var(--chrome);
 }
 
-/* Base link style on this page */
 body.menu-transparent .menu-link,
-body.menu-transparent .menu-link:link,
-body.menu-transparent .menu-link:visited,
 body.menu-transparent .brand-link {
   background: transparent !important;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,.45);
 }
 
-/* Cafeteria-only hover: soft white glass, keep text white */
 body.menu-transparent .menu-link:hover,
-body.menu-transparent .menu-link.is-current:hover,
-body.menu-transparent .brand-link:hover,
-body.menu-transparent .menu-link:focus,
-body.menu-transparent .brand-link:focus {
-  background: rgba(255,255,255,0.18) !important; /* light, see-through white */
+body.menu-transparent .brand-link:hover {
+  background: rgba(255,255,255,0.18) !important;
   color: #fff;
+}
+
+/* =========================
+   FONT FIX OVERRIDE (IMPORTANT)
+   ========================= */
+
+.shop-grid .item .meta,
+.shop-grid .item .meta-name,
+.shop-grid .item .meta-price {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  text-transform: none !important;
 }

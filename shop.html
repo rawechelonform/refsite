@@ -10,38 +10,30 @@
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Page CSS first -->
-  <link rel="stylesheet" href="shop.css?v=mb7" />
-
-  <!-- Shared menubar CSS (cache-busted) -->
+  <!-- Shared menubar CSS (load BEFORE page CSS) -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
-
-  <!-- Page-specific transparent overrides -->
   <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8" />
 
-  <!-- Safety: remove default page margin so bar sits flush -->
+  <!-- Page CSS LAST so it overrides everything -->
+  <link rel="stylesheet" href="shop.css?v=mb9" />
+
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
-<!-- Make menubar transparent on this page only -->
 <body class="menu-transparent">
-  <!-- avoid FOUT while Coral Pixels loads -->
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
   </script>
 
-  <!-- Overlay message (on top of everything) -->
   <div class="coming-soon" aria-hidden="true">
     <span>C O M I N G&nbsp;&nbsp;S O O N</span>
   </div>
 
   <div class="page">
-    <!-- shared header + reserved space -->
     <div data-menubar class="menubar-slot"></div>
 
-    <!-- Shop grid -->
     <section class="shop" aria-label="Cafeteria items">
       <div class="shop-inner">
         <div id="shopGrid" class="shop-grid" aria-live="polite"></div>
@@ -49,7 +41,6 @@
     </section>
   </div>
 
-  <!-- Scripts (shared menubar first, then page-specific) -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="shop.js?v=mb7" defer></script>
 </body>

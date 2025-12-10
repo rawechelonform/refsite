@@ -1,42 +1,52 @@
 (() => {
-  // Add your shop items here
   const ITEMS = [
-    { src: "shop/shessolucky.png", title: "She's So Lucky" }
-    // Add more like:
-    // { src: "shop/anotherpiece.png", title: "Another Piece" }
+    { src: "assets/shop/shirt1.png", title: "Shirt 1", price: "$60" },
+    { src: "assets/shop/shirt2.png", title: "Shirt 2", price: "$60" },
+    { src: "assets/shop/shirt3.png", title: "Shirt 3", price: "$60" },
+    { src: "assets/shop/shirt4.png", title: "Shirt 4", price: "$60" },
+    { src: "assets/shop/shirt5.png", title: "Shirt 5", price: "$60" },
+    { src: "assets/shop/shirt6.png", title: "Shirt 6", price: "$60" },
+    { src: "assets/shop/shirt7.png", title: "Shirt 7", price: "$60" },
+    { src: "assets/shop/shirt8.png", title: "Shirt 8", price: "$60" },
+    { src: "assets/shop/shirt9.png", title: "Shirt 9", price: "$60" }
   ];
 
-  const grid = document.getElementById('shopGrid');
+  const grid = document.getElementById("shopGrid");
 
   function makeItem(it) {
-    const card = document.createElement('article');
-    card.className = 'item';
+    const card = document.createElement("article");
+    card.className = "item";
 
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.src = it.src;
-    img.alt = it.title || 'Shop item';
-    img.loading = 'lazy';
-    img.decoding = 'async';
+    img.alt = it.title;
+    img.loading = "lazy";
 
-    // Remove the card if the image fails to load
-    img.addEventListener('error', () => card.remove(), { once: true });
+    img.addEventListener("error", () => card.remove(), { once: true });
 
-    // Optional title/meta (hidden in CSS)
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = it.title || '';
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
+    const name = document.createElement("div");
+    name.className = "meta-name";
+    name.textContent = it.title;
+
+    const price = document.createElement("div");
+    price.className = "meta-price";
+    price.textContent = it.price;
+
+    meta.appendChild(name);
+    meta.appendChild(price);
 
     card.appendChild(img);
     card.appendChild(meta);
+
     return card;
   }
 
   function render() {
-    if (!grid) return;
     ITEMS.forEach(it => grid.appendChild(makeItem(it)));
   }
 
   render();
 })();
-
-
