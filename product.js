@@ -1,5 +1,5 @@
 // product.js
-// Single dynamic product page driven by REFsiteproductdescriptions.csv
+// Dynamic product page driven by REFsiteproductdescriptions.csv
 // URL format: product.html?file=shirt1.png
 
 (function () {
@@ -11,7 +11,6 @@
   }
 
   function parseCSV(text) {
-    // Simple CSV parser (no quoted commas support – OK for your current sheet)
     const lines = text.trim().split(/\r?\n/);
     if (!lines.length) return [];
 
@@ -32,42 +31,62 @@
     );
   }
 
+  // Build the vertical image stack for a product
+  function renderImages(fileName, title) {
+    const stack = document.getElementById("imageStack");
+    if (!stack) return;
+
+    stack.innerHTML = "";
+
+    if (!fileName) return;
+
+    const base = fileName.replace(/\.[^.]+$/, ""); // "shirt1"
+    const images = [];
+
+    // 1) main grid image: assets/shop/shirt1.png
+    images.push(`assets/shop/${fileName}`);
+
+    // 2) additional detail images:
+    //    assets/shop/products/shirt1/shirt1a.png, b, c, d, e, f
+    const suffixes = ["a", "b", "c", "d", "e", "f"];
+    suffixes.forEach(suf => {
+      images.push(`assets/shop/products/${base}/${base}${suf}.png`);
+    });
+
+    images.forEach((src, idx) => {
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = (title || base) + " view " + (idx + 1);
+
+      // If an image doesn't exist, just remove it
+      img.addEventListener("error", () => img.remove(), { once: true });
+
+      stack.appendChild(img);
+    });
+  }
+
   function renderProduct(product, fileName) {
-    const mainImg = document.getElementById("mainImage");
     const titleEl = document.getElementById("prodTitle");
     const priceEl = document.getElementById("prodPrice");
     const descEl  = document.getElementById("prodDesc");
 
     if (!product) {
+      const fallbackTitle = fileName || "Product";
       if (titleEl) titleEl.textContent = "Product not found";
       if (descEl)  descEl.textContent  = "Check the link or go back to the cafeteria.";
-      if (mainImg) {
-        mainImg.alt = "No product image";
-        mainImg.style.display = "none";
-      }
+      renderImages(fileName || "", fallbackTitle);
       return;
     }
 
-    // Metadata from CSV
-    const title = product["Title"] || fileName;
-    const price = product["Price"] || "";
+    const title   = product["Title"]   || fileName;
+    const price   = product["Price"]   || "";
     const details = product["Details"] || "";
 
     if (titleEl) titleEl.textContent = title;
     if (priceEl) priceEl.textContent = price;
     if (descEl)  descEl.textContent  = details;
 
-    // Use the File column to point to the main image (same as grid)
-    // assets/shop/shirt1.png, etc.
-    if (mainImg) {
-      const imgPath = "assets/shop/" + fileName;
-      mainImg.src = imgPath;
-      mainImg.alt = title;
-      mainImg.style.display = "block";
-    }
-
-    // If later you add more images per shirt, you can build thumbnails here
-    // using a naming convention or extra CSV columns.
+    renderImages(fileName, title);
   }
 
   function init() {

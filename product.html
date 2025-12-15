@@ -10,18 +10,18 @@
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Shared menubar CSS (same as shop) -->
+  <!-- Shared menubar CSS (same as other pages) -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
   <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
 
   <!-- Product page CSS -->
-  <link rel="stylesheet" href="product.css?v=p3">
+  <link rel="stylesheet" href="product.css?v=p4">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
-<!-- menu-transparent so the white frame style applies -->
 <body class="menu-transparent">
+  <!-- avoid FOUT while Coral Pixels loads -->
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
@@ -29,16 +29,16 @@
   </script>
 
   <div class="page">
-    <!-- same menubar slot as shop -->
+    <!-- menubar slot (same as shop.html) -->
     <div data-menubar class="menubar-slot"></div>
 
     <main class="product-shell" aria-label="Product page">
-      <section class="product-main">
-        <!-- main image is set by product.js based on ?file=shirt1.png -->
-        <img id="mainImage" src="" alt="" />
-        <div class="thumbs" id="thumbStrip"></div>
+      <!-- Scrollable image column -->
+      <section class="product-main" id="imageStack" aria-label="Product images">
+        <!-- images injected by product.js -->
       </section>
 
+      <!-- Text / price / button -->
       <aside class="product-info">
         <h1 class="product-title" id="prodTitle">Loading…</h1>
         <div class="product-price" id="prodPrice"></div>
@@ -54,7 +54,7 @@
   <!-- shared menubar JS -->
   <script src="menubar.js?v=mb27" defer></script>
 
-  <!-- dynamic product loader (uses ?file=shirt1.png + CSV) -->
-  <script src="product.js?v=1" defer></script>
+  <!-- dynamic product loader -->
+  <script src="product.js?v=2" defer></script>
 </body>
 </html>

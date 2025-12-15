@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
   <!-- Page CSS first -->
-<link rel="stylesheet" href="sadgirls.css?v=sg-edgefix2" />
+  <link rel="stylesheet" href="sadgirls.css?v=sg-video-final2" />
 
   <!-- Shared menubar CSS (cache-busted) -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
@@ -21,7 +21,6 @@
   <style>html,body{margin:0;padding:0}</style>
 
   <script src="icon.js" defer></script>
-
 </head>
 
 <body>
@@ -33,8 +32,7 @@
   </script>
 
   <!-- overlay for shooting stars -->
-<div class="sky-overlay" id="sky-overlay" aria-hidden="true"></div>
-
+  <div class="sky-overlay" id="sky-overlay" aria-hidden="true"></div>
 
   <div class="page">
     <!-- shared header + reserved space -->
@@ -55,12 +53,107 @@
 
       <div class="caption" id="caption"></div>
     </section>
+
+    <!-- Sad Girls video (centered, 16:9, custom play) -->
+    <section class="sg-video" aria-label="Sad Girls video">
+      <div class="video-wrap">
+        <div class="video-frame">
+          <!-- Minimal outlined triangle play button (top-right).
+               Button covers the whole frame so clicking anywhere plays. -->
+          <button class="video-overlay-play" id="sgPlayBtn" type="button" aria-label="Play video">
+            <svg class="video-play-icon" viewBox="0 0 48 48" aria-hidden="true">
+              <polygon
+                points="18,12 34,24 18,36"
+                fill="none"
+                stroke="rgba(255,255,255,0.85)"
+                stroke-width="2.2"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+
+          <!-- YouTube iframe (controls ON, JS API enabled, hidden until play) -->
+          <iframe
+            id="sgVideo"
+            class="video-iframe is-hidden"
+            src="https://www.youtube.com/embed/Heb1V6OvuVk?rel=0&modestbranding=1&controls=1&enablejsapi=1"
+            title="Sad Girls video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </section>
   </div>
 
-  
-
-  <!-- scripts: shared menubar first, then page -->
+  <!-- scripts: shared menubar first, then page carousel/stars -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="sadgirls.js?v=mb7" defer></script>
+
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    let sgPlayer;
+
+    // Called by YouTube API when it’s ready
+    function onYouTubeIframeAPIReady() {
+      sgPlayer = new YT.Player('sgVideo', {
+        events: {
+          'onStateChange': onSgPlayerStateChange
+        }
+      });
+    }
+
+    function onSgPlayerStateChange(event) {
+      const btn    = document.getElementById('sgPlayBtn');
+      const iframe = document.getElementById('sgVideo');
+      if (!btn || !iframe || !window.YT) return;
+
+      if (event.data === YT.PlayerState.ENDED) {
+        // Stop and return to thumbnail state
+        try { sgPlayer.stopVideo(); } catch (e) {}
+        iframe.classList.add('is-hidden');
+        btn.classList.remove('is-hidden');
+      } else if (event.data === YT.PlayerState.PLAYING) {
+        iframe.classList.remove('is-hidden');
+      }
+    }
+
+    // Wire up overlay click → play + GLOBAL glitch trigger
+    (function () {
+      const btn    = document.getElementById('sgPlayBtn');
+      const iframe = document.getElementById('sgVideo');
+      if (!btn || !iframe) return;
+
+      // Click anywhere on thumbnail → play
+      btn.addEventListener('click', () => {
+        if (sgPlayer && typeof sgPlayer.playVideo === 'function') {
+          sgPlayer.playVideo();
+          btn.classList.add('is-hidden');
+          iframe.classList.remove('is-hidden');
+        }
+      });
+
+      // GLOBAL mouse move → glitch triangle anytime overlay is visible
+      let lastGlitchTime = 0;
+
+      document.addEventListener('mousemove', () => {
+        // Only glitch when the thumbnail overlay is shown (video not playing)
+        if (btn.classList.contains('is-hidden')) return;
+
+        const now = performance.now();
+
+        // Throttle so it's not constant
+        if (now - lastGlitchTime < 220) return;
+        lastGlitchTime = now;
+
+        // Random chance so it feels erratic, not rhythmic
+        if (Math.random() < 0.55) {
+          btn.classList.add('glitch-once');
+          setTimeout(() => btn.classList.remove('glitch-once'), 170);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

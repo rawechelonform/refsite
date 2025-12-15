@@ -19,16 +19,19 @@
   font-display: block;
 }
 
-/* ===== Tokens (reuse from shop) ===== */
+/* ===== Tokens ===== */
 :root {
   --bg: #000;
   --fg: #fff;
   --muted: #aaa;
-  --maxw: 1200px;
+  --maxw: 1100px;
   --grid-pad: 24px;
+
+  /* height for the LEFT image container only */
+  --image-pane-h: 70vh;   /* tweak up/down to change scrollable image area */
 }
 
-/* ===== Base (same background + base font as shop) ===== */
+/* ===== Base ===== */
 html, body { height: 100%; }
 
 body {
@@ -38,13 +41,11 @@ body {
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
 }
 
-/* menubar slot (same as shop) */
 .menubar-slot {
   display: block;
   height: var(--barh, 32px);
 }
 
-/* page wrapper */
 .page {
   padding: 24px 0 48px;
   min-height: 100vh;
@@ -60,20 +61,46 @@ body {
 
 .product-shell {
   width: 100%;
-  max-width: 960px;
+  max-width: var(--maxw);
   padding: 0 var(--grid-pad);
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+  grid-template-columns: 3fr 2fr;   /* bigger images, smaller panel */
   gap: 32px;
+
+  /* don't force equal heights; right panel can be shorter */
+  align-items: flex-start;
 }
 
-/* main image panel */
+/* LEFT: image column
+   - no border / no black box
+   - fixed-height container
+   - internal vertical scroll for multiple images
+*/
 .product-main {
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.12);
-  padding: 16px;
+  background: transparent;
+  border: none;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  height: var(--image-pane-h);
+  overflow-y: auto;
 }
 
+/* scrollbar can be subtle */
+.product-main::-webkit-scrollbar {
+  width: 6px;
+}
+.product-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.product-main::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.25);
+}
+
+/* each image sits inside the container, no bleed */
 .product-main img {
   display: block;
   width: 100%;
@@ -81,28 +108,7 @@ body {
   image-rendering: crisp-edges;
 }
 
-/* thumbs (optional – populated by JS later if you want) */
-.thumbs {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.thumbs img {
-  width: 90px;
-  height: auto;
-  display: block;
-  border: 1px solid rgba(255,255,255,0.25);
-  background: #000;
-  cursor: pointer;
-}
-
-.thumbs img.active {
-  border-color: #fff;
-}
-
-/* info panel */
+/* RIGHT: info panel (shorter than before) */
 .product-info {
   background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.12);
@@ -110,9 +116,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  min-height: 50vh;   /* shorter black box; tweak as needed */
+  max-height: 70vh;   /* prevents it from getting super tall */
+  overflow: hidden;
 }
 
-/* title uses RetroByte like other headings */
+/* Typography */
 .product-title {
   margin: 0;
   font-family: 'RetroByte', monospace;
@@ -121,7 +131,6 @@ body {
   text-transform: uppercase;
 }
 
-/* price in OCR font like grid labels */
 .product-price {
   font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
   font-size: 16px;
@@ -133,7 +142,7 @@ body {
   color: #ddd;
 }
 
-/* fake button for now */
+/* Button */
 .buy-button {
   margin-top: 8px;
   align-self: flex-start;
@@ -157,10 +166,19 @@ body {
   .product-shell {
     grid-template-columns: 1fr;
   }
+
+  /* on mobile let everything scroll normally */
+  .product-main,
+  .product-info {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 /* =========================
-   MENUBAR OVERRIDES (copied from shop.css)
+   MENUBAR OVERRIDES (same as shop.css)
    ========================= */
 
 body.menu-transparent {

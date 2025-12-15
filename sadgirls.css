@@ -38,7 +38,7 @@
   --right-gutter: 80px;
 
   /* caption spacing */
-  --caption-gap: 16px;           /* distance between caption and image (desktop) */
+  --caption-gap: 16px;
   --caption-maxw: 260px;
 
   /* responsive caption typography — smaller desktop defaults */
@@ -48,22 +48,22 @@
   --caption-track: 0.005em;
 }
 
-  /* ===== Base ===== */
+/* ===== Base ===== */
 html, body { 
   height: 100%; 
   background: #000 !important;
 }
 
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
 /* page wrapper */
 .page {
-  padding: 24px 0 48px;
+  padding: 24px 0 48px;   /* smaller bottom padding */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -98,45 +98,42 @@ html, body {
   display: block;
 }
 
-/* ===== Stage (image area) — image flush-right with thumbs ===== */
-.stage { position: relative; padding: 0; } /* gutter handled in .stage-inner */
+/* ===== Stage (image area) ===== */
+.stage { position: relative; padding: 0; }
 
-/* RIGHT-ALIGNED FLEX ROW: [caption] —gap— [image]
-   align-items:flex-end keeps bottoms aligned. */
 .stage-inner {
   position: relative;
   width: var(--rail-w);
-  margin-left: auto;                 /* push rail to the right edge */
+  margin-left: auto;
   padding-right: var(--right-gutter);
   display: flex;
-  justify-content: flex-end;         /* whole row flush-right */
-  align-items: flex-end;             /* caption bottom == image bottom */
+  justify-content: flex-end;
+  align-items: flex-end;
   gap: var(--caption-gap);
 }
 
-/* Make sure order is caption then image (even if DOM differs) */
+/* Ensure order: caption then image */
 .caption { order: 1; }
 #stageImg { order: 2; }
 
 #stageImg {
   display: block;
   margin-left: 0;
-  max-width: 90%;                    /* visual scale of artwork */
+  max-width: 90%;
   max-height: 76vh;
   height: auto;
 }
 
-/* ===== Caption (left of image on desktop) ===== */
+/* ===== Caption ===== */
 .caption {
   margin: 0;
   padding: 0;
   color: #ddd;
-  text-align: right;                 /* lean text toward the image */
-  width: max-content;                /* shrink-wrap to text */
-  max-width: var(--caption-maxw);    /* but don’t exceed this width */
-  overflow-wrap: anywhere;           /* wrap long bits if needed */
+  text-align: right;
+  width: max-content;
+  max-width: var(--caption-maxw);
+  overflow-wrap: anywhere;
 
-  /* OCR-A font + responsive size */
   font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
   font-size: clamp(var(--caption-size-min),
                    var(--caption-size-ideal),
@@ -144,17 +141,15 @@ html, body {
   letter-spacing: var(--caption-track);
   line-height: 1.45;
 }
-
-/* No italics even if <em> appears */
 .caption em { font-style: normal; font-synthesis: none; transform: none; }
 
-/* ===== Thumbnails — same right rail/gutter as stage ===== */
+/* ===== Thumbnails ===== */
 .thumbBarWrap {
   width: var(--rail-w);
   margin-left: auto;
   margin-top: 12px;
   padding-right: var(--right-gutter);
-  text-align: right;                 /* thumbs flush-right */
+  text-align: right;
 }
 
 .thumbBar {
@@ -162,95 +157,140 @@ html, body {
   gap: 12px;
 }
 
-.thumbBar::-webkit-scrollbar {
-  height: 10px;
-}
-
-/* scrollbar colors */
-.thumbBar::-webkit-scrollbar-thumb {
-  background: #000 !important;
-}
-
-.thumbBar::-webkit-scrollbar-track {
-  background: #000 !important;
-}
-
+.thumbBar::-webkit-scrollbar { height: 10px; }
+.thumbBar::-webkit-scrollbar-thumb { background: #000 !important; }
+.thumbBar::-webkit-scrollbar-track { background: #000 !important; }
 
 /* thumbnails */
-.thumb { background: none; border: none; padding: 0; margin: 0; cursor: pointer; }
-.thumb img { height: 50px; width: auto; display: block; border: none; }
+.thumb {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.thumb img {
+  height: 50px;
+  width: auto;
+  display: block;
+  border: none;
+}
 
 /* selected thumbnail outline */
 .thumb.active { outline: 2px solid #444; outline-offset: 0; }
 
 /* keyboard focus visible without breaking active box */
-.thumb:focus-visible { outline: 2px dashed #777; outline-offset: 0; }
+.thumb:focus-visible {
+  outline: 2px dashed #777;
+  outline-offset: 0;
+}
 .thumb.active:focus,
-.thumb.active:focus-visible { outline: 2px solid #444 !important; outline-offset: 0; }
+.thumb.active:focus-visible {
+  outline: 2px solid #444 !important;
+  outline-offset: 0;
+}
 
 /* Diagnostics (optional) */
 .diag { margin-top: 10px; font-size: 12px; color: #555; }
 .diag code { background: #f5f5f5; padding: 2px 4px; border: 1px solid #eee; }
 
-/* ===== Responsive ===== */
-@media (max-width: 720px) {
-  :root {
-    --caption-size-min: 6.5px;
-    --caption-size-ideal: 1.0vw;
-    --caption-size-max: 8px;
-    --caption-track: 0.005em;
-    --caption-gap: 8px;
-  }
-
-  /* match other pages’ top spacing (↑ was 16px) */
-  .page { padding: 24px 10px 32px; }
-
-  /* stack image → caption (flush right), caption sits above thumbnails */
-  .stage-inner {
-    width: var(--rail-w);
-    margin-left: auto;          /* keeps the rail flush right */
-    padding-right: 16px;        /* right gutter on phones */
-    display: flex;
-    flex-direction: column;     /* stack vertically */
-    align-items: flex-end;      /* flush right */
-    gap: var(--caption-gap);
-  }
-
-  /* image first, full width of rail */
-  #stageImg {
-    order: 1;
-    max-width: 100%;
-    height: auto;
-  }
-
-  /* caption second, between image and thumbnails, flush right */
-  .caption {
-    order: 2;
-    width: auto;
-    max-width: 90%;             /* keeps lines from getting too long */
-    text-align: right;
-    margin: 0;
-    padding: 0;
-    line-height: 1.35;
-
-    /* prevent single-letter wrapping */
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-
-  /* thumbnails below, aligned to same right rail */
-  .thumbBarWrap {
-    width: var(--rail-w);
-    margin-left: auto;
-    padding-right: 16px;
-    text-align: right;
-    margin-top: 10px;
-  }
-}
-
 /* Prevent caption "flash" before JS moves it into the stage */
 .caption { visibility: hidden; }
 .stage .stage-inner .caption { visibility: visible; }
+
+/* ===== Video embed: centered, proportional 16:9, custom play + thumbnail ===== */
+.sg-video {
+  margin-top: 72px;      /* spacing below thumbnails */
+  margin-bottom: 24px;   /* smaller bottom gap */
+}
+
+.video-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.video-frame {
+  position: relative;
+  width: min(80vw, 1100px);
+  aspect-ratio: 16 / 9;
+  background:
+    #000
+    url("assets/sadgirls/commuteira_video_thumbnail.png")
+    center / cover
+    no-repeat;
+  border: none;
+  overflow: hidden;
+}
+
+/* iframe fills the frame */
+.video-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* hide iframe when we’re in thumbnail state */
+.video-iframe.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* overlay button covers whole frame so clicking anywhere plays */
+.video-overlay-play {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* svg triangle outline, positioned in top-right */
+.video-play-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+.video-overlay-play:focus-visible {
+  outline: 1px dashed rgba(255,255,255,0.7);
+  outline-offset: 3px;
+}
+
+.video-overlay-play:hover .video-play-icon polygon {
+  stroke: rgba(255,255,255,1);
+  transform: scale(1.04);
+  transform-origin: center;
+}
+
+/* hide overlay while video is playing */
+.video-overlay-play.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+
+/* === Glitchy flash for play triangle (icon only) === */
+@keyframes sg_play_glitch {
+  0%   { opacity: 1;   transform: translate(0,0); }
+  20%  { opacity: 0.3; transform: translate(-1px, 1px); }
+  40%  { opacity: 0.9; transform: translate(1px, -1px); }
+  60%  { opacity: 0.4; transform: translate(-1px, 0); }
+  100% { opacity: 1;   transform: translate(0,0); }
+}
+
+/* only the triangle icon flickers, not the whole overlay */
+.video-overlay-play.glitch-once .video-play-icon {
+  animation: sg_play_glitch 140ms steps(2, end);
+}
 
 /* === Shooting stars (vertical, random thickness) === */
 .sky-overlay {
@@ -263,9 +303,9 @@ html, body {
 
 .shooting-star {
   position: absolute;
-  width: 2px;                 /* JS overrides per star via inline style */
-  height: 2px;                /* JS overrides per star via inline style */
-  background: #fff;           /* white head */
+  width: 2px;
+  height: 2px;
+  background: #fff;
   border-radius: 50%;
   filter: drop-shadow(0 0 6px #fff);
   will-change: transform, opacity;
@@ -278,8 +318,8 @@ html, body {
   left: 50%;
   bottom: 100%;
   transform: translateX(-50%);
-  width: var(--thick, 2px);   /* randomized per star in JS */
-  height: var(--tail, 160px); /* randomized per star in JS */
+  width: var(--thick, 2px);
+  height: var(--tail, 160px);
   background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 85%, #fff 100%);
   opacity: 0.95;
   filter: blur(0.2px);
@@ -288,19 +328,83 @@ html, body {
 @keyframes sg_fall {
   0%   { transform: translateY(0); opacity: 0; }
   5%   { opacity: 1; }
-  100% { transform: translateY(var(--sg-distance)); opacity: 0; } /* distance set per star in JS */
+  100% { transform: translateY(var(--sg-distance)); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .shooting-star { animation: none !important; }
 }
 
+/* ===== Responsive ===== */
+@media (max-width: 720px) {
+  :root {
+    --caption-size-min: 6.5px;
+    --caption-size-ideal: 1.0vw;
+    --caption-size-max: 8px;
+    --caption-track: 0.005em;
+    --caption-gap: 8px;
+  }
+
+  .page { padding: 24px 10px 40px; } /* smaller mobile bottom padding */
+
+  .stage-inner {
+    width: var(--rail-w);
+    margin-left: auto;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--caption-gap);
+  }
+
+  #stageImg {
+    order: 1;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .caption {
+    order: 2;
+    width: auto;
+    max-width: 90%;
+    text-align: right;
+    margin: 0;
+    padding: 0;
+    line-height: 1.35;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .thumbBarWrap {
+    width: var(--rail-w);
+    margin-left: auto;
+    padding-right: 16px;
+    text-align: right;
+    margin-top: 10px;
+  }
+
+  .sg-video {
+    margin-top: 48px;
+    margin-bottom: 24px;
+  }
+
+  .video-frame {
+    width: 100vw;
+    max-width: 100vw;
+    border: none;
+  }
+
+  .video-play-icon {
+    top: 10px;
+    right: 10px;
+  }
+}
 
 /* Sad Girls (mobile portrait): make the menubar full-bleed */
 @media (max-width: 720px) and (orientation: portrait) {
   .page > .top-margin {
-    width: 100vw;                                  /* span the viewport */
-    margin-left: calc(50% - 50vw);                 /* cancel .page padding */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
   }
 }
