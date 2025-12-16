@@ -1,10 +1,10 @@
-Site Page,File,Title,Price,Details
-products,shirt1.png,Shirt 1,$60,100% Cotton
-products,shirt2.png,Shirt 2,$60,100% Cotton
-products,shirt3.png,Shirt 3,$60,100% Cotton
-products,shirt4.png,Shirt 4,$60,100% Cotton
-products,shirt5.png,Shirt 5,$60,100% Cotton
-products,shirt6.png,Shirt 6,$60,100% Cotton
-products,shirt7.png,Shirt 7,$60,100% Cotton
-products,shirt8.png,Shirt 8,$60,100% Cotton
-products,shirt9.png,Shirt 9,$60,100% Cotton
+Site Page,File,Title,Price,Details,StripePriceId
+products,shirt1.png,Shirt 1,$60,100% Cotton,price_1Sd02LRUeLzZqzRzrtd672uT
+products,shirt2.png,Shirt 2,$60,100% Cotton,price_1Sd04BRUeLzZqzRz4msx3FYP
+products,shirt3.png,Shirt 3,$60,100% Cotton,price_1Sd04ORUeLzZqzRz9e5f1YTO
+products,shirt4.png,Shirt 4,$60,100% Cotton,price_1Sd04YRUeLzZqzRz7rNi0rMY
+products,shirt5.png,Shirt 5,$60,100% Cotton,price_1Sd04hRUeLzZqzRzXax0pRwt
+products,shirt6.png,Shirt 6,$60,100% Cotton,price_1Sd04uRUeLzZqzRzfoloiIsn
+products,shirt7.png,Shirt 7,$60,100% Cotton,price_1Sd053RUeLzZqzRzE3lljTHO
+products,shirt8.png,Shirt 8,$60,100% Cotton,price_1Sd05CRUeLzZqzRzWuMPukOX
+products,shirt9.png,Shirt 9,$60,100% Cotton,price_1Sd05ORUeLzZqzRzkGW3hBJc
