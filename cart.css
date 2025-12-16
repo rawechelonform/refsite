@@ -1,0 +1,212 @@
+/* cart.css
+   Slide-out cart panel on the right side, triggered from menubar
+*/
+
+/* Make sure everything inside the drawer uses a sane baseline */
+.cart-drawer,
+.cart-drawer * {
+  box-sizing: border-box;
+}
+
+/* overlay behind the drawer */
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+  z-index: 99998;  /* above header */
+}
+
+.cart-drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* drawer itself */
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(360px, 90vw);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: -6px 0 24px rgba(0,0,0,0.6);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-out;
+  z-index: 99999;  /* top-most */
+
+  display: flex;
+  flex-direction: column;
+
+  /* base font for drawer content */
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+/* open state */
+.cart-drawer.open {
+  transform: translateX(0);
+}
+
+/* header */
+.cart-drawer-header {
+  padding: 20px 20px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid #000;
+}
+
+.cart-drawer-title {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 20px;
+}
+
+/* close button */
+.cart-drawer-close {
+  border: 1px solid #000000;
+  background: #ffffff !important;
+  color: #000000 !important;
+  padding: 4px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+}
+
+.cart-drawer-close:hover {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* body / list */
+.cart-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.cart-drawer-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cart-drawer-empty {
+  font-size: 13px;
+  color: #444;
+}
+
+/* item rows */
+.cart-drawer-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;   /* keep children packed to the left */
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  gap: 15px;                      /* tiny gap between image and text */
+}
+
+/* thumbnail */
+.cart-drawer-thumb-wrap {
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-drawer-thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border: none;                  /* no frame */
+}
+
+.cart-drawer-item-main {
+  flex: 0 1 auto;
+  max-width: 60%;
+}
+
+.cart-drawer-item-title {
+  font-weight: 600;
+}
+
+.cart-drawer-item-meta {
+  font-size: 12px;
+  color: #555555;
+}
+
+/* quantity controls */
+.cart-drawer-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;             /* push controls to the far right */
+}
+
+.cart-drawer-item-controls button {
+  padding: 2px 6px;
+  border: 1px solid #000000;
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+}
+
+.cart-drawer-item-controls button:hover {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* footer */
+.cart-drawer-footer {
+  border-top: 1px solid #000000;
+  padding: 12px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cart-drawer-total {
+  font-size: 13px;
+}
+
+/* checkout button */
+.cart-drawer-checkout {
+  padding: 8px 16px;
+  border: 1px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.cart-drawer-checkout:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+.cart-drawer-status {
+  font-size: 11px;
+  color: #555555;
+}
+
+/* small screens */
+@media (max-width: 600px) {
+  .cart-drawer {
+    width: 100vw;
+  }
+}

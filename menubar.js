@@ -1,6 +1,5 @@
 // menubar.js  
 
-
 (function () {
   const VER = 'mb27';
 
@@ -19,6 +18,9 @@
 
       normalizeMenuLinkAttrs();
       highlightCurrentNav();
+
+      // 🔔 Tell other scripts (like cart.js) that the menubar is ready
+      window.dispatchEvent(new Event('ref-menubar-ready'));
     } catch (_) {}
   }
 

@@ -1,63 +1,197 @@
 // cart.js
+// Slide-out cart panel that reads from localStorage.ref_cart
 
-function loadCart() {
-  try {
-    return JSON.parse(localStorage.getItem("ref_cart") || "[]");
-  } catch {
-    return [];
+(function () {
+  function loadCart() {
+    try {
+      return JSON.parse(localStorage.getItem("ref_cart") || "[]");
+    } catch {
+      return [];
+    }
   }
-}
 
-function saveCart(cart) {
-  localStorage.setItem("ref_cart", JSON.stringify(cart));
-}
+  function saveCart(cart) {
+    localStorage.setItem("ref_cart", JSON.stringify(cart));
+  }
 
-function formatLine(item) {
-  const qty = item.quantity || 1;
-  const label = item.displayPrice ? `${item.displayPrice}` : "";
-  return `${item.title} × ${qty}${label ? " — " + label : ""}`;
-}
+  // only show the price in the meta line
+  function formatMeta(item) {
+    const price = item.displayPrice || "";
+    return price || "";
+  }
 
-function renderCart() {
-  const itemsContainer = document.getElementById("cartItems");
-  const emptyEl = document.getElementById("cartEmpty");
-  const totalEl = document.getElementById("cartTotal");
+  let drawer, overlay, itemsContainer, totalEl, statusEl;
+  let built = false;
 
-  const cart = loadCart();
+  function renderCartDrawer() {
+    const cart = loadCart();
+    if (!itemsContainer || !totalEl) return;
 
-  if (!cart.length) {
     itemsContainer.innerHTML = "";
-    emptyEl.hidden = false;
-    totalEl.textContent = "";
-    return;
+
+    if (!cart.length) {
+      const empty = document.createElement("div");
+      empty.className = "cart-drawer-empty";
+      empty.textContent = "your bag is empty.";
+      itemsContainer.appendChild(empty);
+      totalEl.textContent = "";
+      return;
+    }
+
+    cart.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "cart-drawer-item";
+
+      // assumes your product grid images live at assets/shop/<file>
+      const thumbSrc = item.file ? `assets/shop/${item.file}` : "";
+
+      row.innerHTML = `
+        ${thumbSrc ? `
+          <div class="cart-drawer-thumb-wrap">
+            <img class="cart-drawer-thumb"
+                 src="${thumbSrc}"
+                 alt="${item.title || ""}">
+          </div>
+        ` : ``}
+        <div class="cart-drawer-item-main">
+          <div class="cart-drawer-item-title">${item.title}</div>
+          <div class="cart-drawer-item-meta">${formatMeta(item)}</div>
+        </div>
+        <div class="cart-drawer-item-controls">
+          <button data-idx="${idx}" data-action="dec">-</button>
+          <span>${item.quantity || 1}</span>
+          <button data-idx="${idx}" data-action="inc">+</button>
+        </div>
+      `;
+
+      itemsContainer.appendChild(row);
+    });
+
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    totalEl.textContent = `items: ${totalItems}`;
   }
 
-  emptyEl.hidden = true;
-  itemsContainer.innerHTML = "";
+  function handleItemsClick(e) {
+    const btn = e.target.closest("button");
+    if (!btn) return;
 
-  cart.forEach((item, idx) => {
-    const row = document.createElement("div");
-    row.className = "cart-item";
+    const idx = parseInt(btn.dataset.idx, 10);
+    const action = btn.dataset.action;
+    if (Number.isNaN(idx) || !action) return;
 
-    row.innerHTML = `
-      <span class="cart-item-text">${formatLine(item)}</span>
-      <div class="cart-item-controls">
-        <button data-idx="${idx}" data-action="dec">-</button>
-        <span class="cart-item-qty">${item.quantity || 1}</span>
-        <button data-idx="${idx}" data-action="inc">+</button>
-        <button data-idx="${idx}" data-action="remove">x</button>
+    const cart = loadCart();
+    const item = cart[idx];
+    if (!item) return;
+
+    if (action === "inc") {
+      item.quantity = (item.quantity || 1) + 1;
+    } else if (action === "dec") {
+      item.quantity = (item.quantity || 1) - 1;
+      if (item.quantity <= 0) {
+        cart.splice(idx, 1); // 0 or less → remove from cart
+      }
+    }
+
+    saveCart(cart);
+    renderCartDrawer();
+  }
+
+  // temporary placeholder — Stripe wiring comes next
+  function fakeCheckout() {
+    if (!statusEl) return;
+
+    const cart = loadCart();
+    if (!cart.length) {
+      statusEl.textContent = "cart is empty.";
+      return;
+    }
+
+    statusEl.textContent = "checkout not wired yet (Stripe is next).";
+  }
+
+  function openDrawer() {
+    if (!drawer || !overlay) return;
+    drawer.classList.add("open");
+    overlay.classList.add("open");
+    if (statusEl) statusEl.textContent = "";
+    renderCartDrawer();
+  }
+
+  function closeDrawer() {
+    if (!drawer || !overlay) return;
+    drawer.classList.remove("open");
+    overlay.classList.remove("open");
+  }
+
+  function buildCartDrawer() {
+    if (built) return;
+    built = true;
+
+    // overlay
+    overlay = document.createElement("div");
+    overlay.className = "cart-drawer-overlay";
+    overlay.addEventListener("click", closeDrawer);
+
+    // drawer
+    drawer = document.createElement("aside");
+    drawer.className = "cart-drawer";
+    drawer.innerHTML = `
+      <div class="cart-drawer-header">
+        <h2 class="cart-drawer-title">SHOPPING BAG</h2>
+        <button class="cart-drawer-close" type="button" data-cart-close>close</button>
+      </div>
+      <div class="cart-drawer-body">
+        <div class="cart-drawer-items" data-cart-items></div>
+      </div>
+      <div class="cart-drawer-footer">
+        <div class="cart-drawer-total" data-cart-total></div>
+        <button class="cart-drawer-checkout" type="button" data-cart-checkout>
+          checkout
+        </button>
+        <div class="cart-drawer-status" data-cart-status></div>
       </div>
     `;
 
-    itemsContainer.appendChild(row);
-  });
+    document.body.appendChild(overlay);
+    document.body.appendChild(drawer);
 
-  const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-  totalEl.textContent = `items: ${totalItems}`;
-}
+    itemsContainer = drawer.querySelector("[data-cart-items]");
+    totalEl = drawer.querySelector("[data-cart-total]");
+    statusEl = drawer.querySelector("[data-cart-status]");
 
-function handleCartClick(e) {
-  const btn = e.target.closest("button");
-  if (!btn) return;
+    const closeBtn = drawer.querySelector("[data-cart-close]");
+    const checkoutBtn = drawer.querySelector("[data-cart-checkout]");
 
-  const idx = p
+    if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
+    if (itemsContainer) itemsContainer.addEventListener("click", handleItemsClick);
+    if (checkoutBtn) checkoutBtn.addEventListener("click", fakeCheckout);
+
+    // hook up the CART link in the menubar
+    const toggle = document.querySelector("[data-cart-toggle]");
+    if (toggle) {
+      toggle.addEventListener("click", (e) => {
+        e.preventDefault();   // stop "#" from jumping
+        openDrawer();
+      });
+    } else {
+      console.warn("[cart] no [data-cart-toggle] found");
+    }
+  }
+
+  function initCart() {
+    // If menubar already injected and CART link exists, build immediately
+    if (document.querySelector("[data-cart-toggle]")) {
+      buildCartDrawer();
+      return;
+    }
+
+    // Otherwise, wait for menubar.js to signal it's ready
+    window.addEventListener("ref-menubar-ready", buildCartDrawer, { once: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCart);
+  } else {
+    initCart();
+  }
+})();

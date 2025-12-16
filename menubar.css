@@ -1,5 +1,4 @@
 /* ===== menubar.css — pixel-aligned borders via gradients, mobile tweaks ===== */
-/* ===== menubar.css — pixel-aligned borders via gradients, mobile tweaks ===== */
 
 /* Global reset so the bar sits flush on every page */
 html, body { margin: 0; padding: 0; }
@@ -67,7 +66,7 @@ html, body { margin: 0; padding: 0; }
   list-style: none;
   margin: 0;
   padding: 0;
-  height: 100%;              /* fill header */
+  height: 100%;
   display: flex;
   align-items: stretch;
   width: 100%;
@@ -90,6 +89,11 @@ html, body { margin: 0; padding: 0; }
 /* ESC cell gets half the flex of others → less width, others share remaining space */
 .menu > li.esc-item {
   flex: 0.1 1 0;
+}
+
+/* CART cell a bit narrower than main nav items */
+.menu > li.cart-nav-item {
+  flex: 0.35 1 0;
 }
 
 /* Buttons (no borders; header + li draw all lines) */
@@ -207,7 +211,7 @@ html, body { margin: 0; padding: 0; }
   :root {
     --barh: 26px;
     --linew: 1px;
-  }  /* make the bar flatter here */
+  }
 
   .menu-link  {
     font-size: clamp(5.6px, 2.6vw, 6.8px);
@@ -226,10 +230,10 @@ html, body { margin: 0; padding: 0; }
   .menu a[href$="artist.html"] {
     white-space: normal !important;
     text-align: center;
-    justify-items: center;      /* works because .menu-link is display:grid */
+    justify-items: center;
     word-break: normal;
     text-wrap: balance;
-    line-height: 1.12;          /* 1–2px extra breathing room between lines */
+    line-height: 1.12;
     padding-left: 4px !important;
     padding-right: 4px !important;
   }
@@ -266,7 +270,7 @@ html, body { margin: 0; padding: 0; }
   :root {
     --barh: 24px;
     --linew: 1px;
-  }  /* narrow bar + match portrait border thickness */
+  }
 
   .menu-link:not(.brand-link) {
     font-size: clamp(5.8px, 2.2vw, 7.4px);
@@ -285,7 +289,7 @@ html, body { margin: 0; padding: 0; }
     white-space: normal !important;
     text-align: center;
     justify-items: center;
-    line-height: 1.12;             /* keep the tiny interline gap */
+    line-height: 1.12;
     padding-left: 3px !important;
     padding-right: 3px !important;
   }
