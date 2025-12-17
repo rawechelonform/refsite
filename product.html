@@ -5,26 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>REF · Product</title>
 
-  <!-- Fonts / shared styles -->
+  <!-- Fonts -->
   <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Shared menubar CSS (same as other pages) -->
+  <!-- Menubar + overrides -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
   <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
 
-  <!-- Product page CSS -->
-  <link rel="stylesheet" href="product.css?v=p4">
-
-  <link rel="stylesheet" href="cart.css?v=1">
-
+  <!-- Product page styles -->
+  <link rel="stylesheet" href="product.css?v=p9">
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
 <body class="menu-transparent">
-  <!-- avoid FOUT while Coral Pixels loads -->
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
@@ -32,35 +28,60 @@
   </script>
 
   <div class="page">
-    <!-- menubar slot (same as shop.html) -->
     <div data-menubar class="menubar-slot"></div>
 
     <main class="product-shell" aria-label="Product page">
-      <!-- Scrollable image column -->
+      <!-- LEFT: images -->
       <section class="product-main" id="imageStack" aria-label="Product images">
         <!-- images injected by product.js -->
       </section>
 
-      <!-- Text / price / button -->
+      <!-- RIGHT: info panel -->
       <aside class="product-info">
         <h1 class="product-title" id="prodTitle">Loading…</h1>
-        <div class="product-price" id="prodPrice"></div>
-        <p class="product-desc" id="prodDesc"></p>
 
+        <div class="product-meta">
+          <div class="product-price" id="prodPrice"></div>
+          <div class="product-subline">
+            <span id="prodSubline"></span>
+          </div>
+        </div>
+
+        <!-- COLOR -->
+        <div class="product-field">
+          <div class="product-label" id="colorLabel">COLOR</div>
+          <div class="color-row" id="colorRow">
+            <!-- color swatches injected by product.js -->
+          </div>
+        </div>
+
+        <!-- SIZE -->
+        <div class="product-field">
+          <div class="product-label">SIZE</div>
+          <div class="size-row" id="sizeRow">
+            <!-- S M L XL XXL buttons injected by product.js -->
+          </div>
+          <div class="product-error" id="productError"></div>
+        </div>
+
+        <!-- Add to Cart -->
         <button class="buy-button" type="button">
-          add to cart
+          ADD TO CART
         </button>
+
+        <!-- DETAILS toggle -->
+        <div class="details-block">
+          <button type="button" class="details-toggle" id="detailsToggle">
+            <span class="details-label">details</span><span class="no-underline">.</span>
+          </button>
+          <div class="details-body" id="detailsBody"></div>
+        </div>
       </aside>
     </main>
   </div>
 
-  <!-- shared menubar JS -->
   <script src="menubar.js?v=mb27" defer></script>
-
-  <!-- dynamic product loader -->
-  <script src="product.js?v=2" defer></script>
-
-  <!-- cart drawer -->
-  <script src="cart.js?v=1" defer></script>
+  <script src="product.js?v=6" defer></script>
+  <script src="cart.js?v=2" defer></script>
 </body>
 </html>

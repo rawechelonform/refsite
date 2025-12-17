@@ -43,13 +43,6 @@ html, body { margin: 0; padding: 0; }
   align-items: stretch;
   color: var(--chrome);
 
-  /* Layers:
-     - top horizontal
-     - bottom horizontal
-     - left edge vertical
-     - right edge vertical
-     - black bar background
-  */
   background:
     linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
     linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
@@ -91,12 +84,7 @@ html, body { margin: 0; padding: 0; }
   flex: 0.1 1 0;
 }
 
-/* CART cell a bit narrower than main nav items */
-.menu > li.cart-nav-item {
-  flex: 0.35 1 0;
-}
-
-/* Buttons (no borders; header + li draw all lines) */
+/* Buttons / links (no borders; header + li draw all lines) */
 .menu-link,
 .menu-link:link,
 .menu-link:visited {
@@ -111,9 +99,8 @@ html, body { margin: 0; padding: 0; }
   color: var(--chrome);
   background: transparent;
 
-  /* exact centering */
-  display: grid;               /* lets us center + use justify-items on mobile */
-  place-items: center;         /* centers text vertically + horizontally */
+  display: grid;
+  place-items: center;
 
   height: 100%;
   width: 100%;
@@ -121,7 +108,7 @@ html, body { margin: 0; padding: 0; }
   border-radius: 0;
 
   font-size: 10px;
-  padding: 0 8px;              /* no vertical padding, only horizontal */
+  padding: 0 8px;
 
   white-space: nowrap;
   overflow: hidden;
@@ -129,8 +116,15 @@ html, body { margin: 0; padding: 0; }
 
   transition: background .15s, color .15s;
 
-  /* tiny optical nudge for this pixel font */
   transform: translateY(var(--text-nudge));
+}
+
+/* Make button version look identical to <a> */
+button.menu-link {
+  border: none;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 /* Brand button (REF) */
@@ -138,14 +132,14 @@ html, body { margin: 0; padding: 0; }
   font-family: 'Pixel Warden', 'Coral Pixels', system-ui, sans-serif !important;
   letter-spacing: .02em;
   font-size: 15px !important;
-  padding: 0 14px !important;   /* horizontal only */
+  padding: 0 14px !important;
   display: grid !important;
   place-items: center !important;
   line-height: 1 !important;
   transform: translateY(var(--brand-nudge)) !important;
 }
 
-/* Make ESC label a bit less loud (optional; remove font-size if you want same size) */
+/* Make ESC label a bit less loud */
 .menu > li.esc-item .menu-link {
   padding: 0 6px;
   font-size: 8px;
@@ -180,11 +174,15 @@ html, body { margin: 0; padding: 0; }
   outline: none;
 }
 
+/* CART count */
+.cart-menu-count {
+  margin-left: 2px;
+}
+
 /* ==========================
    Responsive sizing (v: mb9)
    ========================== */
 
-/* Tablets / small laptops */
 @media (max-width: 720px) {
   :root {
     --barh: 22px;
@@ -206,7 +204,7 @@ html, body { margin: 0; padding: 0; }
   }
 }
 
-/* Phones — PORTRAIT: flatter bar + tiny gap in ARTIST */
+/* Phones — PORTRAIT */
 @media (max-width: 480px) and (orientation: portrait) {
   :root {
     --barh: 26px;
@@ -256,16 +254,7 @@ html, body { margin: 0; padding: 0; }
   }
 }
 
-/* Final portrait-only safety so it DOESN'T affect landscape */
-@media (max-width: 480px) and (orientation: portrait) {
-  .menu-link:not(.brand-link) {
-    font-size: clamp(5.2px, 2.5vw, 6.6px);
-    letter-spacing: 0;
-    padding: 0 4px;
-  }
-}
-
-/* Phones — LANDSCAPE (short height): put this LAST so it wins in landscape */
+/* Phones — LANDSCAPE */
 @media (max-height: 420px) and (orientation: landscape) {
   :root {
     --barh: 24px;
@@ -292,5 +281,14 @@ html, body { margin: 0; padding: 0; }
     line-height: 1.12;
     padding-left: 3px !important;
     padding-right: 3px !important;
+  }
+}
+
+/* Portrait-only safety */
+@media (max-width: 480px) and (orientation: portrait) {
+  .menu-link:not(.brand-link) {
+    font-size: clamp(5.2px, 2.5vw, 6.6px);
+    letter-spacing: 0;
+    padding: 0 4px;
   }
 }

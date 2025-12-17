@@ -66,9 +66,41 @@
     </main>
   </div>
 
+  <!-- CART DRAWER -->
+  <div class="cart-drawer-overlay"></div>
+
+  <aside id="cartPanel" class="cart-drawer" aria-label="Shopping cart">
+    <div class="cart-drawer-header">
+      <h2 class="cart-drawer-title">CART</h2>
+      <button class="cart-drawer-close" type="button" data-cart-close>
+        CLOSE
+      </button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <!-- items list -->
+      <div id="cartItems" class="cart-drawer-items"></div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-drawer-total" id="cartItemsCount">
+        items: 0
+      </div>
+      <button
+        class="cart-drawer-checkout"
+        id="cartCheckoutBtn"
+        type="button">
+        CHECKOUT
+      </button>
+      <div class="cart-drawer-status">
+        checkout opens in a new tab.
+      </div>
+    </div>
+  </aside>
+
   <!-- scripts: shared menubar first, then page JS, then cart -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="main.js?v=mb8" defer></script>
-  <script src="cart.js?v=1" defer></script>
+  <script src="cart.js?v=2" defer></script>
 </body>
 </html>

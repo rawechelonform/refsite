@@ -1,10 +1,11 @@
-Site Page,File,Title,Price,Details,StripePriceId
-products,shirt1.png,Shirt 1,$60,100% Cotton,price_1Sd02LRUeLzZqzRzrtd672uT
-products,shirt2.png,Shirt 2,$60,100% Cotton,price_1Sd04BRUeLzZqzRz4msx3FYP
-products,shirt3.png,Shirt 3,$60,100% Cotton,price_1Sd04ORUeLzZqzRz9e5f1YTO
-products,shirt4.png,Shirt 4,$60,100% Cotton,price_1Sd04YRUeLzZqzRz7rNi0rMY
-products,shirt5.png,Shirt 5,$60,100% Cotton,price_1Sd04hRUeLzZqzRzXax0pRwt
-products,shirt6.png,Shirt 6,$60,100% Cotton,price_1Sd04uRUeLzZqzRzfoloiIsn
-products,shirt7.png,Shirt 7,$60,100% Cotton,price_1Sd053RUeLzZqzRzE3lljTHO
-products,shirt8.png,Shirt 8,$60,100% Cotton,price_1Sd05CRUeLzZqzRzWuMPukOX
-products,shirt9.png,Shirt 9,$60,100% Cotton,price_1Sd05ORUeLzZqzRzkGW3hBJc
+Site Page,UniqueID,StyleCode,Title,ColorDescription,ColorCode,Price,StripePriceId,S,M,L,XL,XXL,Image1,Image2,Image3,Image4,Image5,Image6,Image7,Details
+products,101,SHIRT1,Shirt 1,Acid Washed Black,2D2E33,$60,price_1Sd02LRUeLzZqzRzrtd672uT,x,x,x,,x,shirt1.png,shirt1.png,shirt1.png,shirt1.png,shirt1.png,shirt1.png,shirt1.png,100% Cotton
+products,102,SHIRT1,Shirt 1,White,FFFFFF,$60,price_1Sd05dRUeLzZqzRzas1R4Ayb,x,x,,x,x,shirt1.png,,,,,,,100% Cotton
+products,103,SHIRT2,Shirt 2,Acid Washed Black,2D2E33,$60,price_1Sd04BRUeLzZqzRz4msx3FYP,x,x,x,x,x,shirt2.png,,,,,,,100% Cotton
+products,104,SHIRT3,Shirt 3,Acid Washed Black,2D2E33,$60,price_1Sd04ORUeLzZqzRz9e5f1YTO,x,,x,x,x,shirt3.png,,,,,,,100% Cotton
+products,105,SHIRT4,Shirt 4,Acid Washed Black,2D2E33,$60,price_1Sd04YRUeLzZqzRz7rNi0rMY,x,x,x,x,x,shirt4.png,,,,,,,100% Cotton
+products,106,SHIRT5,Shirt 5,Acid Washed Black,2D2E33,$60,price_1Sd04hRUeLzZqzRzXax0pRwt,x,x,x,x,x,shirt5.png,,,,,,,100% Cotton
+products,107,SHIRT6,Shirt 6,Acid Washed Black,2D2E33,$60,price_1Sd04uRUeLzZqzRzfoloiIsn,x,x,x,x,x,shirt6.png,,,,,,,100% Cotton
+products,108,SHIRT7,Shirt 7,Acid Washed Black,2D2E33,$60,price_1Sd053RUeLzZqzRzE3lljTHO,x,x,x,x,x,shirt7.png,,,,,,,100% Cotton
+products,109,SHIRT8,Shirt 8,Acid Washed Black,2D2E33,$60,price_1Sd05CRUeLzZqzRzWuMPukOX,x,x,x,x,x,shirt8.png,,,,,,,100% Cotton
+products,110,SHIRT9,Shirt 9,Acid Washed Black,2D2E33,$60,price_1Sd05ORUeLzZqzRzkGW3hBJc,x,x,x,x,x,shirt9.png,,,,,,,100% Cotton

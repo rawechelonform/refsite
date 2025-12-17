@@ -28,11 +28,13 @@
   --grid-pad: 24px;
 
   /* height for the LEFT image container only */
-  --image-pane-h: 70vh;   /* tweak up/down to change scrollable image area */
+  --image-pane-h: 88vh;
 }
 
 /* ===== Base ===== */
-html, body { height: 100%; }
+html, body {
+  height: 100%;
+}
 
 body {
   margin: 0;
@@ -64,18 +66,12 @@ body {
   max-width: var(--maxw);
   padding: 0 var(--grid-pad);
   display: grid;
-  grid-template-columns: 3fr 2fr;   /* bigger images, smaller panel */
+  grid-template-columns: 3fr 2fr;
   gap: 32px;
-
-  /* don't force equal heights; right panel can be shorter */
   align-items: flex-start;
 }
 
-/* LEFT: image column
-   - no border / no black box
-   - fixed-height container
-   - internal vertical scroll for multiple images
-*/
+/* LEFT: image column */
 .product-main {
   background: transparent;
   border: none;
@@ -89,7 +85,6 @@ body {
   overflow-y: auto;
 }
 
-/* scrollbar can be subtle */
 .product-main::-webkit-scrollbar {
   width: 6px;
 }
@@ -100,7 +95,6 @@ body {
   background: rgba(255,255,255,0.25);
 }
 
-/* each image sits inside the container, no bleed */
 .product-main img {
   display: block;
   width: 100%;
@@ -108,17 +102,17 @@ body {
   image-rendering: crisp-edges;
 }
 
-/* RIGHT: info panel (shorter than before) */
+/* RIGHT: info panel */
 .product-info {
   background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.12);
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 
-  min-height: 50vh;   /* shorter black box; tweak as needed */
-  max-height: 70vh;   /* prevents it from getting super tall */
+  min-height: 50vh;
+  max-height: 70vh;
   overflow: hidden;
 }
 
@@ -137,14 +131,101 @@ body {
   letter-spacing: 0.06em;
 }
 
-.product-desc {
-  font-size: 14px;
-  color: #ddd;
+.product-subline {
+  font-size: 12px;
+  color: var(--muted);
 }
 
-/* Button */
+/* ===== Product fields (COLOR, SIZE, DETAILS) ===== */
+
+.product-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.product-label {
+  font-family: 'FS TI-92 ENO C', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* COLOR row */
+
+.color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* small rectangles with no gap between chip and border */
+.product-color-chip {
+  width: 22px;
+  height: 16px;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+/* current color: tight grey outline, no offset */
+.product-color-chip.is-current {
+  outline: 2px solid #444;
+  outline-offset: 0;
+}
+
+/* SIZE row */
+
+.size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.product-size-pill {
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: #ddd;
+  font-size: 14px;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+/* selected size: bold, brighter */
+.product-size-pill.is-selected {
+  font-weight: 700;
+  color: #fff;
+}
+
+/* disabled size: darker grey but readable */
+.product-size-pill.is-disabled {
+  color: #666;      /* darker than before */
+  opacity: 0.75;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* inline error under sizes */
+
+.product-error {
+  min-height: 18px;
+  font-size: 11px;
+  color: #ffb0b0;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
+/* Add to Cart button */
+
 .buy-button {
-  margin-top: 8px;
+  margin-top: 12px;
   align-self: flex-start;
   padding: 8px 16px;
   border: 1px solid #fff;
@@ -158,16 +239,64 @@ body {
 }
 
 .buy-button:hover {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.25);
 }
 
-/* ===== Responsive ===== */
+.buy-button.is-success {
+  background: #fff;
+  color: #000;
+}
+
+/* DETAILS block – no border on body */
+
+.details-block {
+  margin-top: 16px;
+}
+
+.details-toggle {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-family: 'FS TI-92 ENO C', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: none;   /* keep "details." lowercase */
+  cursor: pointer;
+}
+
+.details-label {
+  text-decoration: underline;
+}
+
+.details-toggle:hover .details-label {
+  text-decoration-thickness: 2px;
+}
+
+/* animated details body */
+
+.details-body {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #ddd;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.9s ease;  /* slower open and close */
+  border: none;
+  padding: 0;
+}
+
+.details-body.is-open {
+  /* max-height is set inline via JS for smoother scroll */
+}
+
+/* Responsive */
+
 @media (max-width: 800px) {
   .product-shell {
     grid-template-columns: 1fr;
   }
 
-  /* on mobile let everything scroll normally */
   .product-main,
   .product-info {
     height: auto;
@@ -175,41 +304,4 @@ body {
     max-height: none;
     overflow-y: visible;
   }
-}
-
-/* =========================
-   MENUBAR OVERRIDES (same as shop.css)
-   ========================= */
-
-body.menu-transparent {
-  --chrome: rgba(255,255,255,0.70);
-}
-
-body.menu-transparent .top-margin {
-  background: transparent !important;
-}
-
-body.menu-transparent .site-header {
-  background:
-    linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
-    linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
-    linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
-    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
-    transparent !important;
-}
-
-body.menu-transparent .menu > li {
-  border-left-color: var(--chrome);
-}
-
-body.menu-transparent .menu-link,
-body.menu-transparent .brand-link {
-  color: #fff;
-  background: transparent !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.45);
-}
-
-body.menu-transparent .menu-link:hover,
-body.menu-transparent .brand-link:hover {
-  background: rgba(255,255,255,0.18) !important;
 }

@@ -1,197 +1,276 @@
 // cart.js
-// Slide-out cart panel that reads from localStorage.ref_cart
+// Side cart panel shared across pages
+// Uses localStorage key "ref_cart"
+// Exposes window.refCart.{openPanel,closePanel,openPanelTemporarily,render}
 
 (function () {
-  function loadCart() {
+  const STORAGE_KEY = "ref_cart";
+  const IMAGE_BASE  = "assets/shop/";
+
+  const panel      = document.getElementById("cartPanel");
+  const overlay    = document.querySelector(".cart-drawer-overlay");
+  const listEl     = document.getElementById("cartItems");
+  const countEl    = document.getElementById("cartItemsCount");
+  const checkoutBtn = document.getElementById("cartCheckoutBtn");
+
+  let autoCloseTimer = null;
+
+  /* ---------- storage helpers ---------- */
+
+  function readCart() {
     try {
-      return JSON.parse(localStorage.getItem("ref_cart") || "[]");
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
   }
 
-  function saveCart(cart) {
-    localStorage.setItem("ref_cart", JSON.stringify(cart));
+  function saveCart(items) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }
 
-  // only show the price in the meta line
-  function formatMeta(item) {
-    const price = item.displayPrice || "";
-    return price || "";
+  /* ---------- panel open / close ---------- */
+
+  function openPanel() {
+    if (!panel) return;
+    panel.classList.add("open");                // matches cart.css (.cart-drawer.open)
+    if (overlay) overlay.classList.add("open");
+    document.body.classList.add("cart-open");
   }
 
-  let drawer, overlay, itemsContainer, totalEl, statusEl;
-  let built = false;
+  function closePanel() {
+    if (!panel) return;
+    panel.classList.remove("open");
+    if (overlay) overlay.classList.remove("open");
+    document.body.classList.remove("cart-open");
+  }
 
-  function renderCartDrawer() {
-    const cart = loadCart();
-    if (!itemsContainer || !totalEl) return;
+  function togglePanel() {
+    if (!panel) return;
+    if (panel.classList.contains("open")) closePanel();
+    else openPanel();
+  }
 
-    itemsContainer.innerHTML = "";
+  function openPanelTemporarily(ms) {
+    if (!panel) return;
+    const dur = typeof ms === "number" ? ms : 3000;
 
-    if (!cart.length) {
+    openPanel();
+
+    if (autoCloseTimer) {
+      clearTimeout(autoCloseTimer);
+      autoCloseTimer = null;
+    }
+
+    autoCloseTimer = setTimeout(() => {
+      autoCloseTimer = null;
+      if (!panel.classList.contains("open")) return;
+      closePanel();
+    }, dur);
+  }
+
+  /* ---------- DOM helpers ---------- */
+
+  function getMenuBadgeEl() {
+    // lives in menubar_x.html; injected later by menubar.js
+    return document.getElementById("cartMenuCount");
+  }
+
+  /* ---------- rendering ---------- */
+
+  function renderRow(item, idx) {
+    const row = document.createElement("div");
+    row.className = "cart-drawer-item";
+    row.dataset.index = String(idx);
+
+    // thumbnail
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "cart-drawer-thumb-wrap";
+
+    if (item.file) {
+      const img = document.createElement("img");
+      img.className = "cart-drawer-thumb";
+      img.src = IMAGE_BASE + item.file;
+      img.alt = item.title || "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("error", () => img.remove(), { once: true });
+      thumbWrap.appendChild(img);
+    }
+
+    // main text
+    const main = document.createElement("div");
+    main.className = "cart-drawer-item-main";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "cart-drawer-item-title";
+    titleEl.textContent = item.title || "";
+
+    const metaEl = document.createElement("div");
+    metaEl.className = "cart-drawer-item-meta";
+    const bits = [];
+    if (item.displayPrice) bits.push(item.displayPrice);
+    if (item.color)        bits.push(item.color);
+    if (item.size)         bits.push(item.size);
+    metaEl.textContent = bits.join(" · ");
+
+    main.appendChild(titleEl);
+    main.appendChild(metaEl);
+
+    // quantity controls
+    const controls = document.createElement("div");
+    controls.className = "cart-drawer-item-controls";
+
+    const minusBtn = document.createElement("button");
+    minusBtn.type = "button";
+    minusBtn.textContent = "−";
+
+    const qtyLabel = document.createElement("span");
+    qtyLabel.textContent = String(item.quantity || 1);
+
+    const plusBtn = document.createElement("button");
+    plusBtn.type = "button";
+    plusBtn.textContent = "+";
+
+    controls.appendChild(minusBtn);
+    controls.appendChild(qtyLabel);
+    controls.appendChild(plusBtn);
+
+    row.appendChild(thumbWrap);
+    row.appendChild(main);
+    row.appendChild(controls);
+
+    minusBtn.addEventListener("click", () => changeQuantity(idx, -1));
+    plusBtn.addEventListener("click", () => changeQuantity(idx, +1));
+
+    return row;
+  }
+
+  function render() {
+    if (!listEl || !countEl) return;
+
+    const items = readCart();
+    listEl.innerHTML = "";
+
+    if (!items.length) {
       const empty = document.createElement("div");
       empty.className = "cart-drawer-empty";
       empty.textContent = "your bag is empty.";
-      itemsContainer.appendChild(empty);
-      totalEl.textContent = "";
+      listEl.appendChild(empty);
+      countEl.textContent = "items: 0";
+
+      const badge = getMenuBadgeEl();
+      if (badge) badge.textContent = "";
       return;
     }
 
-    cart.forEach((item, idx) => {
-      const row = document.createElement("div");
-      row.className = "cart-drawer-item";
-
-      // assumes your product grid images live at assets/shop/<file>
-      const thumbSrc = item.file ? `assets/shop/${item.file}` : "";
-
-      row.innerHTML = `
-        ${thumbSrc ? `
-          <div class="cart-drawer-thumb-wrap">
-            <img class="cart-drawer-thumb"
-                 src="${thumbSrc}"
-                 alt="${item.title || ""}">
-          </div>
-        ` : ``}
-        <div class="cart-drawer-item-main">
-          <div class="cart-drawer-item-title">${item.title}</div>
-          <div class="cart-drawer-item-meta">${formatMeta(item)}</div>
-        </div>
-        <div class="cart-drawer-item-controls">
-          <button data-idx="${idx}" data-action="dec">-</button>
-          <span>${item.quantity || 1}</span>
-          <button data-idx="${idx}" data-action="inc">+</button>
-        </div>
-      `;
-
-      itemsContainer.appendChild(row);
+    items.forEach((it, idx) => {
+      listEl.appendChild(renderRow(it, idx));
     });
 
-    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    totalEl.textContent = `items: ${totalItems}`;
+    const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
+    countEl.textContent = "items: " + totalQty;
+
+    // update little badge in menubar ("CART(2)")
+    const badge = getMenuBadgeEl();
+    if (badge) {
+      badge.textContent = totalQty ? ` (${totalQty})` : "";
+    }
   }
 
-  function handleItemsClick(e) {
-    const btn = e.target.closest("button");
-    if (!btn) return;
+  /* ---------- quantity changes ---------- */
 
-    const idx = parseInt(btn.dataset.idx, 10);
-    const action = btn.dataset.action;
-    if (Number.isNaN(idx) || !action) return;
+  function changeQuantity(index, delta) {
+    const items = readCart();
+    if (index < 0 || index >= items.length) return;
 
-    const cart = loadCart();
-    const item = cart[idx];
-    if (!item) return;
+    const item = items[index];
+    const next = (item.quantity || 0) + delta;
 
-    if (action === "inc") {
-      item.quantity = (item.quantity || 1) + 1;
-    } else if (action === "dec") {
-      item.quantity = (item.quantity || 1) - 1;
-      if (item.quantity <= 0) {
-        cart.splice(idx, 1); // 0 or less → remove from cart
+    if (next <= 0) {
+      items.splice(index, 1);
+    } else {
+      item.quantity = next;
+    }
+
+    saveCart(items);
+    render();
+  }
+
+  /* ---------- checkout stub ---------- */
+
+  function handleCheckoutClick() {
+    const items = readCart();
+    if (!items.length) return;
+    console.log("[cart checkout] items:", items);
+    // Stripe Checkout integration will go here later
+  }
+
+  /* ---------- wire up ---------- */
+
+  function init() {
+    // pages without the drawer: still expose refCart, just noop open
+    if (!panel) {
+      console.warn("[cart] #cartPanel not found on this page");
+    }
+
+    // event delegation for CART button in menubar (which is injected later)
+    document.addEventListener("click", (e) => {
+      const toggle = e.target.closest("[data-cart-toggle]");
+      if (toggle) {
+        e.preventDefault();
+        togglePanel();
+      }
+    });
+
+    // close button inside drawer
+    if (panel) {
+      const closeBtn = panel.querySelector("[data-cart-close]");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          closePanel();
+        });
       }
     }
 
-    saveCart(cart);
-    renderCartDrawer();
-  }
-
-  // temporary placeholder — Stripe wiring comes next
-  function fakeCheckout() {
-    if (!statusEl) return;
-
-    const cart = loadCart();
-    if (!cart.length) {
-      statusEl.textContent = "cart is empty.";
-      return;
-    }
-
-    statusEl.textContent = "checkout not wired yet (Stripe is next).";
-  }
-
-  function openDrawer() {
-    if (!drawer || !overlay) return;
-    drawer.classList.add("open");
-    overlay.classList.add("open");
-    if (statusEl) statusEl.textContent = "";
-    renderCartDrawer();
-  }
-
-  function closeDrawer() {
-    if (!drawer || !overlay) return;
-    drawer.classList.remove("open");
-    overlay.classList.remove("open");
-  }
-
-  function buildCartDrawer() {
-    if (built) return;
-    built = true;
-
-    // overlay
-    overlay = document.createElement("div");
-    overlay.className = "cart-drawer-overlay";
-    overlay.addEventListener("click", closeDrawer);
-
-    // drawer
-    drawer = document.createElement("aside");
-    drawer.className = "cart-drawer";
-    drawer.innerHTML = `
-      <div class="cart-drawer-header">
-        <h2 class="cart-drawer-title">SHOPPING BAG</h2>
-        <button class="cart-drawer-close" type="button" data-cart-close>close</button>
-      </div>
-      <div class="cart-drawer-body">
-        <div class="cart-drawer-items" data-cart-items></div>
-      </div>
-      <div class="cart-drawer-footer">
-        <div class="cart-drawer-total" data-cart-total></div>
-        <button class="cart-drawer-checkout" type="button" data-cart-checkout>
-          checkout
-        </button>
-        <div class="cart-drawer-status" data-cart-status></div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-    document.body.appendChild(drawer);
-
-    itemsContainer = drawer.querySelector("[data-cart-items]");
-    totalEl = drawer.querySelector("[data-cart-total]");
-    statusEl = drawer.querySelector("[data-cart-status]");
-
-    const closeBtn = drawer.querySelector("[data-cart-close]");
-    const checkoutBtn = drawer.querySelector("[data-cart-checkout]");
-
-    if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
-    if (itemsContainer) itemsContainer.addEventListener("click", handleItemsClick);
-    if (checkoutBtn) checkoutBtn.addEventListener("click", fakeCheckout);
-
-    // hook up the CART link in the menubar
-    const toggle = document.querySelector("[data-cart-toggle]");
-    if (toggle) {
-      toggle.addEventListener("click", (e) => {
-        e.preventDefault();   // stop "#" from jumping
-        openDrawer();
+    // clicking overlay closes drawer
+    if (overlay) {
+      overlay.addEventListener("click", () => {
+        closePanel();
       });
-    } else {
-      console.warn("[cart] no [data-cart-toggle] found");
-    }
-  }
-
-  function initCart() {
-    // If menubar already injected and CART link exists, build immediately
-    if (document.querySelector("[data-cart-toggle]")) {
-      buildCartDrawer();
-      return;
     }
 
-    // Otherwise, wait for menubar.js to signal it's ready
-    window.addEventListener("ref-menubar-ready", buildCartDrawer, { once: true });
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        handleCheckoutClick();
+      });
+    }
+
+    // re-render when menubar finishes injecting (ensures badge shows correct count)
+    window.addEventListener("ref-menubar-ready", () => {
+      render();
+    });
+
+    // initial render on load
+    render();
+
+    // expose API for product.js and others
+    window.refCart = {
+      openPanel,
+      closePanel,
+      openPanelTemporarily,
+      render,
+    };
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCart);
+    document.addEventListener("DOMContentLoaded", init);
   } else {
-    initCart();
+    init();
   }
 })();

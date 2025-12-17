@@ -1,17 +1,19 @@
 // shop.js — Cafeteria grid
 
 (() => {
-  // Each item maps to an image file under assets/shop/
+  // Each item maps to a row in the CSV via UniqueID
+  // id = UniqueID from your Google Sheet
   const ITEMS = [
-    { file: "shirt1.png", title: "Shirt 1", price: "$60" },
-    { file: "shirt2.png", title: "Shirt 2", price: "$60" },
-    { file: "shirt3.png", title: "Shirt 3", price: "$60" },
-    { file: "shirt4.png", title: "Shirt 4", price: "$60" },
-    { file: "shirt5.png", title: "Shirt 5", price: "$60" },
-    { file: "shirt6.png", title: "Shirt 6", price: "$60" },
-    { file: "shirt7.png", title: "Shirt 7", price: "$60" },
-    { file: "shirt8.png", title: "Shirt 8", price: "$60" },
-    { file: "shirt9.png", title: "Shirt 9", price: "$60" }
+    { id: "101", image: "shirt1.png", title: "Shirt 1", price: "$60" }, // Shirt 1 black
+    { id: "102", image: "shirt1_white.png", title: "Shirt 1", price: "$60" }, // Shirt 1 white (if you want it visible separately)
+    { id: "103", image: "shirt2.png", title: "Shirt 2", price: "$60" },
+    { id: "104", image: "shirt3.png", title: "Shirt 3", price: "$60" },
+    { id: "105", image: "shirt4.png", title: "Shirt 4", price: "$60" },
+    { id: "106", image: "shirt5.png", title: "Shirt 5", price: "$60" },
+    { id: "107", image: "shirt6.png", title: "Shirt 6", price: "$60" },
+    { id: "108", image: "shirt7.png", title: "Shirt 7", price: "$60" },
+    { id: "109", image: "shirt8.png", title: "Shirt 8", price: "$60" },
+    { id: "110", image: "shirt9.png", title: "Shirt 9", price: "$60" }
   ];
 
   const grid = document.getElementById("shopGrid");
@@ -21,8 +23,8 @@
     card.className = "item";
 
     const img = document.createElement("img");
-    img.src = "assets/shop/" + it.file;         // image path
-    img.alt = it.title || it.file;
+    img.src = "assets/shop/" + it.image;   // thumbnail image
+    img.alt = it.title || it.image;
     img.loading = "lazy";
     img.decoding = "async";
 
@@ -45,8 +47,8 @@
     card.appendChild(img);
     card.appendChild(meta);
 
-    // Make the whole card clickable → product.html?file=shirtX.png
-    const targetUrl = "product.html?file=" + encodeURIComponent(it.file);
+    // Make the whole card clickable → product.html?id=101
+    const targetUrl = "product.html?id=" + encodeURIComponent(it.id);
     card.style.cursor = "pointer";
 
     card.addEventListener("click", () => {

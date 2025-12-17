@@ -14,9 +14,11 @@
         <li><a href="artist.html"    class="menu-link">ARTIST</a></li>
         <li><a href="shop.html"      class="menu-link">CAFETERIA</a></li>
 
-        <!-- CART: link styled exactly like CAFETERIA, but used as cart toggle -->
-        <li class="cart-nav-item">
-          <a href="#" class="menu-link" data-cart-toggle>CART</a>
+        <!-- CART: looks like other menu cells, but is a button -->
+        <li>
+          <button class="menu-link cart-menu-button" type="button" data-cart-toggle>
+            CART<span id="cartMenuCount" class="cart-menu-count"></span>
+          </button>
         </li>
 
         <li class="esc-item">
