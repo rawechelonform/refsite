@@ -1,21 +1,21 @@
 // cart.js
-// Side cart panel shared across pages
+// Slide-out cart drawer shared across pages
 // Uses localStorage key "ref_cart"
-// Exposes window.refCart.{openPanel,closePanel,openPanelTemporarily,render}
+// Exposes window.refCart.{openPanel, closePanel, openPanelTemporarily, render}
 
 (function () {
   const STORAGE_KEY = "ref_cart";
   const IMAGE_BASE  = "assets/shop/";
 
-  const panel      = document.getElementById("cartPanel");
-  const overlay    = document.querySelector(".cart-drawer-overlay");
-  const listEl     = document.getElementById("cartItems");
-  const countEl    = document.getElementById("cartItemsCount");
+  const panel       = document.getElementById("cartPanel");
+  const overlay     = document.querySelector(".cart-drawer-overlay");
+  const listEl      = document.getElementById("cartItems");
+  const countEl     = document.getElementById("cartItemsCount");
   const checkoutBtn = document.getElementById("cartCheckoutBtn");
 
   let autoCloseTimer = null;
 
-  /* ---------- storage helpers ---------- */
+  /* ---------- storage ---------- */
 
   function readCart() {
     try {
@@ -32,11 +32,11 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }
 
-  /* ---------- panel open / close ---------- */
+  /* ---------- open / close ---------- */
 
   function openPanel() {
     if (!panel) return;
-    panel.classList.add("open");                // matches cart.css (.cart-drawer.open)
+    panel.classList.add("open");          // matches cart.css (.cart-drawer.open)
     if (overlay) overlay.classList.add("open");
     document.body.classList.add("cart-open");
   }
@@ -72,10 +72,9 @@
     }, dur);
   }
 
-  /* ---------- DOM helpers ---------- */
+  /* ---------- helpers ---------- */
 
   function getMenuBadgeEl() {
-    // lives in menubar_x.html; injected later by menubar.js
     return document.getElementById("cartMenuCount");
   }
 
@@ -111,10 +110,11 @@
 
     const metaEl = document.createElement("div");
     metaEl.className = "cart-drawer-item-meta";
+
+    // show: "Acid Washed Black · S" (no price)
     const bits = [];
-    if (item.displayPrice) bits.push(item.displayPrice);
-    if (item.color)        bits.push(item.color);
-    if (item.size)         bits.push(item.size);
+    if (item.color) bits.push(item.color);
+    if (item.size)  bits.push(item.size);
     metaEl.textContent = bits.join(" · ");
 
     main.appendChild(titleEl);
@@ -162,8 +162,8 @@
       listEl.appendChild(empty);
       countEl.textContent = "items: 0";
 
-      const badge = getMenuBadgeEl();
-      if (badge) badge.textContent = "";
+      const badgeEmpty = getMenuBadgeEl();
+      if (badgeEmpty) badgeEmpty.textContent = "";
       return;
     }
 
@@ -172,16 +172,29 @@
     });
 
     const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
-    countEl.textContent = "items: " + totalQty;
 
-    // update little badge in menubar ("CART(2)")
+    // compute subtotal from displayPrice * quantity
+    let subtotal = 0;
+    items.forEach(it => {
+      const q   = it.quantity || 0;
+      const raw = it.displayPrice || "";          // e.g. "$60.00"
+      const num = parseFloat(raw.replace(/[^0-9.]+/g, "")) || 0;
+      subtotal += num * q;
+    });
+
+    // format like "$60" or "$60.00" (strip .00)
+    const subtotalText = "$" + subtotal.toFixed(2).replace(/\.00$/, "");
+
+    countEl.innerHTML =
+      `items: ${totalQty}<span class="cart-drawer-subtotal">${subtotalText}</span>`;
+
     const badge = getMenuBadgeEl();
     if (badge) {
-      badge.textContent = totalQty ? ` (${totalQty})` : "";
+      badge.textContent = totalQty ? ` [${totalQty}]` : "";
     }
   }
 
-  /* ---------- quantity changes ---------- */
+  /* ---------- quantity ---------- */
 
   function changeQuantity(index, delta) {
     const items = readCart();
@@ -200,33 +213,34 @@
     render();
   }
 
-  /* ---------- checkout stub ---------- */
+  /* ---------- checkout ---------- */
 
   function handleCheckoutClick() {
     const items = readCart();
     if (!items.length) return;
     console.log("[cart checkout] items:", items);
-    // Stripe Checkout integration will go here later
+    // Stripe Checkout integration goes here later
   }
 
-  /* ---------- wire up ---------- */
+  /* ---------- init ---------- */
 
   function init() {
-    // pages without the drawer: still expose refCart, just noop open
     if (!panel) {
       console.warn("[cart] #cartPanel not found on this page");
     }
 
-    // event delegation for CART button in menubar (which is injected later)
+    // CART/BAG button in menubar (injected later) — event delegation
     document.addEventListener("click", (e) => {
-      const toggle = e.target.closest("[data-cart-toggle]");
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const toggle = target.closest("[data-cart-toggle]");
       if (toggle) {
         e.preventDefault();
         togglePanel();
       }
     });
 
-    // close button inside drawer
+    // Drawer close button
     if (panel) {
       const closeBtn = panel.querySelector("[data-cart-close]");
       if (closeBtn) {
@@ -237,13 +251,14 @@
       }
     }
 
-    // clicking overlay closes drawer
+    // Overlay click closes drawer
     if (overlay) {
       overlay.addEventListener("click", () => {
         closePanel();
       });
     }
 
+    // Checkout button
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -251,15 +266,15 @@
       });
     }
 
-    // re-render when menubar finishes injecting (ensures badge shows correct count)
+    // Re-render when menubar finishes injecting (updates BAG badge)
     window.addEventListener("ref-menubar-ready", () => {
       render();
     });
 
-    // initial render on load
+    // Initial render
     render();
 
-    // expose API for product.js and others
+    // Expose API
     window.refCart = {
       openPanel,
       closePanel,

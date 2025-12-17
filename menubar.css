@@ -174,9 +174,16 @@ button.menu-link {
   outline: none;
 }
 
-/* CART count */
+/* CART/BAG count */
 .cart-menu-count {
   margin-left: 2px;
+}
+
+/* BAG button: keep label + count on one line */
+.menu-link.cart-menu-button {
+  display: flex;               /* override display:grid */
+  align-items: center;
+  justify-content: center;
 }
 
 /* ==========================

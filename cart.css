@@ -108,11 +108,11 @@
 .cart-drawer-item {
   display: flex;
   align-items: center;
-  justify-content: flex-start;   /* keep children packed to the left */
+  justify-content: flex-start;
   font-size: 13px;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
-  gap: px;                      /* tiny gap between image and text */
+  gap: 12px;                    /* more space between thumb + text */
 }
 
 /* thumbnail */
@@ -121,6 +121,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 4px;            /* extra spacing tweak */
 }
 
 .cart-drawer-thumb {
@@ -177,8 +178,16 @@
   gap: 8px;
 }
 
+/* items + subtotal row */
 .cart-drawer-total {
   font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cart-drawer-subtotal {
+  font-weight: 600;
 }
 
 /* checkout button */
@@ -199,10 +208,7 @@
   color: #000000;
 }
 
-.cart-drawer-status {
-  font-size: 11px;
-  color: #555555;
-}
+/* (cart-drawer-status was removed from HTML per your request) */
 
 /* small screens */
 @media (max-width: 600px) {

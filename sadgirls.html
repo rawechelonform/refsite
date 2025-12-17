@@ -86,11 +86,38 @@
     </section>
   </div>
 
-  <!-- scripts: shared menubar first, then page carousel/stars -->
+  <!-- CART DRAWER (same as main.html) -->
+  <div class="cart-drawer-overlay"></div>
+
+  <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
+    <div class="cart-drawer-header">
+      <h2 class="cart-drawer-title">BAG</h2>
+      <button class="cart-drawer-close" type="button" data-cart-close>
+        CLOSE
+      </button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <div id="cartItems" class="cart-drawer-items"></div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-drawer-total" id="cartItemsCount">
+        items: 0
+      </div>
+      <button
+        class="cart-drawer-checkout"
+        id="cartCheckoutBtn"
+        type="button">
+        CHECKOUT
+      </button>
+    </div>
+  </aside>
+
+  <!-- scripts: shared menubar first, then page carousel/stars, then cart -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="sadgirls.js?v=mb7" defer></script>
-    <!-- slide-out cart drawer -->
-  <script src="cart.js?v=2" defer></script>
+  <script src="cart.js?v=4" defer></script>
 
   <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
@@ -158,7 +185,6 @@
       });
     })();
   </script>
-
 
 </body>
 </html>

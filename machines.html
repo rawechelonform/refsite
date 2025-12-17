@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-   <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark">
   <title>REF · Machines</title>
 
   <!-- Fonts -->
@@ -17,7 +17,6 @@
   <link rel="stylesheet" href="cart.css?v=1">
 
   <script src="icon.js" defer></script>
-
 </head>
 
 <body>
@@ -51,10 +50,38 @@
     <div class="diag" id="diag" hidden></div>
   </div>
 
-  <!-- JS (shared menubar first is fine; both are defer) -->
+  <!-- CART DRAWER (same as other pages) -->
+  <div class="cart-drawer-overlay"></div>
+
+  <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
+    <div class="cart-drawer-header">
+      <h2 class="cart-drawer-title">BAG</h2>
+      <button class="cart-drawer-close" type="button" data-cart-close>
+        CLOSE
+      </button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <div id="cartItems" class="cart-drawer-items"></div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-drawer-total" id="cartItemsCount">
+        items: 0
+      </div>
+      <button
+        class="cart-drawer-checkout"
+        id="cartCheckoutBtn"
+        type="button">
+        CHECKOUT
+      </button>
+    </div>
+  </aside>
+
+  <!-- JS (shared menubar first; both are defer) -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="machines.js" defer></script>
   <!-- slide-out cart drawer -->
-  <script src="cart.js?v=2" defer></script>
+  <script src="cart.js?v=4" defer></script>
 </body>
 </html>

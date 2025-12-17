@@ -17,8 +17,8 @@
   <!-- PAGE CSS LAST so nothing overrides it -->
   <link rel="stylesheet" href="shop.css?v=mb12">
 
+  <!-- Cart drawer styles -->
   <link rel="stylesheet" href="cart.css?v=1">
-
 
   <style>html,body{margin:0;padding:0}</style>
 </head>
@@ -26,7 +26,7 @@
 <body class="menu-transparent shop-font">
   <script>
     document.documentElement.classList.add('fonts-loading');
-    Promise.all([ document.fonts.load('1em \"Coral Pixels\"') ])
+    Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
       .then(() => document.documentElement.classList.remove('fonts-loading'));
   </script>
 
@@ -45,14 +45,37 @@
     </section>
   </div>
 
+  <!-- CART DRAWER -->
+  <div class="cart-drawer-overlay"></div>
+
+  <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
+    <div class="cart-drawer-header">
+      <h2 class="cart-drawer-title">BAG</h2>
+      <button class="cart-drawer-close" type="button" data-cart-close>
+        CLOSE
+      </button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <div id="cartItems" class="cart-drawer-items"></div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-drawer-total" id="cartItemsCount">
+        items: 0
+      </div>
+      <button
+        class="cart-drawer-checkout"
+        id="cartCheckoutBtn"
+        type="button">
+        CHECKOUT
+      </button>
+    </div>
+  </aside>
+
   <script src="menubar.js?v=mb27" defer></script>
   <script src="shop.js?v=mb7" defer></script>
-
-
   <!-- slide-out cart drawer -->
-  <script src="cart.js?v=2" defer></script>
-</body>
-</html>
-
+  <script src="cart.js?v=4" defer></script>
 </body>
 </html>

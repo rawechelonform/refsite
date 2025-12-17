@@ -179,6 +179,7 @@ body.menu-transparent .brand-link {
 body.menu-transparent .menu-link:hover,
 body.menu-transparent .brand-link:hover {
   background: rgba(255,255,255,0.18) !important;
+  color: #fff !important;
 }
 
 /* ==========================================================

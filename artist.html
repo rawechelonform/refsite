@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
- <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self' 'unsafe-inline';
@@ -83,9 +83,37 @@
     </div>
   </div>
 
+  <!-- CART DRAWER -->
+  <div class="cart-drawer-overlay"></div>
+
+  <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
+    <div class="cart-drawer-header">
+      <h2 class="cart-drawer-title">BAG</h2>
+      <button class="cart-drawer-close" type="button" data-cart-close>
+        CLOSE
+      </button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <div id="cartItems" class="cart-drawer-items"></div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-drawer-total" id="cartItemsCount">
+        items: 0
+      </div>
+      <button
+        class="cart-drawer-checkout"
+        id="cartCheckoutBtn"
+        type="button">
+        CHECKOUT
+      </button>
+    </div>
+  </aside>
+
   <script src="menubar.js?v=mb27" defer></script>
   <!-- slide-out cart drawer -->
-  <script src="cart.js?v=2" defer></script>
+  <script src="cart.js?v=4" defer></script>
 
   <!-- Registration-complete overlay using #reg-banner -->
   <script>
