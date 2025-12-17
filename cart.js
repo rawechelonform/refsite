@@ -29,8 +29,15 @@
   }
 
   function saveCart(items) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  // let other pages (e.g. checkout) know the cart changed
+  try {
+    window.dispatchEvent(
+      new CustomEvent("ref-cart-changed", { detail: { items } })
+    );
+  } catch (_) {}
+}
+
 
   /* ---------- open / close ---------- */
 
@@ -216,11 +223,13 @@
   /* ---------- checkout ---------- */
 
   function handleCheckoutClick() {
-    const items = readCart();
-    if (!items.length) return;
-    console.log("[cart checkout] items:", items);
-    // Stripe Checkout integration goes here later
-  }
+  const items = readCart();
+  if (!items.length) return;
+
+  // Navigate to checkout page
+  window.location.href = "checkout.html";
+}
+
 
   /* ---------- init ---------- */
 

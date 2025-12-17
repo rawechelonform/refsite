@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>REF · Cafeteria</title>
+  <title>REF · Checkout</title>
 
   <!-- Fonts -->
   <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Shared CSS (load FIRST) -->
+  <!-- Menubar + overrides (match shop/product) -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
   <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
 
-  <!-- Page CSS last -->
-  <link rel="stylesheet" href="shop.css?v=mb13">
+  <!-- Checkout styles -->
+  <link rel="stylesheet" href="checkout.css?v=1">
 
   <!-- Cart drawer styles -->
   <link rel="stylesheet" href="cart.css?v=1">
@@ -23,7 +23,7 @@
   <style>html,body{margin:0;padding:0}</style>
 </head>
 
-<body class="menu-transparent shop-font">
+<body class="menu-transparent">
   <script>
     document.documentElement.classList.add('fonts-loading');
     Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
@@ -31,23 +31,44 @@
   </script>
 
   <div class="page">
-    <!-- shared header -->
+    <!-- shared menubar -->
     <div data-menubar class="menubar-slot"></div>
 
-    <!-- Cafeteria title, directly under menubar -->
-    <div class="coming-soon" aria-hidden="true">
-      <span>C A F E T E R I A</span>
-    </div>
+    <!-- CHECKOUT CONTENT -->
+    <main class="checkout-shell" aria-label="Checkout">
+      <section class="checkout-panel">
+        <h1 class="checkout-title">checkout</h1>
 
-    <!-- Shop grid -->
-    <section class="shop" aria-label="Cafeteria items">
-      <div class="shop-inner">
-        <div id="shopGrid" class="shop-grid" aria-live="polite"></div>
-      </div>
-    </section>
+        <div id="checkoutEmpty" class="checkout-empty" hidden>
+          your bag is empty.
+        </div>
+
+        <div id="checkoutItems" class="checkout-items"></div>
+
+        <div class="checkout-summary">
+          <div class="checkout-row">
+            <span>subtotal</span>
+            <span id="checkoutSubtotal">$0.00</span>
+          </div>
+          <!-- If you later add shipping / tax, put them here -->
+          <div class="checkout-row checkout-row-total">
+            <span>total</span>
+            <span id="checkoutTotal">$0.00</span>
+          </div>
+        </div>
+
+        <button id="checkoutPayBtn" class="checkout-pay-btn" type="button">
+          PROCEED TO PAYMENT
+        </button>
+
+        <div id="checkoutNote" class="checkout-note">
+          payment via stripe checkout (coming soon).
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- CART DRAWER -->
+  <!-- CART DRAWER (same as other pages) -->
   <div class="cart-drawer-overlay"></div>
 
   <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
@@ -77,7 +98,7 @@
 
   <!-- scripts -->
   <script src="menubar.js?v=mb27" defer></script>
-  <script src="shop.js?v=mb7" defer></script>
-  <script src="cart.js?v=4" defer></script>
+  <script src="cart.js?v=5" defer></script>
+  <script src="checkout.js?v=1" defer></script>
 </body>
 </html>
