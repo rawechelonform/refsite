@@ -129,16 +129,72 @@
     totalEl.textContent    = formatPrice(subtotal); // shipping/tax later
   }
 
-  // pay button — Stripe integration placeholder
-  function handlePayClick() {
+    // pay button — Stripe integration
+  async function handlePayClick() {
     const items = readCart();
     if (!items.length) return;
 
-    console.log("[checkout] ready to send to Stripe:", items);
+    // optional: check that every item has a priceId
+    const missingPrice = items.some(it => !it.priceId);
+    if (missingPrice) {
+      if (noteEl) {
+        noteEl.textContent = "one or more items are missing a stripe price id.";
+      }
+      return;
+    }
 
-    // Later: replace with fetch to your Stripe Checkout endpoint:
-    // fetch("/.netlify/functions/create-checkout-session", { ... })
+    // basic UI feedback
+    if (payBtn) {
+      payBtn.disabled = true;
+    }
+    if (noteEl) {
+      noteEl.textContent = "redirecting to secure payment...";
+    }
+
+    try {
+      const res = await fetch("/.netlify/functions/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // our function expects the array itself, not { items: [...] }
+        body: JSON.stringify(items),
+      });
+
+      if (!res.ok) {
+        console.error("Checkout session error", res.status);
+        if (noteEl) {
+          noteEl.textContent = "there was a problem creating the payment session.";
+        }
+        if (payBtn) {
+          payBtn.disabled = false;
+        }
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;  // go to Stripe Checkout
+      } else {
+        if (noteEl) {
+          noteEl.textContent = "unexpected response from payment gateway.";
+        }
+        if (payBtn) {
+          payBtn.disabled = false;
+        }
+      }
+    } catch (err) {
+      console.error("Network error", err);
+      if (noteEl) {
+        noteEl.textContent = "network error creating payment session.";
+      }
+      if (payBtn) {
+        payBtn.disabled = false;
+      }
+    }
   }
+
 
   function init() {
     render();
