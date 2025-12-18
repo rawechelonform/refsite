@@ -152,7 +152,7 @@
     }
 
     try {
-      const res = await fetch("/.netlify/functions/payment", {
+      const res = await fetch("/.netlify/functions/payments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
