@@ -1,9 +1,9 @@
-/* ===== cart.js (rollback: Stripe opens in same tab) =====
-   This is your previous working behavior:
-   - Checkout redirects in the SAME tab (no window.open)
-   - Uses relative function path: "/.netlify/functions/payments"
-   - Sends { items, cancelUrl } to the function
-   - Keeps your cart drawer + quantity UI unchanged
+/* ===== cart.js (new tab checkout, stable) =====
+   - Opens Stripe Checkout in a NEW TAB
+   - Works best when your page is served from the SAME domain as the Netlify function
+     (i.e., when you’re on rawechelonform.netlify.app)
+
+   If the browser blocks popups, it falls back to same-tab redirect
 */
 
 (function () {
@@ -227,7 +227,7 @@
     render();
   }
 
-  /* ---------- checkout (Stripe redirect) ---------- */
+  /* ---------- checkout (Stripe new tab) ---------- */
 
   async function handleCheckoutClick() {
     const items = readCart();
@@ -238,6 +238,9 @@
       alert("one or more items are missing a stripe price id.");
       return;
     }
+
+    // Open a blank tab immediately (counts as user gesture; reduces popup blocking)
+    const popup = window.open("", "_blank", "noopener,noreferrer");
 
     if (checkoutBtn) {
       checkoutBtn.disabled = true;
@@ -255,6 +258,7 @@
       });
 
       if (!res.ok) {
+        if (popup) popup.close();
         console.error("[cart] payments error", res.status);
         alert("there was a problem creating the payment session.");
         if (checkoutBtn) {
@@ -266,16 +270,23 @@
 
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url; // SAME TAB REDIRECT (rollback)
+        if (popup) {
+          popup.location.href = data.url; // NEW TAB
+        } else {
+          // popup blocked -> fallback to same tab
+          window.location.href = data.url;
+        }
         return;
       }
 
+      if (popup) popup.close();
       alert("unexpected response from payment gateway.");
       if (checkoutBtn) {
         checkoutBtn.disabled = false;
         checkoutBtn.textContent = "CHECKOUT";
       }
     } catch (err) {
+      if (popup) popup.close();
       console.error("[cart] network error", err);
       alert("network error creating payment session.");
       if (checkoutBtn) {
@@ -292,7 +303,6 @@
       console.warn("[cart] #cartPanel not found on this page");
     }
 
-    // BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
       const target = e.target;
       if (!(target instanceof Element)) return;
@@ -303,7 +313,6 @@
       }
     });
 
-    // Drawer close button
     if (panel) {
       const closeBtn = panel.querySelector("[data-cart-close]");
       if (closeBtn) {
@@ -314,12 +323,10 @@
       }
     }
 
-    // Overlay click closes drawer
     if (overlay) {
       overlay.addEventListener("click", () => closePanel());
     }
 
-    // Checkout button -> Stripe redirect (same tab)
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
