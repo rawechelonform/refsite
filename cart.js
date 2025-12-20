@@ -1,28 +1,19 @@
-/* ===== cart.js (full updated, product.html?id=UNIQUEID) =====
-   Click product image OR title in the bag -> go to product page
-   Prefers item.id / item.uniqueId / item.productId
-   Fallback: maps Stripe priceId -> UniqueID (fill PRICE_ID_TO_UNIQUEID)
-
-   Cart item should ideally include:
-   { id: 101, priceId: "price_...", title, file, size, color, quantity, displayPrice }
+/* ===== cart.js (rollback: Stripe opens in same tab) =====
+   This is your previous working behavior:
+   - Checkout redirects in the SAME tab (no window.open)
+   - Uses relative function path: "/.netlify/functions/payments"
+   - Sends { items, cancelUrl } to the function
+   - Keeps your cart drawer + quantity UI unchanged
 */
 
 (function () {
   const STORAGE_KEY = "ref_cart";
-  const IMAGE_BASE = "assets/shop/";
+  const IMAGE_BASE  = "assets/shop/";
 
-  // OPTIONAL FALLBACK:
-  // If your cart items don't store id yet, fill this with your CSV mapping
-  // Example:
-  // "price_1Sd02LRUeLzZqzRzrtd672uT": 101,
-  const PRICE_ID_TO_UNIQUEID = {
-    // "price_...": 101,
-  };
-
-  const panel = document.getElementById("cartPanel");
-  const overlay = document.querySelector(".cart-drawer-overlay");
-  const listEl = document.getElementById("cartItems");
-  const countEl = document.getElementById("cartItemsCount");
+  const panel       = document.getElementById("cartPanel");
+  const overlay     = document.querySelector(".cart-drawer-overlay");
+  const listEl      = document.getElementById("cartItems");
+  const countEl     = document.getElementById("cartItemsCount");
   const checkoutBtn = document.getElementById("cartCheckoutBtn");
 
   let autoCloseTimer = null;
@@ -101,51 +92,6 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  function getUniqueIdFromItem(item) {
-    const direct =
-      item?.id ??
-      item?.uniqueId ??
-      item?.UniqueID ??
-      item?.productId ??
-      item?.productID ??
-      item?.skuId ??
-      null;
-
-    const n = Number(direct);
-    if (Number.isFinite(n) && n > 0) return n;
-
-    const byPrice = item?.priceId && PRICE_ID_TO_UNIQUEID[item.priceId];
-    const m = Number(byPrice);
-    if (Number.isFinite(m) && m > 0) return m;
-
-    return null;
-  }
-
-  function buildProductHref(item) {
-    // If you already store a url directly, honor it
-    const directUrl =
-      (item && (item.url || item.href || item.productUrl || item.productHref)) || "";
-    if (typeof directUrl === "string" && directUrl) return directUrl;
-
-    const uid = getUniqueIdFromItem(item);
-    if (!uid) return "products.html"; // safe fallback page
-
-    const url = new URL("product.html", window.location.origin);
-    url.searchParams.set("id", String(uid));
-
-    // Optional: preserve currently selected variant on return
-    if (item?.color) url.searchParams.set("color", item.color);
-    if (item?.size) url.searchParams.set("size", item.size);
-
-    return url.pathname + url.search;
-  }
-
-  function goToProduct(item) {
-    const href = buildProductHref(item);
-    closePanel();
-    window.location.assign(href);
-  }
-
   /* ---------- rendering ---------- */
 
   function renderRow(item, idx) {
@@ -153,12 +99,9 @@
     row.className = "cart-drawer-item";
     row.dataset.index = String(idx);
 
-    // set href on the row so click handler doesn't depend on closures
-    row.dataset.href = buildProductHref(item);
-
     // thumbnail
     const thumbWrap = document.createElement("div");
-    thumbWrap.className = "cart-drawer-thumb-wrap cart-drawer-clickable";
+    thumbWrap.className = "cart-drawer-thumb-wrap";
 
     if (item.file) {
       const img = document.createElement("img");
@@ -176,7 +119,7 @@
     main.className = "cart-drawer-item-main";
 
     const titleEl = document.createElement("div");
-    titleEl.className = "cart-drawer-item-title cart-drawer-clickable";
+    titleEl.className = "cart-drawer-item-title";
     titleEl.textContent = item.title || "";
 
     const metaEl = document.createElement("div");
@@ -184,7 +127,7 @@
 
     const bits = [];
     if (item.color) bits.push(item.color);
-    if (item.size) bits.push(item.size);
+    if (item.size)  bits.push(item.size);
     metaEl.textContent = bits.join(" · ");
 
     main.appendChild(titleEl);
@@ -245,7 +188,7 @@
     const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
 
     let subtotal = 0;
-    items.forEach((it) => {
+    items.forEach(it => {
       const q = it.quantity || 0;
       subtotal += parsePrice(it.displayPrice) * q;
     });
@@ -260,7 +203,9 @@
        </span>`;
 
     const badge = getMenuBadgeEl();
-    if (badge) badge.textContent = totalQty ? ` [${totalQty}]` : "";
+    if (badge) {
+      badge.textContent = totalQty ? ` [${totalQty}]` : "";
+    }
   }
 
   /* ---------- quantity ---------- */
@@ -288,7 +233,7 @@
     const items = readCart();
     if (!items.length) return;
 
-    const missingPrice = items.some((it) => !it.priceId);
+    const missingPrice = items.some(it => !it.priceId);
     if (missingPrice) {
       alert("one or more items are missing a stripe price id.");
       return;
@@ -319,15 +264,11 @@
         return;
       }
 
+      const data = await res.json();
       if (data.url) {
-  const w = window.open(data.url, "_blank", "noopener,noreferrer");
-  if (!w) {
-    // popup blocked -> fall back to same-tab redirect
-    window.location.href = data.url;
-  }
-  return;
-}
-
+        window.location.href = data.url; // SAME TAB REDIRECT (rollback)
+        return;
+      }
 
       alert("unexpected response from payment gateway.");
       if (checkoutBtn) {
@@ -347,7 +288,9 @@
   /* ---------- init ---------- */
 
   function init() {
-    if (!panel) console.warn("[cart] #cartPanel not found on this page");
+    if (!panel) {
+      console.warn("[cart] #cartPanel not found on this page");
+    }
 
     // BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
@@ -372,43 +315,15 @@
     }
 
     // Overlay click closes drawer
-    if (overlay) overlay.addEventListener("click", () => closePanel());
+    if (overlay) {
+      overlay.addEventListener("click", () => closePanel());
+    }
 
-    // Checkout
+    // Checkout button -> Stripe redirect (same tab)
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
         handleCheckoutClick();
-      });
-    }
-
-    // Click image OR title -> go to product.html?id=...
-    // Delegated on panel so it works even if cart items are re-rendered
-    if (panel) {
-      panel.addEventListener("click", (e) => {
-        const target = e.target;
-        if (!(target instanceof Element)) return;
-
-        // ignore clicks inside quantity controls
-        if (target.closest(".cart-drawer-item-controls")) return;
-
-        const row = target.closest(".cart-drawer-item");
-        if (!row) return;
-
-        const clickedThumb = target.closest(".cart-drawer-thumb-wrap, .cart-drawer-thumb");
-        const clickedTitle = target.closest(".cart-drawer-item-title");
-        if (!clickedThumb && !clickedTitle) return;
-
-        const idx = Number(row.dataset.index);
-        if (!Number.isFinite(idx)) return;
-
-        const items = readCart();
-        const item = items[idx];
-        if (!item) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        goToProduct(item);
       });
     }
 

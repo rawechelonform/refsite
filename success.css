@@ -1,0 +1,121 @@
+/* =========================
+   SUCCESS.CSS — Order received
+   ========================= */
+
+/* ===== Tokens ===== */
+:root {
+  --bg: #000;
+  --fg: #fff;
+  --muted: #aaa;
+
+  --panel-bg: rgba(0,0,0,0.55);
+  --panel-border: rgba(255,255,255,0.12);
+
+  --maxw: 1000px;
+  --pad: 24px;
+}
+
+/* ===== Base ===== */
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg) url('assets/shop/refcafeteria.png') center / cover no-repeat fixed;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+}
+
+/* ===== Menubar slot (space for injected header) ===== */
+.menubar-slot {
+  display: block;
+  height: var(--barh, 32px);
+}
+
+/* ===== Page shell ===== */
+.page {
+  padding: 24px 0 48px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ===== Success layout ===== */
+.checkout-shell {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--pad);
+  margin-top: 90px; /* tweak if you want the panel lower/higher */
+}
+
+.checkout-panel {
+  width: 100%;
+  max-width: var(--maxw);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  padding: 22px 20px;
+}
+
+.checkout-title {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.checkout-empty {
+  margin: 0;
+  color: rgba(255,255,255,0.85);
+}
+
+/* optional: link back */
+.checkout-link {
+  display: inline-block;
+  margin-top: 14px;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+}
+.checkout-link:hover {
+  border-bottom-color: #fff;
+}
+
+/* =========================
+   MENUBAR OVERRIDES
+   ========================= */
+
+body.menu-transparent {
+  --chrome: rgba(255,255,255,0.70);
+}
+
+body.menu-transparent .top-margin {
+  background: transparent !important;
+}
+
+body.menu-transparent .site-header {
+  background:
+    linear-gradient(var(--chrome), var(--chrome)) top/100% var(--linew) no-repeat,
+    linear-gradient(var(--chrome), var(--chrome)) bottom/100% var(--linew) no-repeat,
+    linear-gradient(to right, var(--chrome), var(--chrome)) left/var(--linew) 100% no-repeat,
+    linear-gradient(to left,  var(--chrome), var(--chrome)) right/var(--linew) 100% no-repeat,
+    transparent !important;
+}
+
+body.menu-transparent .menu > li {
+  border-left-color: var(--chrome);
+}
+
+body.menu-transparent .menu-link,
+body.menu-transparent .brand-link {
+  color: #fff;
+  background: transparent !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+
+body.menu-transparent .menu-link:hover,
+body.menu-transparent .menu-link.is-current:hover,
+body.menu-transparent .brand-link:hover {
+  background: rgba(255,255,255,0.18) !important;
+  color: #fff !important;
+}
