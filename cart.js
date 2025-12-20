@@ -1,10 +1,15 @@
-/* ===== cart.js (rollback: Stripe opens in same tab) =====
-
+/* ===== cart.js =====
+   - Cart drawer + quantity UI unchanged
+   - Checkout hits Vercel backend (NOT relative URL)
+   - Better error logging for debugging
 */
 
 (function () {
   const STORAGE_KEY = "ref_cart";
   const IMAGE_BASE  = "assets/shop/";
+
+  // ✅ IMPORTANT: this must be your Vercel backend URL
+  const PAYMENTS_URL = "https://ref-payments-backend.vercel.app/api/payments";
 
   const panel       = document.getElementById("cartPanel");
   const overlay     = document.querySelector(".cart-drawer-overlay");
@@ -223,70 +228,81 @@
     render();
   }
 
-  /* ---------- checkout (Stripe redirect) ---------- */
+  /* ---------- checkout ---------- */
 
   async function handleCheckoutClick() {
-  const items = readCart();
-  if (!items.length) return;
+    const items = readCart();
+    if (!items.length) return;
 
-  const missingPrice = items.some(it => !it.priceId);
-  if (missingPrice) {
-    alert("one or more items are missing a stripe price id.");
-    return;
-  }
+    const missingPrice = items.some(it => !it.priceId);
+    if (missingPrice) {
+      alert("one or more items are missing a stripe price id.");
+      return;
+    }
 
-  if (checkoutBtn) {
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = "LOADING…";
-  }
+    if (checkoutBtn) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.textContent = "LOADING…";
+    }
 
-  try {
-    const res = await fetch("https://ref-payments-backend.vercel.app/api/payments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items,
-        cancelUrl: window.location.href,
-      }),
-    });
+    try {
+      const res = await fetch(PAYMENTS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          cancelUrl: window.location.href,
+        }),
+      });
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error("[cart] payments error", res.status, text);
-      alert("there was a problem creating the payment session.");
+      const rawText = await res.text().catch(() => "");
+
+      if (!res.ok) {
+        console.error("[cart] payments error", {
+          status: res.status,
+          url: PAYMENTS_URL,
+          response: rawText,
+        });
+
+        alert("there was a problem creating the payment session.");
+
+        if (checkoutBtn) {
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = "CHECKOUT";
+        }
+        return;
+      }
+
+      let data = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch (_) {
+        data = null;
+      }
+
+      if (data && data.url) {
+        const w = window.open(data.url, "_blank", "noopener,noreferrer");
+        if (!w) window.location.href = data.url;
+        return;
+      }
+
+      console.error("[cart] unexpected response", rawText);
+      alert("unexpected response from payment gateway.");
+
       if (checkoutBtn) {
         checkoutBtn.disabled = false;
         checkoutBtn.textContent = "CHECKOUT";
       }
-      return;
-    }
+    } catch (err) {
+      console.error("[cart] network error", err);
+      alert("network error creating payment session.");
 
-    const data = await res.json();
-    if (data.url) {
-      // Try new tab
-      const w = window.open(data.url, "_blank", "noopener,noreferrer");
-      if (!w) {
-        // Popup blocked -> same tab
-        window.location.href = data.url;
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = "CHECKOUT";
       }
-      return;
-    }
-
-    alert("unexpected response from payment gateway.");
-    if (checkoutBtn) {
-      checkoutBtn.disabled = false;
-      checkoutBtn.textContent = "CHECKOUT";
-    }
-  } catch (err) {
-    console.error("[cart] network error", err);
-    alert("network error creating payment session.");
-    if (checkoutBtn) {
-      checkoutBtn.disabled = false;
-      checkoutBtn.textContent = "CHECKOUT";
     }
   }
-}
-
 
   /* ---------- init ---------- */
 
@@ -322,7 +338,7 @@
       overlay.addEventListener("click", () => closePanel());
     }
 
-    // Checkout button -> Stripe redirect (same tab)
+    // Checkout
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();

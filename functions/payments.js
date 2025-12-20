@@ -1,16 +1,23 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  // optional but helps avoid Stripe default-version surprises
+  apiVersion: "2024-06-20",
+});
 
 /**
  * CORS helper
- * Allows ONLY your site (SAFE_ORIGIN) to call this endpoint from the browser
+ * Allows ONLY approved origins to call this endpoint from the browser
  */
-function setCors(res) {
-  const origin = process.env.SAFE_ORIGIN;
+function setCors(req, res) {
+  const allowed = [
+    process.env.SAFE_ORIGIN,          // e.g. "https://rawechelonform.neocities.org"
+    process.env.SAFE_ORIGIN_WWW,      // optional: "https://www.rawechelonform.com"
+  ].filter(Boolean);
 
-  // If SAFE_ORIGIN isn't set, don't accidentally allow everyone
-  if (origin) {
+  const origin = req.headers.origin;
+
+  if (origin && allowed.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
@@ -20,9 +27,9 @@ function setCors(res) {
 }
 
 export default async function handler(req, res) {
-  setCors(res);
+  setCors(req, res);
 
-  // Preflight request (browser sends this before POST)
+  // Preflight
   if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
@@ -43,33 +50,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing priceId" });
     }
 
-    const SAFE_ORIGIN = process.env.SAFE_ORIGIN;
+    const SAFE_ORIGIN = process.env.SAFE_ORIGIN; // must be your storefront origin
     if (!SAFE_ORIGIN) {
-      return res
-        .status(500)
-        .json({ error: "SAFE_ORIGIN env var is not set on server" });
+      return res.status(500).json({ error: "SAFE_ORIGIN env var is not set" });
     }
 
-    const safeCancelUrl = cancelUrl.startsWith(SAFE_ORIGIN)
-      ? cancelUrl
-      : `${SAFE_ORIGIN}/shop.html`;
+    const safeCancelUrl =
+      typeof cancelUrl === "string" && cancelUrl.startsWith(SAFE_ORIGIN)
+        ? cancelUrl
+        : `${SAFE_ORIGIN}/shop.html`;
 
     const line_items = items.map((item) => ({
       price: item.priceId,
-      quantity: item.quantity || 1,
+      quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
     }));
+
+    const shippingRateId = process.env.SHIPPING_RATE_ID;
+    if (!shippingRateId) {
+      return res.status(500).json({ error: "SHIPPING_RATE_ID env var is not set" });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
 
-      shipping_address_collection: {
-        allowed_countries: ["US"],
-      },
-
-      shipping_options: [
-        { shipping_rate: process.env.SHIPPING_RATE_ID },
-      ],
+      shipping_address_collection: { allowed_countries: ["US"] },
+      shipping_options: [{ shipping_rate: shippingRateId }],
 
       metadata: {
         items: JSON.stringify(
@@ -88,16 +94,15 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
-  console.error("[payments] Error creating checkout session", err);
+    console.error("[payments] Error creating checkout session", err);
 
-  return res.status(500).json({
-    error: "Stripe error creating checkout session",
-    message: err?.message || String(err),
-    type: err?.type,
-    code: err?.code,
-    param: err?.param,
-    requestId: err?.requestId,
-  });
-}
-
+    return res.status(500).json({
+      error: "Stripe error creating checkout session",
+      message: err?.message || String(err),
+      type: err?.type,
+      code: err?.code,
+      param: err?.param,
+      requestId: err?.requestId,
+    });
+  }
 }
