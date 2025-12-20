@@ -319,11 +319,15 @@
         return;
       }
 
-      const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
+  const w = window.open(data.url, "_blank", "noopener,noreferrer");
+  if (!w) {
+    // popup blocked -> fall back to same-tab redirect
+    window.location.href = data.url;
+  }
+  return;
+}
+
 
       alert("unexpected response from payment gateway.");
       if (checkoutBtn) {
