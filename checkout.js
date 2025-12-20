@@ -1,5 +1,4 @@
 // checkout.js — CONTACT / SHIPPING / PAYMENT accordion + redirect to Stripe Checkout
-// Calls: /.netlify/functions/payments
 // Reads cart from localStorage "ref_cart"
 
 (() => {
