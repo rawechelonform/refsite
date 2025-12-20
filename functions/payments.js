@@ -88,7 +88,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("[payments] Error creating checkout session", err);
-    return res.status(500).json({ error: "Stripe error creating checkout session" });
-  }
+  console.error("[payments] Error creating checkout session", err);
+
+  return res.status(500).json({
+    error: "Stripe error creating checkout session",
+    message: err?.message || String(err),
+    type: err?.type,
+    code: err?.code,
+    param: err?.param,
+    requestId: err?.requestId,
+  });
+}
+
 }

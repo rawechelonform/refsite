@@ -1,9 +1,5 @@
 /* ===== cart.js (rollback: Stripe opens in same tab) =====
-   This is your previous working behavior:
-   - Checkout redirects in the SAME tab (no window.open)
-   - Uses relative function path: "/.netlify/functions/payments"
-   - Sends { items, cancelUrl } to the function
-   - Keeps your cart drawer + quantity UI unchanged
+
 */
 
 (function () {
@@ -245,7 +241,7 @@
   }
 
   try {
-    const res = await fetch("/.netlify/functions/payments", {
+    const res = await fetch("https://ref-payments-backend.vercel.app/api/payments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
