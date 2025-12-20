@@ -364,3 +364,27 @@
     init();
   }
 })();
+
+
+function ensureCheckoutForm() {
+  let form = document.getElementById("checkoutForm");
+  if (form) return form;
+
+  form = document.createElement("form");
+  form.id = "checkoutForm";
+  form.method = "POST";
+  form.action = PAYMENTS_URL;
+  form.target = "_self";
+  form.style.display = "none";
+
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "payload";
+
+  form.appendChild(input);
+
+  // attach as soon as body exists
+  (document.body || document.documentElement).appendChild(form);
+
+  return form;
+}
