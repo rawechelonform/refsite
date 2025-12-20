@@ -62,3 +62,23 @@ exports.handler = async (event) => {
     };
   }
 };
+
+
+const session = await stripe.checkout.sessions.create({
+  mode: 'payment',
+  line_items,
+
+  shipping_address_collection: {
+    allowed_countries: ['US'],
+  },
+
+  shipping_options: [
+    { shipping_rate: 'shr_1SgFiNRUeLzZqzRzXYqdRNhd' } // your $8 pre-order rate
+  ],
+
+  // OPTIONAL — only add if Stripe Tax is enabled
+  // automatic_tax: { enabled: true },
+
+  success_url: 'https://rawechelonform.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
+  cancel_url:  'https://rawechelonform.netlify.app/checkout.html',
+});

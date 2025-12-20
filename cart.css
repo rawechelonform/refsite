@@ -190,6 +190,15 @@
   font-weight: 600;
 }
 
+.cart-drawer-subtotal-label {
+  margin-right: 6px;
+  color: #aaa;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
+
 /* checkout button */
 .cart-drawer-checkout {
   padding: 8px 16px;

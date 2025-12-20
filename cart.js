@@ -29,21 +29,20 @@
   }
 
   function saveCart(items) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  // let other pages (e.g. checkout) know the cart changed
-  try {
-    window.dispatchEvent(
-      new CustomEvent("ref-cart-changed", { detail: { items } })
-    );
-  } catch (_) {}
-}
-
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    // let other pages know the cart changed
+    try {
+      window.dispatchEvent(
+        new CustomEvent("ref-cart-changed", { detail: { items } })
+      );
+    } catch (_) {}
+  }
 
   /* ---------- open / close ---------- */
 
   function openPanel() {
     if (!panel) return;
-    panel.classList.add("open");          // matches cart.css (.cart-drawer.open)
+    panel.classList.add("open");
     if (overlay) overlay.classList.add("open");
     document.body.classList.add("cart-open");
   }
@@ -85,6 +84,12 @@
     return document.getElementById("cartMenuCount");
   }
 
+  function parsePrice(str) {
+    if (!str) return 0;
+    const n = parseFloat(String(str).replace(/[^0-9.]+/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
   /* ---------- rendering ---------- */
 
   function renderRow(item, idx) {
@@ -118,7 +123,6 @@
     const metaEl = document.createElement("div");
     metaEl.className = "cart-drawer-item-meta";
 
-    // show: "Acid Washed Black · S" (no price)
     const bits = [];
     if (item.color) bits.push(item.color);
     if (item.size)  bits.push(item.size);
@@ -167,6 +171,7 @@
       empty.className = "cart-drawer-empty";
       empty.textContent = "your bag is empty.";
       listEl.appendChild(empty);
+
       countEl.textContent = "items: 0";
 
       const badgeEmpty = getMenuBadgeEl();
@@ -180,20 +185,22 @@
 
     const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
 
-    // compute subtotal from displayPrice * quantity
+    // subtotal from displayPrice * quantity
     let subtotal = 0;
     items.forEach(it => {
-      const q   = it.quantity || 0;
-      const raw = it.displayPrice || "";          // e.g. "$60.00"
-      const num = parseFloat(raw.replace(/[^0-9.]+/g, "")) || 0;
-      subtotal += num * q;
+      const q = it.quantity || 0;
+      subtotal += parsePrice(it.displayPrice) * q;
     });
 
-    // format like "$60" or "$60.00" (strip .00)
     const subtotalText = "$" + subtotal.toFixed(2).replace(/\.00$/, "");
 
+    // NOTE: label it "subtotal" explicitly
     countEl.innerHTML =
-      `items: ${totalQty}<span class="cart-drawer-subtotal">${subtotalText}</span>`;
+      `items: ${totalQty}
+       <span class="cart-drawer-subtotal">
+         <span class="cart-drawer-subtotal-label">subtotal</span>
+         ${subtotalText}
+       </span>`;
 
     const badge = getMenuBadgeEl();
     if (badge) {
@@ -220,16 +227,61 @@
     render();
   }
 
-  /* ---------- checkout ---------- */
+  /* ---------- checkout (Stripe redirect) ---------- */
 
-  function handleCheckoutClick() {
-  const items = readCart();
-  if (!items.length) return;
+  async function handleCheckoutClick() {
+    const items = readCart();
+    if (!items.length) return;
 
-  // Navigate to checkout page
-  window.location.href = "bag.html";
-}
+    // ensure stripe price ids exist
+    const missingPrice = items.some(it => !it.priceId);
+    if (missingPrice) {
+      alert("one or more items are missing a stripe price id.");
+      return;
+    }
 
+    if (checkoutBtn) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.textContent = "LOADING…";
+    }
+
+    try {
+      const res = await fetch("/.netlify/functions/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(items),
+      });
+
+      if (!res.ok) {
+        console.error("[cart] payments error", res.status);
+        alert("there was a problem creating the payment session.");
+        if (checkoutBtn) {
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = "CHECKOUT";
+        }
+        return;
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      alert("unexpected response from payment gateway.");
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = "CHECKOUT";
+      }
+    } catch (err) {
+      console.error("[cart] network error", err);
+      alert("network error creating payment session.");
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = "CHECKOUT";
+      }
+    }
+  }
 
   /* ---------- init ---------- */
 
@@ -238,7 +290,7 @@
       console.warn("[cart] #cartPanel not found on this page");
     }
 
-    // CART/BAG button in menubar (injected later) — event delegation
+    // CART/BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
       const target = e.target;
       if (!(target instanceof Element)) return;
@@ -262,12 +314,10 @@
 
     // Overlay click closes drawer
     if (overlay) {
-      overlay.addEventListener("click", () => {
-        closePanel();
-      });
+      overlay.addEventListener("click", () => closePanel());
     }
 
-    // Checkout button
+    // Checkout button -> Stripe redirect
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -276,9 +326,7 @@
     }
 
     // Re-render when menubar finishes injecting (updates BAG badge)
-    window.addEventListener("ref-menubar-ready", () => {
-      render();
-    });
+    window.addEventListener("ref-menubar-ready", () => render());
 
     // Initial render
     render();
