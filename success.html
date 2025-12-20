@@ -26,5 +26,20 @@
 
   <script src="menubar.js?v=mb27" defer></script>
   
+<script>
+  (function () {
+    try {
+      // clear cart after successful checkout
+      localStorage.removeItem("ref_cart");
+
+      // update any cart UI if it's present on this page
+      if (window.refCart && typeof window.refCart.render === "function") {
+        window.refCart.render();
+      }
+    } catch (e) {}
+  })();
+</script>
+
+
 </body>
 </html>
