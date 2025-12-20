@@ -1,7 +1,8 @@
-// cart.js
-// Slide-out cart drawer shared across pages
-// Uses localStorage key "ref_cart"
-// Exposes window.refCart.{openPanel, closePanel, openPanelTemporarily, render}
+/* ===== cart.js (full updated) =====
+   Slide-out cart drawer shared across pages
+   Uses localStorage key "ref_cart"
+   Exposes window.refCart.{openPanel, closePanel, openPanelTemporarily, render}
+*/
 
 (function () {
   const STORAGE_KEY = "ref_cart";
@@ -30,7 +31,6 @@
 
   function saveCart(items) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    // let other pages know the cart changed
     try {
       window.dispatchEvent(
         new CustomEvent("ref-cart-changed", { detail: { items } })
@@ -185,7 +185,6 @@
 
     const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
 
-    // subtotal from displayPrice * quantity
     let subtotal = 0;
     items.forEach(it => {
       const q = it.quantity || 0;
@@ -194,7 +193,6 @@
 
     const subtotalText = "$" + subtotal.toFixed(2).replace(/\.00$/, "");
 
-    // NOTE: label it "subtotal" explicitly
     countEl.innerHTML =
       `items: ${totalQty}
        <span class="cart-drawer-subtotal">
@@ -233,7 +231,6 @@
     const items = readCart();
     if (!items.length) return;
 
-    // ensure stripe price ids exist
     const missingPrice = items.some(it => !it.priceId);
     if (missingPrice) {
       alert("one or more items are missing a stripe price id.");
@@ -246,10 +243,14 @@
     }
 
     try {
+      // NEW: send cancelUrl so Stripe can return the buyer to the page they came from
       const res = await fetch("/.netlify/functions/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(items),
+        body: JSON.stringify({
+          items,
+          cancelUrl: window.location.href,
+        }),
       });
 
       if (!res.ok) {
@@ -290,7 +291,6 @@
       console.warn("[cart] #cartPanel not found on this page");
     }
 
-    // CART/BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
       const target = e.target;
       if (!(target instanceof Element)) return;
@@ -301,7 +301,6 @@
       }
     });
 
-    // Drawer close button
     if (panel) {
       const closeBtn = panel.querySelector("[data-cart-close]");
       if (closeBtn) {
@@ -312,12 +311,10 @@
       }
     }
 
-    // Overlay click closes drawer
     if (overlay) {
       overlay.addEventListener("click", () => closePanel());
     }
 
-    // Checkout button -> Stripe redirect
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -325,13 +322,10 @@
       });
     }
 
-    // Re-render when menubar finishes injecting (updates BAG badge)
     window.addEventListener("ref-menubar-ready", () => render());
 
-    // Initial render
     render();
 
-    // Expose API
     window.refCart = {
       openPanel,
       closePanel,
