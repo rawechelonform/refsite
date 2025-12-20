@@ -270,6 +270,7 @@
 
       // Navigate to Vercel (allowed by CSP), Vercel must redirect to Stripe
       window.location.href = `${PAYMENTS_URL}?payload=${encodeURIComponent(encoded)}`;
+
     } catch (err) {
       console.error("[cart] checkout error", err);
       alert("checkout error.");
