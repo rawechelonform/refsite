@@ -227,7 +227,7 @@
   if (!items.length) return;
 
   // Navigate to checkout page
-  window.location.href = "checkout.html";
+  window.location.href = "bag.html";
 }
 
 

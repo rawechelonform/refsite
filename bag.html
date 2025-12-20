@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REF · Bag</title>
+
+  <!-- Fonts -->
+  <link rel="preload" href="fonts/coral-pixels/coralpixels-regular.woff2"
+        as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
+
+  <!-- Menubar + overrides (match shop/product) -->
+  <link rel="stylesheet" href="menubar.css?v=mb11">
+  <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
+
+  <!-- Bag styles -->
+  <link rel="stylesheet" href="bag.css?v=2">
+
+  <!-- Cart drawer styles -->
+  <link rel="stylesheet" href="cart.css?v=1">
+
+  <style>html,body{margin:0;padding:0}</style>
+</head>
+
+<body class="menu-transparent">
+  <script>
+    document.documentElement.classList.add('fonts-loading');
+    Promise.all([ document.fonts.load('1em "Coral Pixels"') ])
+      .then(() => document.documentElement.classList.remove('fonts-loading'));
+  </script>
+
+  <div class="page">
+    <div data-menubar class="menubar-slot"></div>
+
+    <main class="checkout-shell" aria-label="Bag">
+      <section class="checkout-panel">
+        <h1 class="checkout-title">bag</h1>
+
+        <div id="checkoutEmpty" class="checkout-empty" hidden>
+          your bag is empty.
+        </div>
+
+        <!-- IMPORTANT: keep this id as checkoutItems so bag.js can render -->
+        <div id="checkoutItems" class="checkout-items"></div>
+
+        <div class="checkout-summary">
+          <div class="checkout-row">
+            <span>subtotal</span>
+            <span id="checkoutSubtotal">$0.00</span>
+          </div>
+
+          <div class="checkout-row">
+            <span>shipping &amp; taxes</span>
+            <span id="checkoutShipTax">TBD</span>
+          </div>
+
+          <div class="checkout-row checkout-row-total">
+            <span>total</span>
+            <span id="checkoutTotal">$0.00</span>
+          </div>
+        </div>
+
+        <!-- IMPORTANT: keep this id as checkoutPayBtn so bag.js can bind -->
+        <button id="checkoutPayBtn" class="checkout-pay-btn" type="button">
+          CONTINUE
+        </button>
+      </section>
+    </main>
+  </div>
+
+  <!-- CART DRAWER -->
+  <div class="cart-drawer-overlay"></div>
+
+  <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
+    <div class="cart-drawer-header">
+      <h2 class="cart-drawer-title">BAG</h2>
+      <button class="cart-drawer-close" type="button" data-cart-close>
+        CLOSE
+      </button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <div id="cartItems" class="cart-drawer-items"></div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-drawer-total" id="cartItemsCount">
+        items: 0
+      </div>
+      <button
+        class="cart-drawer-checkout"
+        id="cartCheckoutBtn"
+        type="button">
+        CHECKOUT
+      </button>
+    </div>
+  </aside>
+
+  <script src="menubar.js?v=mb27" defer></script>
+  <script src="cart.js?v=5" defer></script>
+  <script src="bag.js?v=2" defer></script>
+</body>
+</html>

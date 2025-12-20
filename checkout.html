@@ -1,3 +1,4 @@
+<!-- checkout.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,7 +11,7 @@
         as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/lcf2pet.css">
 
-  <!-- Menubar + overrides (match shop/product) -->
+  <!-- Menubar + overrides -->
   <link rel="stylesheet" href="menubar.css?v=mb11">
   <link rel="stylesheet" href="shop-menubar-overrides.css?v=mb8">
 
@@ -31,72 +32,153 @@
   </script>
 
   <div class="page">
-    <!-- shared menubar -->
     <div data-menubar class="menubar-slot"></div>
 
-    <!-- CHECKOUT CONTENT -->
     <main class="checkout-shell" aria-label="Checkout">
       <section class="checkout-panel">
         <h1 class="checkout-title">checkout</h1>
 
-        <div id="checkoutEmpty" class="checkout-empty" hidden>
-          your bag is empty.
-        </div>
+        <div class="checkout-accordion" id="checkoutAccordion">
+          <!-- CONTACT -->
+          <section class="acc-section" data-section="contact">
+            <button class="acc-header" type="button" aria-expanded="true">
+              <span class="acc-title">CONTACT</span>
+              <span class="acc-status" id="contactStatus">open</span>
+            </button>
 
-        <div id="checkoutItems" class="checkout-items"></div>
+            <div class="acc-body">
+              <label class="field">
+                <span class="field-label">email</span>
+                <input class="field-input" id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" />
+              </label>
 
-        <div class="checkout-summary">
-          <div class="checkout-row">
-            <span>subtotal</span>
-            <span id="checkoutSubtotal">$0.00</span>
-          </div>
-          <!-- If you later add shipping / tax, put them here -->
-          <div class="checkout-row checkout-row-total">
-            <span>total</span>
-            <span id="checkoutTotal">$0.00</span>
-          </div>
-        </div>
+              <div class="acc-actions">
+                <button class="acc-next" type="button" id="toShipping">continue</button>
+              </div>
 
-        <button id="checkoutPayBtn" class="checkout-pay-btn" type="button">
-          PROCEED TO PAYMENT
-        </button>
+              <div class="acc-error" id="contactError" aria-live="polite"></div>
+            </div>
+          </section>
 
-        <div id="checkoutNote" class="checkout-note">
-          payment via stripe checkout (coming soon).
+          <!-- SHIPPING -->
+          <section class="acc-section" data-section="shipping">
+            <button class="acc-header" type="button" aria-expanded="false">
+              <span class="acc-title">SHIPPING</span>
+              <span class="acc-status" id="shippingStatus">closed</span>
+            </button>
+
+            <div class="acc-body" hidden>
+              <div class="grid-2">
+                <label class="field">
+                  <span class="field-label">first name</span>
+                  <input class="field-input" id="shipFirst" type="text" autocomplete="given-name" />
+                </label>
+
+                <label class="field">
+                  <span class="field-label">last name</span>
+                  <input class="field-input" id="shipLast" type="text" autocomplete="family-name" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span class="field-label">address</span>
+                <input class="field-input" id="shipLine1" type="text" autocomplete="shipping address-line1" />
+              </label>
+
+              <label class="field">
+                <span class="field-label">address 2</span>
+                <input class="field-input" id="shipLine2" type="text" autocomplete="shipping address-line2" />
+              </label>
+
+              <div class="grid-3">
+                <label class="field">
+                  <span class="field-label">city</span>
+                  <input class="field-input" id="shipCity" type="text" autocomplete="shipping address-level2" />
+                </label>
+
+                <label class="field">
+                  <span class="field-label">state</span>
+                  <input class="field-input" id="shipState" type="text" autocomplete="shipping address-level1" />
+                </label>
+
+                <label class="field">
+                  <span class="field-label">zip</span>
+                  <input class="field-input" id="shipZip" type="text" autocomplete="shipping postal-code" inputmode="numeric" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span class="field-label">country</span>
+                <select class="field-input" id="shipCountry" autocomplete="shipping country">
+                  <option value="US" selected>United States</option>
+                </select>
+              </label>
+
+              <div class="summary-mini">
+                <div class="mini-row">
+                  <span>subtotal</span>
+                  <span id="miniSubtotal">$0.00</span>
+                </div>
+                <div class="mini-row">
+                  <span>shipping &amp; taxes</span>
+                  <span id="miniShipTax">TBD</span>
+                </div>
+                <div class="mini-row mini-total">
+                  <span>total</span>
+                  <span id="miniTotal">$0.00</span>
+                </div>
+              </div>
+
+              <div class="acc-actions">
+                <button class="acc-back" type="button" id="backToContact">back</button>
+                <button class="acc-next" type="button" id="toPayment">continue</button>
+              </div>
+
+              <div class="acc-error" id="shippingError" aria-live="polite"></div>
+            </div>
+          </section>
+
+          <!-- PAYMENT -->
+          <section class="acc-section" data-section="payment">
+            <button class="acc-header" type="button" aria-expanded="false">
+              <span class="acc-title">PAYMENT</span>
+              <span class="acc-status" id="paymentStatus">closed</span>
+            </button>
+
+            <div class="acc-body" hidden>
+              <p class="pay-note">
+                payment is handled on secure stripe checkout. you’ll be redirected to enter card details.
+              </p>
+
+              <div class="acc-actions">
+                <button class="acc-back" type="button" id="backToShipping">back</button>
+                <button class="acc-final" type="button" id="finalizePayment">finalize payment</button>
+              </div>
+
+              <div class="acc-error" id="paymentError" aria-live="polite"></div>
+            </div>
+          </section>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- CART DRAWER (same as other pages) -->
+  <!-- CART DRAWER -->
   <div class="cart-drawer-overlay"></div>
-
   <aside id="cartPanel" class="cart-drawer" aria-label="Shopping bag">
     <div class="cart-drawer-header">
       <h2 class="cart-drawer-title">BAG</h2>
-      <button class="cart-drawer-close" type="button" data-cart-close>
-        CLOSE
-      </button>
+      <button class="cart-drawer-close" type="button" data-cart-close>CLOSE</button>
     </div>
-
     <div class="cart-drawer-body">
       <div id="cartItems" class="cart-drawer-items"></div>
     </div>
-
     <div class="cart-drawer-footer">
-      <div class="cart-drawer-total" id="cartItemsCount">
-        items: 0
-      </div>
-      <button
-        class="cart-drawer-checkout"
-        id="cartCheckoutBtn"
-        type="button">
-        CHECKOUT
-      </button>
+      <div class="cart-drawer-total" id="cartItemsCount">items: 0</div>
+      <button class="cart-drawer-checkout" id="cartCheckoutBtn" type="button">CHECKOUT</button>
     </div>
   </aside>
 
-  <!-- scripts -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="cart.js?v=5" defer></script>
   <script src="checkout.js?v=1" defer></script>

@@ -1,19 +1,57 @@
-// checkout.js — render checkout summary from localStorage "ref_cart"
+// checkout.js — CONTACT / SHIPPING / PAYMENT accordion + redirect to Stripe Checkout
+// Calls: /.netlify/functions/payments
+// Reads cart from localStorage "ref_cart"
 
 (() => {
-  const STORAGE_KEY = "ref_cart";
-  const IMAGE_BASE  = "assets/shop/";
+  const CART_KEY = "ref_cart";
+  const CHECKOUT_INFO_KEY = "ref_checkout_info";
 
-  const itemsEl    = document.getElementById("checkoutItems");
-  const emptyEl    = document.getElementById("checkoutEmpty");
-  const subtotalEl = document.getElementById("checkoutSubtotal");
-  const totalEl    = document.getElementById("checkoutTotal");
-  const payBtn     = document.getElementById("checkoutPayBtn");
-  const noteEl     = document.getElementById("checkoutNote");
+  // Status labels
+  const contactStatus  = document.getElementById("contactStatus");
+  const shippingStatus = document.getElementById("shippingStatus");
+  const paymentStatus  = document.getElementById("paymentStatus");
+
+  // Errors
+  const contactError  = document.getElementById("contactError");
+  const shippingError = document.getElementById("shippingError");
+  const paymentError  = document.getElementById("paymentError");
+
+  // Inputs
+  const emailEl = document.getElementById("email");
+
+  const shipFirst   = document.getElementById("shipFirst");
+  const shipLast    = document.getElementById("shipLast");
+  const shipLine1   = document.getElementById("shipLine1");
+  const shipLine2   = document.getElementById("shipLine2");
+  const shipCity    = document.getElementById("shipCity");
+  const shipState   = document.getElementById("shipState");
+  const shipZip     = document.getElementById("shipZip");
+  const shipCountry = document.getElementById("shipCountry");
+
+  // Mini summary
+  const miniSubtotal = document.getElementById("miniSubtotal");
+  const miniShipTax  = document.getElementById("miniShipTax");
+  const miniTotal    = document.getElementById("miniTotal");
+
+  // Buttons
+  const toShippingBtn     = document.getElementById("toShipping");
+  const backToContactBtn  = document.getElementById("backToContact");
+  const toPaymentBtn      = document.getElementById("toPayment");
+  const backToShippingBtn = document.getElementById("backToShipping");
+  const finalizeBtn       = document.getElementById("finalizePayment");
+
+  // Sections + headers
+  const sections = Array.from(document.querySelectorAll(".acc-section"));
+  const headers  = Array.from(document.querySelectorAll(".acc-header"));
+
+  function setError(el, msg) {
+    if (!el) return;
+    el.textContent = msg || "";
+  }
 
   function readCart() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(CART_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -32,184 +70,177 @@
     return "$" + n.toFixed(2);
   }
 
-  function renderItem(item) {
-    const row = document.createElement("div");
-    row.className = "checkout-item";
-
-    // thumb
-    const thumbWrap = document.createElement("div");
-    thumbWrap.className = "checkout-thumb-wrap";
-
-    if (item.file) {
-      const img = document.createElement("img");
-      img.className = "checkout-thumb";
-      img.src = IMAGE_BASE + item.file;
-      img.alt = item.title || "";
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.addEventListener("error", () => img.remove(), { once: true });
-      thumbWrap.appendChild(img);
+  function calcSubtotal(items) {
+    let subtotal = 0;
+    for (const it of items) {
+      const qty = it.quantity || 1;
+      const unit = parsePrice(it.displayPrice);
+      subtotal += unit * qty;
     }
-
-    // meta
-    const meta = document.createElement("div");
-    meta.className = "checkout-meta";
-
-    const titleEl = document.createElement("div");
-    titleEl.className = "checkout-meta-title";
-    titleEl.textContent = item.title || "";
-
-    const sub = document.createElement("div");
-    sub.className = "checkout-meta-sub";
-
-    if (item.color) {
-      const colorSpan = document.createElement("span");
-      colorSpan.textContent = item.color;
-      sub.appendChild(colorSpan);
-    }
-    if (item.size) {
-      const sizeSpan = document.createElement("span");
-      sizeSpan.textContent = item.size;
-      sub.appendChild(sizeSpan);
-    }
-
-    meta.appendChild(titleEl);
-    if (sub.childNodes.length) meta.appendChild(sub);
-
-    // line total
-    const qty = item.quantity || 1;
-    const unit = parsePrice(item.displayPrice);
-    const line = unit * qty;
-
-    const lineWrap = document.createElement("div");
-    lineWrap.className = "checkout-line-total";
-
-    const amt = document.createElement("div");
-    amt.textContent = formatPrice(line);
-
-    const qtyLabel = document.createElement("span");
-    qtyLabel.className = "qty";
-    qtyLabel.textContent = "qty: " + qty;
-
-    lineWrap.appendChild(amt);
-    lineWrap.appendChild(qtyLabel);
-
-    row.appendChild(thumbWrap);
-    row.appendChild(meta);
-    row.appendChild(lineWrap);
-
-    return { row, lineAmount: line };
+    return subtotal;
   }
 
-  function render() {
-    if (!itemsEl || !subtotalEl || !totalEl || !emptyEl || !payBtn) return;
-
+  function setMiniSummary() {
     const items = readCart();
-    itemsEl.innerHTML = "";
+    const subtotal = calcSubtotal(items);
 
-    if (!items.length) {
-      emptyEl.hidden = false;
-      payBtn.disabled = true;
-      subtotalEl.textContent = "$0.00";
-      totalEl.textContent = "$0.00";
-      return;
-    }
+    if (miniSubtotal) miniSubtotal.textContent = formatPrice(subtotal);
+    if (miniShipTax)  miniShipTax.textContent  = "TBD";
+    if (miniTotal)    miniTotal.textContent    = formatPrice(subtotal);
+  }
 
-    emptyEl.hidden = true;
-    payBtn.disabled = false;
+  function validateEmail(v) {
+    const s = String(v || "").trim();
+    if (!s) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  }
 
-    let subtotal = 0;
-    items.forEach(it => {
-      const { row, lineAmount } = renderItem(it);
-      itemsEl.appendChild(row);
-      subtotal += lineAmount;
+  function shippingComplete() {
+    const required = [shipFirst, shipLast, shipLine1, shipCity, shipState, shipZip, shipCountry];
+    return required.every(el => el && String(el.value || "").trim().length > 0);
+  }
+
+  function saveCheckoutInfo() {
+    const payload = {
+      email: String(emailEl?.value || "").trim(),
+      shipping: {
+        first:   String(shipFirst?.value || "").trim(),
+        last:    String(shipLast?.value || "").trim(),
+        line1:   String(shipLine1?.value || "").trim(),
+        line2:   String(shipLine2?.value || "").trim(),
+        city:    String(shipCity?.value || "").trim(),
+        state:   String(shipState?.value || "").trim(),
+        zip:     String(shipZip?.value || "").trim(),
+        country: String(shipCountry?.value || "").trim(),
+      }
+    };
+    localStorage.setItem(CHECKOUT_INFO_KEY, JSON.stringify(payload));
+  }
+
+  function openOnly(name) {
+    sections.forEach(sec => {
+      const secName = sec.getAttribute("data-section");
+      const header = sec.querySelector(".acc-header");
+      const body   = sec.querySelector(".acc-body");
+      const isTarget = secName === name;
+
+      if (header) header.setAttribute("aria-expanded", isTarget ? "true" : "false");
+      if (body) body.hidden = !isTarget;
     });
 
-    subtotalEl.textContent = formatPrice(subtotal);
-    totalEl.textContent    = formatPrice(subtotal); // shipping/tax later
+    if (contactStatus)  contactStatus.textContent  = name === "contact" ? "open" : "closed";
+    if (shippingStatus) shippingStatus.textContent = name === "shipping" ? "open" : "closed";
+    if (paymentStatus)  paymentStatus.textContent  = name === "payment" ? "open" : "closed";
   }
 
-    // pay button — Stripe integration
-  async function handlePayClick() {
-    const items = readCart();
-    if (!items.length) return;
+  async function finalizePayment() {
+    setError(paymentError, "");
 
-    // optional: check that every item has a priceId
-    const missingPrice = items.some(it => !it.priceId);
-    if (missingPrice) {
-      if (noteEl) {
-        noteEl.textContent = "one or more items are missing a stripe price id.";
-      }
+    const items = readCart();
+    if (!items.length) {
+      setError(paymentError, "your bag is empty.");
       return;
     }
 
-    // basic UI feedback
-    if (payBtn) {
-      payBtn.disabled = true;
+    // must have Stripe price IDs
+    const missingPrice = items.some(it => !it.priceId);
+    if (missingPrice) {
+      setError(paymentError, "one or more items are missing a stripe price id.");
+      return;
     }
-    if (noteEl) {
-      noteEl.textContent = "redirecting to secure payment...";
+
+    // validate contact + shipping
+    setError(contactError, "");
+    if (!validateEmail(emailEl?.value)) {
+      setError(contactError, "please enter a valid email.");
+      openOnly("contact");
+      return;
     }
+
+    setError(shippingError, "");
+    if (!shippingComplete()) {
+      setError(shippingError, "please fill out all required fields.");
+      openOnly("shipping");
+      return;
+    }
+
+    // store info (for later receipts/shipping calc)
+    saveCheckoutInfo();
+
+    if (finalizeBtn) finalizeBtn.disabled = true;
 
     try {
       const res = await fetch("/.netlify/functions/payments", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // our function expects the array itself, not { items: [...] }
+        headers: { "Content-Type": "application/json" },
+        // Your Netlify function expects the cart array itself
         body: JSON.stringify(items),
       });
 
       if (!res.ok) {
-        console.error("Checkout session error", res.status);
-        if (noteEl) {
-          noteEl.textContent = "there was a problem creating the payment session.";
-        }
-        if (payBtn) {
-          payBtn.disabled = false;
-        }
+        setError(paymentError, "there was a problem creating the payment session.");
+        if (finalizeBtn) finalizeBtn.disabled = false;
         return;
       }
 
       const data = await res.json();
-
       if (data.url) {
-        window.location.href = data.url;  // go to Stripe Checkout
-      } else {
-        if (noteEl) {
-          noteEl.textContent = "unexpected response from payment gateway.";
-        }
-        if (payBtn) {
-          payBtn.disabled = false;
-        }
+        window.location.href = data.url;
+        return;
       }
+
+      setError(paymentError, "unexpected response from payment gateway.");
+      if (finalizeBtn) finalizeBtn.disabled = false;
     } catch (err) {
-      console.error("Network error", err);
-      if (noteEl) {
-        noteEl.textContent = "network error creating payment session.";
-      }
-      if (payBtn) {
-        payBtn.disabled = false;
-      }
+      console.error(err);
+      setError(paymentError, "network error creating payment session.");
+      if (finalizeBtn) finalizeBtn.disabled = false;
     }
   }
 
-
   function init() {
-    render();
-
-    if (payBtn) {
-      payBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        handlePayClick();
+    // header click: open that section
+    headers.forEach(h => {
+      h.addEventListener("click", () => {
+        const sec = h.closest(".acc-section");
+        const name = sec?.getAttribute("data-section");
+        if (name) openOnly(name);
       });
-    }
-
-    // re-render whenever cart.js updates the cart
-    window.addEventListener("ref-cart-changed", () => {
-      render();
     });
+
+    // default open
+    openOnly("contact");
+    setMiniSummary();
+
+    toShippingBtn?.addEventListener("click", () => {
+      setError(contactError, "");
+      if (!validateEmail(emailEl?.value)) {
+        setError(contactError, "please enter a valid email.");
+        return;
+      }
+      openOnly("shipping");
+    });
+
+    backToContactBtn?.addEventListener("click", () => openOnly("contact"));
+
+    toPaymentBtn?.addEventListener("click", () => {
+      setError(shippingError, "");
+      if (!shippingComplete()) {
+        setError(shippingError, "please fill out all required fields.");
+        return;
+      }
+      openOnly("payment");
+    });
+
+    backToShippingBtn?.addEventListener("click", () => openOnly("shipping"));
+
+    finalizeBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      finalizePayment();
+    });
+
+    // if bag changes while on this page, refresh totals
+    window.addEventListener("ref-cart-changed", () => setMiniSummary());
   }
 
   if (document.readyState === "loading") {

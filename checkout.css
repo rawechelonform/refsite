@@ -1,6 +1,4 @@
-/* =========================
-   CHECKOUT.CSS — Checkout page
-   ========================= */
+/* checkout.css — accordion checkout page (CONTACT / SHIPPING / PAYMENT) */
 
 /* Local fonts (match shop/product) */
 @font-face {
@@ -68,115 +66,103 @@ body {
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* Title */
 .checkout-title {
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   font-family: 'RetroByte', monospace;
   font-size: 24px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Empty state */
-.checkout-empty {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-/* Items list */
-.checkout-items {
+/* Accordion */
+.checkout-accordion {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.checkout-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+.acc-section {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
 }
 
-.checkout-thumb-wrap {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.checkout-thumb {
-  display: block;
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-}
-
-.checkout-meta {
-  font-size: 12px;
-}
-
-.checkout-meta-title {
-  font-weight: 600;
-}
-
-.checkout-meta-sub {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.checkout-meta-sub span + span::before {
-  content: " · ";
-}
-
-/* qty + line total */
-.checkout-line-total {
-  text-align: right;
-  font-size: 12px;
-}
-
-.checkout-line-total .qty {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-/* Summary */
-.checkout-summary {
-  margin-top: 4px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.25);
-  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-}
-
-.checkout-row {
+.acc-header {
+  width: 100%;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
+  align-items: center;
+
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
 }
 
-.checkout-row-total {
-  margin-top: 4px;
-  font-weight: 700;
+.acc-status {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
 }
 
-/* Pay button */
-.checkout-pay-btn {
-  margin-top: 10px;
-  align-self: flex-start;
-  padding: 8px 16px;
+.acc-body {
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Inputs */
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field-label {
+  font-family: 'FS TI-92 ENO C', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ddd;
+}
+
+.field-input {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  padding: 8px 10px;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+}
+
+.field-input:focus {
+  outline: 2px solid rgba(255,255,255,0.25);
+  outline-offset: 2px;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Actions */
+.acc-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.acc-next,
+.acc-back,
+.acc-final {
+  padding: 8px 14px;
   border: 1px solid #fff;
-  background: #fff;
-  color: #000;
   font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
   font-size: 12px;
   letter-spacing: 0.12em;
@@ -184,26 +170,63 @@ body {
   cursor: pointer;
 }
 
-.checkout-pay-btn:hover {
+.acc-back {
   background: transparent;
   color: #fff;
 }
 
-/* Note */
-.checkout-note {
-  margin-top: 6px;
+.acc-next,
+.acc-final {
+  background: #fff;
+  color: #000;
+}
+
+.acc-next:hover,
+.acc-final:hover {
+  background: transparent;
+  color: #fff;
+}
+
+.acc-next:disabled,
+.acc-final:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Errors */
+.acc-error {
+  min-height: 16px;
   font-size: 11px;
-  color: var(--muted);
+  color: #ffb0b0;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
+/* Mini summary */
+.summary-mini {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.18);
+  font-family: "ocr-a-std", "OCR A Std", "OCR A", monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.mini-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.mini-total { margin-top: 4px; font-weight: 700; }
+
+.pay-note {
+  margin: 0;
+  font-size: 12px;
+  color: #ddd;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
 }
 
 /* Menubar overrides (match shop/product) */
-body.menu-transparent {
-  --chrome: rgba(255,255,255,0.70);
-}
+body.menu-transparent { --chrome: rgba(255,255,255,0.70); }
 
-body.menu-transparent .top-margin {
-  background: transparent !important;
-}
+body.menu-transparent .top-margin { background: transparent !important; }
 
 body.menu-transparent .site-header {
   background:
@@ -214,9 +237,7 @@ body.menu-transparent .site-header {
     transparent !important;
 }
 
-body.menu-transparent .menu > li {
-  border-left-color: var(--chrome);
-}
+body.menu-transparent .menu > li { border-left-color: var(--chrome); }
 
 body.menu-transparent .menu-link,
 body.menu-transparent .brand-link {
@@ -234,16 +255,6 @@ body.menu-transparent .brand-link:hover {
 
 /* Responsive */
 @media (max-width: 720px) {
-  .checkout-panel {
-    padding: 14px 14px;
-  }
-
-  .checkout-item {
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .checkout-line-total {
-    grid-column: 2 / -1;
-  }
+  .checkout-panel { padding: 14px 14px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
 }

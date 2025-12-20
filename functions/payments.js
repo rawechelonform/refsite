@@ -35,9 +35,17 @@ exports.handler = async (event) => {
     const session = await stripe.checkout.sessions.create({
   mode: 'payment',
   line_items,
+
+  // NEW: collect shipping address
+  shipping_address_collection: {
+    // only US; add more country codes if you want (e.g. ['US', 'CA', 'GB'])
+    allowed_countries: ['US'],
+  },
+
   success_url: 'https://rawechelonform.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
   cancel_url:  'https://rawechelonform.netlify.app/checkout.html',
 });
+
 
 
     return {
