@@ -1,13 +1,23 @@
-/* ===== cart.js (full updated) =====
+/* ===== cart.js (full updated, product.html?id=UNIQUEID) =====
    Click product image OR title in the bag -> go to product page
-   IMPORTANT: each cart item must include a URL field (url or href)
-   Example item:
-   { title, file, size, color, priceId, quantity, url: "/shop/shirt1.html" }
+   Prefers item.id / item.uniqueId / item.productId
+   Fallback: maps Stripe priceId -> UniqueID (fill PRICE_ID_TO_UNIQUEID)
+
+   Cart item should ideally include:
+   { id: 101, priceId: "price_...", title, file, size, color, quantity, displayPrice }
 */
 
 (function () {
   const STORAGE_KEY = "ref_cart";
   const IMAGE_BASE = "assets/shop/";
+
+  // OPTIONAL FALLBACK:
+  // If your cart items don't store id yet, fill this with your CSV mapping
+  // Example:
+  // "price_1Sd02LRUeLzZqzRzrtd672uT": 101,
+  const PRICE_ID_TO_UNIQUEID = {
+    // "price_...": 101,
+  };
 
   const panel = document.getElementById("cartPanel");
   const overlay = document.querySelector(".cart-drawer-overlay");
@@ -91,11 +101,49 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  function getProductUrl(item) {
-    const url =
-      (item && (item.url || item.href || item.productUrl || item.productHref)) ||
-      "";
-    return typeof url === "string" ? url : "";
+  function getUniqueIdFromItem(item) {
+    const direct =
+      item?.id ??
+      item?.uniqueId ??
+      item?.UniqueID ??
+      item?.productId ??
+      item?.productID ??
+      item?.skuId ??
+      null;
+
+    const n = Number(direct);
+    if (Number.isFinite(n) && n > 0) return n;
+
+    const byPrice = item?.priceId && PRICE_ID_TO_UNIQUEID[item.priceId];
+    const m = Number(byPrice);
+    if (Number.isFinite(m) && m > 0) return m;
+
+    return null;
+  }
+
+  function buildProductHref(item) {
+    // If you already store a url directly, honor it
+    const directUrl =
+      (item && (item.url || item.href || item.productUrl || item.productHref)) || "";
+    if (typeof directUrl === "string" && directUrl) return directUrl;
+
+    const uid = getUniqueIdFromItem(item);
+    if (!uid) return "products.html"; // safe fallback page
+
+    const url = new URL("product.html", window.location.origin);
+    url.searchParams.set("id", String(uid));
+
+    // Optional: preserve currently selected variant on return
+    if (item?.color) url.searchParams.set("color", item.color);
+    if (item?.size) url.searchParams.set("size", item.size);
+
+    return url.pathname + url.search;
+  }
+
+  function goToProduct(item) {
+    const href = buildProductHref(item);
+    closePanel();
+    window.location.assign(href);
   }
 
   /* ---------- rendering ---------- */
@@ -105,12 +153,12 @@
     row.className = "cart-drawer-item";
     row.dataset.index = String(idx);
 
-    const href = getProductUrl(item);
-    if (href) row.dataset.url = href; // used by delegated click handler
+    // set href on the row so click handler doesn't depend on closures
+    row.dataset.href = buildProductHref(item);
 
     // thumbnail
     const thumbWrap = document.createElement("div");
-    thumbWrap.className = "cart-drawer-thumb-wrap";
+    thumbWrap.className = "cart-drawer-thumb-wrap cart-drawer-clickable";
 
     if (item.file) {
       const img = document.createElement("img");
@@ -128,9 +176,8 @@
     main.className = "cart-drawer-item-main";
 
     const titleEl = document.createElement("div");
-    titleEl.className = "cart-drawer-item-title";
+    titleEl.className = "cart-drawer-item-title cart-drawer-clickable";
     titleEl.textContent = item.title || "";
-    if (href) titleEl.classList.add("cart-drawer-product-clickable");
 
     const metaEl = document.createElement("div");
     metaEl.className = "cart-drawer-item-meta";
@@ -205,16 +252,15 @@
 
     const subtotalText = "$" + subtotal.toFixed(2).replace(/\.00$/, "");
 
-    countEl.innerHTML = `items: ${totalQty}
+    countEl.innerHTML =
+      `items: ${totalQty}
        <span class="cart-drawer-subtotal">
          <span class="cart-drawer-subtotal-label">subtotal</span>
          ${subtotalText}
        </span>`;
 
     const badge = getMenuBadgeEl();
-    if (badge) {
-      badge.textContent = totalQty ? ` [${totalQty}]` : "";
-    }
+    if (badge) badge.textContent = totalQty ? ` [${totalQty}]` : "";
   }
 
   /* ---------- quantity ---------- */
@@ -297,9 +343,7 @@
   /* ---------- init ---------- */
 
   function init() {
-    if (!panel) {
-      console.warn("[cart] #cartPanel not found on this page");
-    }
+    if (!panel) console.warn("[cart] #cartPanel not found on this page");
 
     // BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
@@ -324,9 +368,7 @@
     }
 
     // Overlay click closes drawer
-    if (overlay) {
-      overlay.addEventListener("click", () => closePanel());
-    }
+    if (overlay) overlay.addEventListener("click", () => closePanel());
 
     // Checkout
     if (checkoutBtn) {
@@ -336,27 +378,33 @@
       });
     }
 
-    // NEW: click image OR title -> navigate to product URL
-    // This avoids <a> issues with pointer-events / layout and is more reliable
-    if (listEl) {
-      listEl.addEventListener("click", (e) => {
+    // Click image OR title -> go to product.html?id=...
+    // Delegated on panel so it works even if cart items are re-rendered
+    if (panel) {
+      panel.addEventListener("click", (e) => {
         const target = e.target;
         if (!(target instanceof Element)) return;
+
+        // ignore clicks inside quantity controls
+        if (target.closest(".cart-drawer-item-controls")) return;
 
         const row = target.closest(".cart-drawer-item");
         if (!row) return;
 
-        const url = row.dataset.url || "";
-        if (!url) return;
-
         const clickedThumb = target.closest(".cart-drawer-thumb-wrap, .cart-drawer-thumb");
         const clickedTitle = target.closest(".cart-drawer-item-title");
+        if (!clickedThumb && !clickedTitle) return;
 
-        if (clickedThumb || clickedTitle) {
-          e.preventDefault();
-          closePanel();
-          window.location.assign(url);
-        }
+        const idx = Number(row.dataset.index);
+        if (!Number.isFinite(idx)) return;
+
+        const items = readCart();
+        const item = items[idx];
+        if (!item) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        goToProduct(item);
       });
     }
 

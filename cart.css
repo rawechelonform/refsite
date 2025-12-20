@@ -1,12 +1,10 @@
-/* ===== cart.css (full, with clickability fix) ===== */
+/* ===== cart.css (full, unchanged layout + clickability) ===== */
 
-/* Make sure everything inside the drawer uses a sane baseline */
 .cart-drawer,
 .cart-drawer * {
   box-sizing: border-box;
 }
 
-/* overlay behind the drawer */
 .cart-drawer-overlay {
   position: fixed;
   inset: 0;
@@ -22,7 +20,6 @@
   pointer-events: auto;
 }
 
-/* drawer itself */
 .cart-drawer {
   position: fixed;
   top: 0;
@@ -43,12 +40,10 @@
   font-size: 13px;
 }
 
-/* open state */
 .cart-drawer.open {
   transform: translateX(0);
 }
 
-/* header */
 .cart-drawer-header {
   padding: 20px 20px 12px;
   display: flex;
@@ -65,7 +60,6 @@
   font-size: 20px;
 }
 
-/* close button */
 .cart-drawer-close {
   border: 1px solid #000000;
   background: #ffffff !important;
@@ -83,7 +77,6 @@
   color: #ffffff !important;
 }
 
-/* body / list */
 .cart-drawer-body {
   flex: 1;
   overflow-y: auto;
@@ -101,7 +94,6 @@
   color: #444;
 }
 
-/* item rows */
 .cart-drawer-item {
   display: flex;
   align-items: center;
@@ -112,7 +104,6 @@
   gap: 12px;
 }
 
-/* thumbnail */
 .cart-drawer-thumb-wrap {
   flex: 0 0 56px;
   display: flex;
@@ -143,7 +134,6 @@
   color: #555555;
 }
 
-/* quantity controls */
 .cart-drawer-item-controls {
   display: flex;
   align-items: center;
@@ -166,7 +156,6 @@
   color: #ffffff !important;
 }
 
-/* footer */
 .cart-drawer-footer {
   border-top: 1px solid #000000;
   padding: 12px 20px 16px;
@@ -175,7 +164,6 @@
   gap: 8px;
 }
 
-/* items + subtotal row */
 .cart-drawer-total {
   font-size: 13px;
   display: flex;
@@ -195,7 +183,6 @@
   text-transform: lowercase;
 }
 
-/* checkout button */
 .cart-drawer-checkout {
   padding: 8px 16px;
   border: 1px solid #000000;
@@ -219,14 +206,14 @@
   }
 }
 
-/* NEW: make image + title feel clickable */
+/* NEW: make it obvious what's clickable */
+.cart-drawer-clickable,
 .cart-drawer-thumb-wrap,
 .cart-drawer-item-title {
   cursor: pointer;
   pointer-events: auto;
 }
 
-/* optional: underline title on hover (purely visual) */
 .cart-drawer-item-title:hover {
   text-decoration: underline;
 }
