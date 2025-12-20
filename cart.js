@@ -1,17 +1,18 @@
 /* ===== cart.js (full updated) =====
-   Slide-out cart drawer shared across pages
-   Uses localStorage key "ref_cart"
-   Exposes window.refCart.{openPanel, closePanel, openPanelTemporarily, render}
+   Click product image OR title in the bag -> go to product page
+   IMPORTANT: each cart item must include a URL field (url or href)
+   Example item:
+   { title, file, size, color, priceId, quantity, url: "/shop/shirt1.html" }
 */
 
 (function () {
   const STORAGE_KEY = "ref_cart";
-  const IMAGE_BASE  = "assets/shop/";
+  const IMAGE_BASE = "assets/shop/";
 
-  const panel       = document.getElementById("cartPanel");
-  const overlay     = document.querySelector(".cart-drawer-overlay");
-  const listEl      = document.getElementById("cartItems");
-  const countEl     = document.getElementById("cartItemsCount");
+  const panel = document.getElementById("cartPanel");
+  const overlay = document.querySelector(".cart-drawer-overlay");
+  const listEl = document.getElementById("cartItems");
+  const countEl = document.getElementById("cartItemsCount");
   const checkoutBtn = document.getElementById("cartCheckoutBtn");
 
   let autoCloseTimer = null;
@@ -90,12 +91,22 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  function getProductUrl(item) {
+    const url =
+      (item && (item.url || item.href || item.productUrl || item.productHref)) ||
+      "";
+    return typeof url === "string" ? url : "";
+  }
+
   /* ---------- rendering ---------- */
 
   function renderRow(item, idx) {
     const row = document.createElement("div");
     row.className = "cart-drawer-item";
     row.dataset.index = String(idx);
+
+    const href = getProductUrl(item);
+    if (href) row.dataset.url = href; // used by delegated click handler
 
     // thumbnail
     const thumbWrap = document.createElement("div");
@@ -119,13 +130,14 @@
     const titleEl = document.createElement("div");
     titleEl.className = "cart-drawer-item-title";
     titleEl.textContent = item.title || "";
+    if (href) titleEl.classList.add("cart-drawer-product-clickable");
 
     const metaEl = document.createElement("div");
     metaEl.className = "cart-drawer-item-meta";
 
     const bits = [];
     if (item.color) bits.push(item.color);
-    if (item.size)  bits.push(item.size);
+    if (item.size) bits.push(item.size);
     metaEl.textContent = bits.join(" · ");
 
     main.appendChild(titleEl);
@@ -186,15 +198,14 @@
     const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
 
     let subtotal = 0;
-    items.forEach(it => {
+    items.forEach((it) => {
       const q = it.quantity || 0;
       subtotal += parsePrice(it.displayPrice) * q;
     });
 
     const subtotalText = "$" + subtotal.toFixed(2).replace(/\.00$/, "");
 
-    countEl.innerHTML =
-      `items: ${totalQty}
+    countEl.innerHTML = `items: ${totalQty}
        <span class="cart-drawer-subtotal">
          <span class="cart-drawer-subtotal-label">subtotal</span>
          ${subtotalText}
@@ -231,7 +242,7 @@
     const items = readCart();
     if (!items.length) return;
 
-    const missingPrice = items.some(it => !it.priceId);
+    const missingPrice = items.some((it) => !it.priceId);
     if (missingPrice) {
       alert("one or more items are missing a stripe price id.");
       return;
@@ -243,7 +254,6 @@
     }
 
     try {
-      // NEW: send cancelUrl so Stripe can return the buyer to the page they came from
       const res = await fetch("/.netlify/functions/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -291,6 +301,7 @@
       console.warn("[cart] #cartPanel not found on this page");
     }
 
+    // BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
       const target = e.target;
       if (!(target instanceof Element)) return;
@@ -301,6 +312,7 @@
       }
     });
 
+    // Drawer close button
     if (panel) {
       const closeBtn = panel.querySelector("[data-cart-close]");
       if (closeBtn) {
@@ -311,14 +323,40 @@
       }
     }
 
+    // Overlay click closes drawer
     if (overlay) {
       overlay.addEventListener("click", () => closePanel());
     }
 
+    // Checkout
     if (checkoutBtn) {
       checkoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
         handleCheckoutClick();
+      });
+    }
+
+    // NEW: click image OR title -> navigate to product URL
+    // This avoids <a> issues with pointer-events / layout and is more reliable
+    if (listEl) {
+      listEl.addEventListener("click", (e) => {
+        const target = e.target;
+        if (!(target instanceof Element)) return;
+
+        const row = target.closest(".cart-drawer-item");
+        if (!row) return;
+
+        const url = row.dataset.url || "";
+        if (!url) return;
+
+        const clickedThumb = target.closest(".cart-drawer-thumb-wrap, .cart-drawer-thumb");
+        const clickedTitle = target.closest(".cart-drawer-item-title");
+
+        if (clickedThumb || clickedTitle) {
+          e.preventDefault();
+          closePanel();
+          window.location.assign(url);
+        }
       });
     }
 

@@ -1,6 +1,4 @@
-/* cart.css
-   Slide-out cart panel on the right side, triggered from menubar
-*/
+/* ===== cart.css (full, with clickability fix) ===== */
 
 /* Make sure everything inside the drawer uses a sane baseline */
 .cart-drawer,
@@ -16,7 +14,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease-out;
-  z-index: 99998;  /* above header */
+  z-index: 99998;
 }
 
 .cart-drawer-overlay.open {
@@ -36,12 +34,11 @@
   box-shadow: -6px 0 24px rgba(0,0,0,0.6);
   transform: translateX(100%);
   transition: transform 0.3s ease-out;
-  z-index: 99999;  /* top-most */
+  z-index: 99999;
 
   display: flex;
   flex-direction: column;
 
-  /* base font for drawer content */
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 13px;
 }
@@ -112,7 +109,7 @@
   font-size: 13px;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
-  gap: 12px;                    /* more space between thumb + text */
+  gap: 12px;
 }
 
 /* thumbnail */
@@ -121,7 +118,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 4px;            /* extra spacing tweak */
+  margin-right: 4px;
 }
 
 .cart-drawer-thumb {
@@ -129,7 +126,7 @@
   width: 56px;
   height: 56px;
   object-fit: cover;
-  border: none;                  /* no frame */
+  border: none;
 }
 
 .cart-drawer-item-main {
@@ -151,7 +148,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: auto;             /* push controls to the far right */
+  margin-left: auto;
 }
 
 .cart-drawer-item-controls button {
@@ -198,7 +195,6 @@
   text-transform: lowercase;
 }
 
-
 /* checkout button */
 .cart-drawer-checkout {
   padding: 8px 16px;
@@ -217,11 +213,20 @@
   color: #000000;
 }
 
-/* (cart-drawer-status was removed from HTML per your request) */
-
-/* small screens */
 @media (max-width: 600px) {
   .cart-drawer {
     width: 100vw;
   }
+}
+
+/* NEW: make image + title feel clickable */
+.cart-drawer-thumb-wrap,
+.cart-drawer-item-title {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* optional: underline title on hover (purely visual) */
+.cart-drawer-item-title:hover {
+  text-decoration: underline;
 }

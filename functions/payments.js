@@ -52,20 +52,32 @@ exports.handler = async (event) => {
     }));
 
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items,
+  mode: "payment",
+  line_items,
 
-      shipping_address_collection: {
-        allowed_countries: ["US"],
-      },
+  shipping_address_collection: {
+    allowed_countries: ["US"],
+  },
 
-      shipping_options: [
-        { shipping_rate: "shr_1SgFiNRUeLzZqzRzXYqdRNhd" },
-      ],
+  shipping_options: [
+    { shipping_rate: "shr_1SgFiNRUeLzZqzRzXYqdRNhd" },
+  ],
 
-      success_url: `${SAFE_ORIGIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: safeCancelUrl,
-    });
+  metadata: {
+    items: JSON.stringify(
+      items.map(it => ({
+        title: it.title,
+        size: it.size,
+        color: it.color,
+        quantity: it.quantity,
+      }))
+    ),
+  },
+
+  success_url: `${SAFE_ORIGIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: safeCancelUrl,
+});
+
 
     return {
       statusCode: 200,
