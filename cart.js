@@ -1,20 +1,18 @@
 /* ===== cart.js =====
-   - Cart drawer + quantity UI unchanged
-   - Checkout hits Vercel backend (NOT relative URL)
-   - Better error logging for debugging
+   - Neocities-safe checkout (NO fetch)
+   - Uses form POST + redirect to Vercel
+   - Auto-injects hidden checkout form
 */
 
 (function () {
   const STORAGE_KEY = "ref_cart";
-  const IMAGE_BASE  = "assets/shop/";
-
-  // ✅ IMPORTANT: this must be your Vercel backend URL
+  const IMAGE_BASE = "assets/shop/";
   const PAYMENTS_URL = "https://ref-payments-backend.vercel.app/api/payments";
 
-  const panel       = document.getElementById("cartPanel");
-  const overlay     = document.querySelector(".cart-drawer-overlay");
-  const listEl      = document.getElementById("cartItems");
-  const countEl     = document.getElementById("cartItemsCount");
+  const panel = document.getElementById("cartPanel");
+  const overlay = document.querySelector(".cart-drawer-overlay");
+  const listEl = document.getElementById("cartItems");
+  const countEl = document.getElementById("cartItemsCount");
   const checkoutBtn = document.getElementById("cartCheckoutBtn");
 
   let autoCloseTimer = null;
@@ -24,8 +22,7 @@
   function readCart() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(raw || "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
@@ -39,6 +36,29 @@
         new CustomEvent("ref-cart-changed", { detail: { items } })
       );
     } catch (_) {}
+  }
+
+  /* ---------- checkout form ---------- */
+
+  function ensureCheckoutForm() {
+    let form = document.getElementById("checkoutForm");
+    if (form) return form;
+
+    form = document.createElement("form");
+    form.id = "checkoutForm";
+    form.method = "POST";
+    form.action = PAYMENTS_URL;
+    form.target = "_self";
+    form.style.display = "none";
+
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload";
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    return form;
   }
 
   /* ---------- open / close ---------- */
@@ -59,26 +79,13 @@
 
   function togglePanel() {
     if (!panel) return;
-    if (panel.classList.contains("open")) closePanel();
-    else openPanel();
+    panel.classList.contains("open") ? closePanel() : openPanel();
   }
 
-  function openPanelTemporarily(ms) {
-    if (!panel) return;
-    const dur = typeof ms === "number" ? ms : 3000;
-
+  function openPanelTemporarily(ms = 3000) {
     openPanel();
-
-    if (autoCloseTimer) {
-      clearTimeout(autoCloseTimer);
-      autoCloseTimer = null;
-    }
-
-    autoCloseTimer = setTimeout(() => {
-      autoCloseTimer = null;
-      if (!panel.classList.contains("open")) return;
-      closePanel();
-    }, dur);
+    clearTimeout(autoCloseTimer);
+    autoCloseTimer = setTimeout(closePanel, ms);
   }
 
   /* ---------- helpers ---------- */
@@ -88,8 +95,7 @@
   }
 
   function parsePrice(str) {
-    if (!str) return 0;
-    const n = parseFloat(String(str).replace(/[^0-9.]+/g, ""));
+    const n = parseFloat(String(str || "").replace(/[^0-9.]+/g, ""));
     return Number.isFinite(n) ? n : 0;
   }
 
@@ -98,67 +104,42 @@
   function renderRow(item, idx) {
     const row = document.createElement("div");
     row.className = "cart-drawer-item";
-    row.dataset.index = String(idx);
 
-    // thumbnail
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "cart-drawer-thumb-wrap";
 
     if (item.file) {
       const img = document.createElement("img");
-      img.className = "cart-drawer-thumb";
       img.src = IMAGE_BASE + item.file;
-      img.alt = item.title || "";
       img.loading = "lazy";
-      img.decoding = "async";
-      img.addEventListener("error", () => img.remove(), { once: true });
       thumbWrap.appendChild(img);
     }
 
-    // main text
     const main = document.createElement("div");
     main.className = "cart-drawer-item-main";
 
-    const titleEl = document.createElement("div");
-    titleEl.className = "cart-drawer-item-title";
-    titleEl.textContent = item.title || "";
+    const title = document.createElement("div");
+    title.textContent = item.title || "";
 
-    const metaEl = document.createElement("div");
-    metaEl.className = "cart-drawer-item-meta";
+    const meta = document.createElement("div");
+    meta.textContent = [item.color, item.size].filter(Boolean).join(" · ");
 
-    const bits = [];
-    if (item.color) bits.push(item.color);
-    if (item.size)  bits.push(item.size);
-    metaEl.textContent = bits.join(" · ");
+    main.append(title, meta);
 
-    main.appendChild(titleEl);
-    main.appendChild(metaEl);
-
-    // quantity controls
     const controls = document.createElement("div");
-    controls.className = "cart-drawer-item-controls";
+    const minus = document.createElement("button");
+    const plus = document.createElement("button");
+    const qty = document.createElement("span");
 
-    const minusBtn = document.createElement("button");
-    minusBtn.type = "button";
-    minusBtn.textContent = "−";
+    minus.textContent = "−";
+    plus.textContent = "+";
+    qty.textContent = item.quantity || 1;
 
-    const qtyLabel = document.createElement("span");
-    qtyLabel.textContent = String(item.quantity || 1);
+    minus.onclick = () => changeQuantity(idx, -1);
+    plus.onclick = () => changeQuantity(idx, 1);
 
-    const plusBtn = document.createElement("button");
-    plusBtn.type = "button";
-    plusBtn.textContent = "+";
-
-    controls.appendChild(minusBtn);
-    controls.appendChild(qtyLabel);
-    controls.appendChild(plusBtn);
-
-    row.appendChild(thumbWrap);
-    row.appendChild(main);
-    row.appendChild(controls);
-
-    minusBtn.addEventListener("click", () => changeQuantity(idx, -1));
-    plusBtn.addEventListener("click", () => changeQuantity(idx, +1));
+    controls.append(minus, qty, plus);
+    row.append(thumbWrap, main, controls);
 
     return row;
   }
@@ -170,59 +151,38 @@
     listEl.innerHTML = "";
 
     if (!items.length) {
-      const empty = document.createElement("div");
-      empty.className = "cart-drawer-empty";
-      empty.textContent = "your bag is empty.";
-      listEl.appendChild(empty);
-
+      listEl.textContent = "your bag is empty.";
       countEl.textContent = "items: 0";
-
-      const badgeEmpty = getMenuBadgeEl();
-      if (badgeEmpty) badgeEmpty.textContent = "";
+      const badge = getMenuBadgeEl();
+      if (badge) badge.textContent = "";
       return;
     }
 
-    items.forEach((it, idx) => {
-      listEl.appendChild(renderRow(it, idx));
-    });
+    items.forEach((it, idx) => listEl.appendChild(renderRow(it, idx)));
 
-    const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
+    const totalQty = items.reduce((s, it) => s + (it.quantity || 0), 0);
+    const subtotal = items.reduce(
+      (s, it) => s + parsePrice(it.displayPrice) * (it.quantity || 0),
+      0
+    );
 
-    let subtotal = 0;
-    items.forEach(it => {
-      const q = it.quantity || 0;
-      subtotal += parsePrice(it.displayPrice) * q;
-    });
-
-    const subtotalText = "$" + subtotal.toFixed(2).replace(/\.00$/, "");
-
-    countEl.innerHTML =
-      `items: ${totalQty}
-       <span class="cart-drawer-subtotal">
-         <span class="cart-drawer-subtotal-label">subtotal</span>
-         ${subtotalText}
-       </span>`;
+    countEl.innerHTML = `items: ${totalQty}
+      <span class="cart-drawer-subtotal">
+        subtotal $${subtotal.toFixed(2).replace(/\.00$/, "")}
+      </span>`;
 
     const badge = getMenuBadgeEl();
-    if (badge) {
-      badge.textContent = totalQty ? ` [${totalQty}]` : "";
-    }
+    if (badge) badge.textContent = ` [${totalQty}]`;
   }
 
   /* ---------- quantity ---------- */
 
   function changeQuantity(index, delta) {
     const items = readCart();
-    if (index < 0 || index >= items.length) return;
+    const next = (items[index]?.quantity || 0) + delta;
 
-    const item = items[index];
-    const next = (item.quantity || 0) + delta;
-
-    if (next <= 0) {
-      items.splice(index, 1);
-    } else {
-      item.quantity = next;
-    }
+    if (next <= 0) items.splice(index, 1);
+    else items[index].quantity = next;
 
     saveCart(items);
     render();
@@ -230,125 +190,51 @@
 
   /* ---------- checkout ---------- */
 
-  async function handleCheckoutClick() {
+  function handleCheckoutClick() {
     const items = readCart();
     if (!items.length) return;
 
-    const missingPrice = items.some(it => !it.priceId);
-    if (missingPrice) {
-      alert("one or more items are missing a stripe price id.");
+    if (items.some(it => !it.priceId)) {
+      alert("missing stripe price id");
       return;
     }
 
-    if (checkoutBtn) {
-      checkoutBtn.disabled = true;
-      checkoutBtn.textContent = "LOADING…";
-    }
+    const form = ensureCheckoutForm();
+    form.querySelector("input[name='payload']").value = JSON.stringify({
+      items,
+      cancelUrl: window.location.href,
+    });
 
-    try {
-      const res = await fetch(PAYMENTS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          cancelUrl: window.location.href,
-        }),
-      });
-
-      const rawText = await res.text().catch(() => "");
-
-      if (!res.ok) {
-        console.error("[cart] payments error", {
-          status: res.status,
-          url: PAYMENTS_URL,
-          response: rawText,
-        });
-
-        alert("there was a problem creating the payment session.");
-
-        if (checkoutBtn) {
-          checkoutBtn.disabled = false;
-          checkoutBtn.textContent = "CHECKOUT";
-        }
-        return;
-      }
-
-      let data = null;
-      try {
-        data = rawText ? JSON.parse(rawText) : null;
-      } catch (_) {
-        data = null;
-      }
-
-      if (data && data.url) {
-        const w = window.open(data.url, "_blank", "noopener,noreferrer");
-        if (!w) window.location.href = data.url;
-        return;
-      }
-
-      console.error("[cart] unexpected response", rawText);
-      alert("unexpected response from payment gateway.");
-
-      if (checkoutBtn) {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = "CHECKOUT";
-      }
-    } catch (err) {
-      console.error("[cart] network error", err);
-      alert("network error creating payment session.");
-
-      if (checkoutBtn) {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = "CHECKOUT";
-      }
-    }
+    form.submit();
   }
 
   /* ---------- init ---------- */
 
   function init() {
-    if (!panel) {
-      console.warn("[cart] #cartPanel not found on this page");
-    }
+    ensureCheckoutForm();
+    render();
 
-    // BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
-      const target = e.target;
-      if (!(target instanceof Element)) return;
-      const toggle = target.closest("[data-cart-toggle]");
-      if (toggle) {
+      const t = e.target.closest("[data-cart-toggle]");
+      if (t) {
         e.preventDefault();
         togglePanel();
       }
-    });
 
-    // Drawer close button
-    if (panel) {
-      const closeBtn = panel.querySelector("[data-cart-close]");
-      if (closeBtn) {
-        closeBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          closePanel();
-        });
-      }
-    }
-
-    // Overlay click closes drawer
-    if (overlay) {
-      overlay.addEventListener("click", () => closePanel());
-    }
-
-    // Checkout
-    if (checkoutBtn) {
-      checkoutBtn.addEventListener("click", (e) => {
+      const c = e.target.closest("#cartCheckoutBtn,[data-cart-checkout]");
+      if (c) {
         e.preventDefault();
         handleCheckoutClick();
-      });
-    }
+      }
 
-    window.addEventListener("ref-menubar-ready", () => render());
+      const close = e.target.closest("[data-cart-close]");
+      if (close) {
+        e.preventDefault();
+        closePanel();
+      }
+    });
 
-    render();
+    if (overlay) overlay.onclick = closePanel;
 
     window.refCart = {
       openPanel,
@@ -364,27 +250,3 @@
     init();
   }
 })();
-
-
-function ensureCheckoutForm() {
-  let form = document.getElementById("checkoutForm");
-  if (form) return form;
-
-  form = document.createElement("form");
-  form.id = "checkoutForm";
-  form.method = "POST";
-  form.action = PAYMENTS_URL;
-  form.target = "_self";
-  form.style.display = "none";
-
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "payload";
-
-  form.appendChild(input);
-
-  // attach as soon as body exists
-  (document.body || document.documentElement).appendChild(form);
-
-  return form;
-}
