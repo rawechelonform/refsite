@@ -1,73 +1,72 @@
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  // optional but helps avoid Stripe default-version surprises
   apiVersion: "2024-06-20",
 });
 
-/**
- * CORS helper
- * Allows ONLY approved origins to call this endpoint from the browser
- */
-function setCors(req, res) {
-  const allowed = [
-    process.env.SAFE_ORIGIN,          // e.g. "https://rawechelonform.neocities.org"
-    process.env.SAFE_ORIGIN_WWW,      // optional: "https://www.rawechelonform.com"
-  ].filter(Boolean);
-
-  const origin = req.headers.origin;
-
-  if (origin && allowed.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+// base64url decode helper
+function fromBase64Url(b64url) {
+  const b64 = String(b64url).replace(/-/g, "+").replace(/_/g, "/");
+  const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
+  return Buffer.from(b64 + pad, "base64").toString("utf8");
 }
 
 export default async function handler(req, res) {
-  setCors(req, res);
+  // Allow preflight just in case, but GET nav won't need CORS
+  if (req.method === "OPTIONS") return res.status(204).end();
 
-  // Preflight
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
-
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST, OPTIONS");
+  // ✅ allow GET (from Neocities) and POST (optional future)
+  if (req.method !== "GET" && req.method !== "POST") {
+    res.setHeader("Allow", "GET, POST, OPTIONS");
     return res.status(405).send("Method Not Allowed");
   }
 
   try {
-    const { items = [], cancelUrl = "" } = req.body || {};
+    let items = [];
+    let cancelUrl = "";
 
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: "Cart is empty" });
+    if (req.method === "GET") {
+      const payload = req.query?.payload;
+      if (!payload) return res.status(400).send("Missing payload");
+
+      const json = fromBase64Url(payload);
+      const data = JSON.parse(json);
+
+      items = Array.isArray(data.items) ? data.items : [];
+      cancelUrl = typeof data.cancelUrl === "string" ? data.cancelUrl : "";
+    } else {
+      // Optional: keep POST support if you want it later
+      const body = req.body || {};
+      items = Array.isArray(body.items) ? body.items : [];
+      cancelUrl = typeof body.cancelUrl === "string" ? body.cancelUrl : "";
+    }
+
+    if (!items.length) {
+      return res.status(400).send("Cart is empty");
     }
 
     if (items.some((it) => !it.priceId)) {
-      return res.status(400).json({ error: "Missing priceId" });
+      return res.status(400).send("Missing priceId");
     }
 
-    const SAFE_ORIGIN = process.env.SAFE_ORIGIN; // must be your storefront origin
+    const SAFE_ORIGIN = process.env.SAFE_ORIGIN;
     if (!SAFE_ORIGIN) {
-      return res.status(500).json({ error: "SAFE_ORIGIN env var is not set" });
+      return res.status(500).send("SAFE_ORIGIN env var is not set");
     }
 
     const safeCancelUrl =
-      typeof cancelUrl === "string" && cancelUrl.startsWith(SAFE_ORIGIN)
+      cancelUrl && cancelUrl.startsWith(SAFE_ORIGIN)
         ? cancelUrl
         : `${SAFE_ORIGIN}/shop.html`;
 
-    const line_items = items.map((item) => ({
-      price: item.priceId,
-      quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+    const line_items = items.map((it) => ({
+      price: it.priceId,
+      quantity: Number(it.quantity) > 0 ? Number(it.quantity) : 1,
     }));
 
     const shippingRateId = process.env.SHIPPING_RATE_ID;
     if (!shippingRateId) {
-      return res.status(500).json({ error: "SHIPPING_RATE_ID env var is not set" });
+      return res.status(500).send("SHIPPING_RATE_ID env var is not set");
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -77,6 +76,7 @@ export default async function handler(req, res) {
       shipping_address_collection: { allowed_countries: ["US"] },
       shipping_options: [{ shipping_rate: shippingRateId }],
 
+      // optional metadata
       metadata: {
         items: JSON.stringify(
           items.map((it) => ({
@@ -92,17 +92,12 @@ export default async function handler(req, res) {
       cancel_url: safeCancelUrl,
     });
 
-    return res.status(200).json({ url: session.url });
+    // ✅ redirect browser straight to Stripe Checkout
+    res.writeHead(303, { Location: session.url });
+    res.end();
+    return;
   } catch (err) {
     console.error("[payments] Error creating checkout session", err);
-
-    return res.status(500).json({
-      error: "Stripe error creating checkout session",
-      message: err?.message || String(err),
-      type: err?.type,
-      code: err?.code,
-      param: err?.param,
-      requestId: err?.requestId,
-    });
+    return res.status(500).send(err?.message || "Stripe error creating checkout session");
   }
 }
