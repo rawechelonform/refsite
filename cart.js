@@ -1,8 +1,8 @@
 /* ===== cart.js =====
-   Neocities-safe checkout:
-   - No fetch() (blocked by CSP connect-src)
-   - No form POST (blocked by CSP form-action 'self')
-   - Uses GET navigation to Vercel with base64 payload, then Vercel redirects to Stripe
+   Neocities-safe cart + checkout
+   - Cart drawer + quantity UI
+   - Checkout uses GET navigation to Vercel with base64 payload (no fetch, no form POST)
+   - Clears cart automatically when returning from Stripe (success.html?session_id=...)
 */
 
 (function () {
@@ -11,6 +11,28 @@
 
   // Vercel endpoint (must support GET ?payload=... and redirect to Stripe)
   const PAYMENTS_URL = "https://ref-payments-backend.vercel.app/api/payments";
+
+  // --- clear cart after successful checkout redirect ---
+  (function clearCartAfterStripeReturn() {
+    try {
+      const p = new URLSearchParams(window.location.search);
+
+      // Stripe success redirect includes session_id
+      if (p.has("session_id")) {
+        localStorage.removeItem(STORAGE_KEY);
+
+        // remove session_id so refresh/back doesn't re-run logic
+        const url = new URL(window.location.href);
+        url.searchParams.delete("session_id");
+        window.history.replaceState({}, "", url.toString());
+      }
+
+      // Optional secondary mechanism (if you ever add ?cleared=1 redirects)
+      if (p.get("cleared") === "1") {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (e) {}
+  })();
 
   const panel = document.getElementById("cartPanel");
   const overlay = document.querySelector(".cart-drawer-overlay");
@@ -269,8 +291,8 @@
       const encoded = toBase64Url(JSON.stringify(payload));
 
       // Navigate to Vercel (allowed by CSP), Vercel must redirect to Stripe
-      window.location.href = `${PAYMENTS_URL}?payload=${encodeURIComponent(encoded)}`;
-
+      window.location.href =
+        `${PAYMENTS_URL}?payload=${encodeURIComponent(encoded)}`;
     } catch (err) {
       console.error("[cart] checkout error", err);
       alert("checkout error.");
