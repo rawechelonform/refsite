@@ -1,3 +1,5 @@
+// sadgirls.js
+
 (() => {
   // ==== CONFIG ==============================================================
   const SHEET_CSV_URL = "assets/artdescriptions/REFsiteartdescriptions.csv";
@@ -15,6 +17,13 @@
   const stageInner = document.querySelector('#stage .stage-inner');
   if (stageInner && captionEl && !stageInner.contains(captionEl)) {
     stageInner.appendChild(captionEl);
+  }
+
+  // Reveal the video after the first stage image is ready
+  function revealVideoOnce() {
+    const v = document.querySelector('.sg-video');
+    if (!v) return;
+    v.classList.remove('is-pending');
   }
 
   // ==== STATE ==============================================================
@@ -160,7 +169,18 @@
     // Desktop / mobile landscape: original order
     thumbBar.innerHTML = "";
     IMAGES.forEach((it, i) => thumbBar.appendChild(makeThumb(it, i)));
+
     setStage(0);
+
+    // Reveal video only after the first stage image is ready (keeps layout identical; just hides it)
+    const img = document.getElementById("stageImg");
+    if (img) {
+      const ready = img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+      ready.finally(revealVideoOnce);
+    } else {
+      revealVideoOnce();
+    }
+
     preloadAround(0);
   }
 
@@ -180,23 +200,22 @@
     preload(IMAGES[prevI].src);
   }
 
- document.addEventListener("keydown", (e) => {
-  const tag = e.target.tagName;
-  if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
+  document.addEventListener("keydown", (e) => {
+    const tag = e.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
 
-  if (e.key === "ArrowRight") {
-    if (IMAGES.length > 0) {
-      go(current + 1);
-      e.preventDefault();
+    if (e.key === "ArrowRight") {
+      if (IMAGES.length > 0) {
+        go(current + 1);
+        e.preventDefault();
+      }
+    } else if (e.key === "ArrowLeft") {
+      if (IMAGES.length > 0) {
+        go(current - 1);
+        e.preventDefault();
+      }
     }
-  } else if (e.key === "ArrowLeft") {
-    if (IMAGES.length > 0) {
-      go(current - 1);
-      e.preventDefault();
-    }
-  }
-});
-
+  });
 
   // ==== Mobile portrait: zero-shift loader ================================
   async function renderMobilePortraitNoShift() {
@@ -226,6 +245,9 @@
     }
     // Fade in now that pixels are ready
     requestAnimationFrame(() => { stageImg.style.opacity = "1"; });
+
+    // Reveal video now that the first image is ready
+    revealVideoOnce();
 
     // 3) Only now build thumbnails and caption, and reveal together
     thumbBar.innerHTML = "";
@@ -396,4 +418,3 @@
     scheduleNext();
   }
 })();
-

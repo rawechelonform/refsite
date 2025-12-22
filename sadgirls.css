@@ -204,6 +204,14 @@ body {
   margin-bottom: 24px;   /* smaller bottom gap */
 }
 
+/* Keep video space reserved but hide it until first image is ready */
+.sg-video.is-pending {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+
+
 .video-wrap {
   width: 100%;
   display: flex;
