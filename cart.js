@@ -3,7 +3,7 @@
    - No fetch() (blocked by CSP connect-src)
    - No form POST (blocked by CSP form-action 'self')
    - Uses GET navigation to Vercel with base64 payload, then Vercel redirects to Stripe
-   - Clears cart on Stripe success return (?session_id=...) on ANY page that loads cart.js
+   - Clears cart on Stripe success return (session_id) or success.html
 */
 
 (function () {
@@ -13,23 +13,6 @@
   // Vercel endpoint (must support GET ?payload=... and redirect to Stripe)
   const PAYMENTS_URL = "https://ref-payments-backend.vercel.app/api/payments";
 
-  // --- CLEAR CART AFTER STRIPE SUCCESS (RUNS BEFORE ANY CART READS) ---
-  (function clearCartOnStripeReturn() {
-    try {
-      const params = new URLSearchParams(window.location.search);
-
-      if (params.has("session_id")) {
-        // wipe cart before anything else runs
-        localStorage.removeItem(STORAGE_KEY);
-
-        // remove session_id so refresh/back doesn't re-trigger
-        const url = new URL(window.location.href);
-        url.searchParams.delete("session_id");
-        window.history.replaceState({}, "", url.toString());
-      }
-    } catch (e) {}
-  })();
-
   const panel = document.getElementById("cartPanel");
   const overlay = document.querySelector(".cart-drawer-overlay");
   const listEl = document.getElementById("cartItems");
@@ -37,6 +20,54 @@
   const checkoutBtn = document.getElementById("cartCheckoutBtn");
 
   let autoCloseTimer = null;
+
+  /* ---------- cart clearing (RUNS IMMEDIATELY) ---------- */
+
+  function safeDispatchCartChanged(items) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("ref-cart-changed", { detail: { items } })
+      );
+    } catch (_) {}
+  }
+
+  function clearCart(reason) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_) {}
+
+    safeDispatchCartChanged([]);
+    // If cart UI exists on this page, re-render it
+    try {
+      if (typeof render === "function") render();
+    } catch (_) {}
+
+    // Visible proof in console that this ran
+    try {
+      console.log("[cart] cleared", reason);
+    } catch (_) {}
+  }
+
+  (function clearCartOnStripeSuccessReturn() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const path = (window.location.pathname || "").toLowerCase();
+
+      const hasSessionId = params.has("session_id");
+      const isSuccessPage = path.endsWith("/success.html") || path.includes("success");
+
+      if (hasSessionId || isSuccessPage) {
+        clearCart(hasSessionId ? "stripe session_id" : "success page");
+
+        // Remove session_id so refresh/back doesn’t keep re-triggering
+        if (hasSessionId) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("session_id");
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+    } catch (_) {}
+  })();
 
   /* ---------- storage ---------- */
 
@@ -52,12 +83,17 @@
   }
 
   function saveCart(items) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    // IMPORTANT: if empty, remove the key entirely (hard clear)
     try {
-      window.dispatchEvent(
-        new CustomEvent("ref-cart-changed", { detail: { items } })
-      );
+      if (!items || items.length === 0) {
+        localStorage.removeItem(STORAGE_KEY);
+        safeDispatchCartChanged([]);
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch (_) {}
+
+    safeDispatchCartChanged(items);
   }
 
   /* ---------- open / close ---------- */
@@ -113,9 +149,7 @@
   }
 
   function toBase64Url(str) {
-    // UTF-8 safe base64
     const b64 = btoa(unescape(encodeURIComponent(str)));
-    // URL-safe base64
     return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
   }
 
@@ -126,7 +160,6 @@
     row.className = "cart-drawer-item";
     row.dataset.index = String(idx);
 
-    // thumbnail
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "cart-drawer-thumb-wrap";
 
@@ -141,7 +174,6 @@
       thumbWrap.appendChild(img);
     }
 
-    // main text
     const main = document.createElement("div");
     main.className = "cart-drawer-item-main";
 
@@ -160,7 +192,6 @@
     main.appendChild(titleEl);
     main.appendChild(metaEl);
 
-    // quantity controls
     const controls = document.createElement("div");
     controls.className = "cart-drawer-item-controls";
 
@@ -208,9 +239,7 @@
       return;
     }
 
-    items.forEach((it, idx) => {
-      listEl.appendChild(renderRow(it, idx));
-    });
+    items.forEach((it, idx) => listEl.appendChild(renderRow(it, idx)));
 
     const totalQty = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
 
@@ -230,9 +259,7 @@
        </span>`;
 
     const badge = getMenuBadgeEl();
-    if (badge) {
-      badge.textContent = totalQty ? ` [${totalQty}]` : "";
-    }
+    if (badge) badge.textContent = totalQty ? ` [${totalQty}]` : "";
   }
 
   /* ---------- quantity ---------- */
@@ -244,11 +271,8 @@
     const item = items[index];
     const next = (item.quantity || 0) + delta;
 
-    if (next <= 0) {
-      items.splice(index, 1);
-    } else {
-      item.quantity = next;
-    }
+    if (next <= 0) items.splice(index, 1);
+    else item.quantity = next;
 
     saveCart(items);
     render();
@@ -260,8 +284,7 @@
     const items = readCart();
     if (!items.length) return;
 
-    const missingPrice = items.some((it) => !it.priceId);
-    if (missingPrice) {
+    if (items.some((it) => !it.priceId)) {
       alert("one or more items are missing a stripe price id.");
       return;
     }
@@ -272,7 +295,6 @@
     }
 
     try {
-      // Keep payload small to avoid URL length issues
       const payload = {
         items: items.map((it) => ({
           priceId: it.priceId,
@@ -285,8 +307,6 @@
       };
 
       const encoded = toBase64Url(JSON.stringify(payload));
-
-      // Navigate to Vercel (allowed by CSP), Vercel must redirect to Stripe
       window.location.href = `${PAYMENTS_URL}?payload=${encodeURIComponent(encoded)}`;
     } catch (err) {
       console.error("[cart] checkout error", err);
@@ -302,10 +322,6 @@
   /* ---------- init ---------- */
 
   function init() {
-    if (!panel) {
-      console.warn("[cart] #cartPanel not found on this page");
-    }
-
     // BAG button in menubar — event delegation
     document.addEventListener("click", (e) => {
       const target = e.target;
@@ -329,9 +345,7 @@
     }
 
     // Overlay click closes drawer
-    if (overlay) {
-      overlay.addEventListener("click", () => closePanel());
-    }
+    if (overlay) overlay.addEventListener("click", () => closePanel());
 
     // Checkout
     if (checkoutBtn) {
@@ -350,6 +364,7 @@
       closePanel,
       openPanelTemporarily,
       render,
+      clearCart: () => clearCart("manual"),
     };
   }
 
