@@ -8,21 +8,6 @@
   <link rel="stylesheet" href="bag.css?v=1">
   <link rel="stylesheet" href="menubar.css?v=mb27">
   <link rel="stylesheet" href="success.css?v=1">
-
-  <script>
-    (function () {
-      // clear cart as early as possible
-      function clearCart() {
-        try { localStorage.removeItem("ref_cart"); } catch (e) {}
-      }
-
-      // 1) run immediately
-      clearCart();
-
-      // 2) also run on pageshow (handles bfcache/back-forward restores)
-      window.addEventListener("pageshow", clearCart);
-    })();
-  </script>
 </head>
 
 <body class="menu-transparent">
@@ -39,11 +24,11 @@
     </main>
   </div>
 
+  <!-- scripts -->
   <script src="menubar.js?v=mb27" defer></script>
-  <!-- only include cart.js here if you want the cart UI on success page -->
-  <!-- <script src="cart.js?v=7" defer></script> -->
 
-  <script src="cart.js?v=6" defer></script>
-
+  <!-- IMPORTANT: cart.js must load on this page so cart can clear + UI updates -->
+  <!-- bump the v number any time you change cart.js to break caching -->
+  <script src="cart.js?v=7" defer></script>
 </body>
 </html>
