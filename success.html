@@ -24,25 +24,30 @@
     </main>
   </div>
 
-  <script src="menubar.js?v=mb27" defer></script>
-
+  <!-- clear cart immediately on success, before any deferred scripts run -->
   <script>
     (function () {
-      // 1) always clear the stored cart on success
       try {
+        // clear both ways to cover old/new code paths
+        localStorage.setItem("ref_cart", "[]");
         localStorage.removeItem("ref_cart");
       } catch (e) {}
-
-      // 2) if the cart UI exists on this page (or gets injected),
-      // re-render once the menubar is ready
-      window.addEventListener("ref-menubar-ready", function () {
-        try {
-          if (window.refCart && typeof window.refCart.render === "function") {
-            window.refCart.render();
-          }
-        } catch (e) {}
-      });
     })();
+  </script>
+
+  <!-- load UI + cart logic after the clear -->
+  <script src="menubar.js?v=mb27" defer></script>
+  <script src="cart.js?v=6" defer></script>
+
+  <!-- once menubar/cart are ready, force a re-render -->
+  <script>
+    window.addEventListener("ref-menubar-ready", function () {
+      try {
+        if (window.refCart && typeof window.refCart.render === "function") {
+          window.refCart.render();
+        }
+      } catch (e) {}
+    });
   </script>
 </body>
 </html>
