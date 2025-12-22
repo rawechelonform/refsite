@@ -1,5 +1,3 @@
-// sadgirls.js
-
 (() => {
   // ==== CONFIG ==============================================================
   const SHEET_CSV_URL = "assets/artdescriptions/REFsiteartdescriptions.csv";
@@ -19,11 +17,15 @@
     stageInner.appendChild(captionEl);
   }
 
-  // Reveal the video after the first stage image is ready
+  // ==== Video reveal control ===============================================
+  let videoRevealed = false;
+
   function revealVideoOnce() {
+    if (videoRevealed) return;
     const v = document.querySelector('.sg-video');
     if (!v) return;
     v.classList.remove('is-pending');
+    videoRevealed = true;
   }
 
   // ==== STATE ==============================================================
@@ -99,7 +101,7 @@
 
         return {
           src,
-          thumb: null, // if you add thumbs later, wire here
+          thumb: null,
           title: r[iTitle] || "",
           meta: {
             title:  r[iTitle]  || "",
@@ -121,18 +123,29 @@
     const img = new Image();
     img.alt = item.title || "";
 
-    img.onload = () => {
+    img.onload = async () => {
       stageImg.style.opacity = 0;
-      requestAnimationFrame(() => {
+
+      requestAnimationFrame(async () => {
         stageImg.src = img.src;
         stageImg.alt = img.alt;
         stageImg.style.opacity = 1;
+
+        // IMPORTANT: reveal video only after FIRST stage image is actually ready
+        if (i === 0 && !videoRevealed) {
+          try {
+            await decodeImg(stageImg);
+          } catch (e) {}
+          revealVideoOnce();
+        }
       });
     };
 
     img.onerror = () => {
       stageImg.removeAttribute("src");
       stageImg.alt = "Image failed to load";
+      // If first image fails, still reveal video so the page doesn't keep it hidden forever
+      if (i === 0) revealVideoOnce();
     };
 
     img.src = item.src;
@@ -166,21 +179,11 @@
   }
 
   function render() {
-    // Desktop / mobile landscape: original order
     thumbBar.innerHTML = "";
     IMAGES.forEach((it, i) => thumbBar.appendChild(makeThumb(it, i)));
 
+    // Do NOT reveal here. setStage(0) will reveal when the image is actually ready
     setStage(0);
-
-    // Reveal video only after the first stage image is ready (keeps layout identical; just hides it)
-    const img = document.getElementById("stageImg");
-    if (img) {
-      const ready = img.decode ? img.decode().catch(() => {}) : Promise.resolve();
-      ready.finally(revealVideoOnce);
-    } else {
-      revealVideoOnce();
-    }
-
     preloadAround(0);
   }
 
@@ -219,15 +222,12 @@
 
   // ==== Mobile portrait: zero-shift loader ================================
   async function renderMobilePortraitNoShift() {
-    // 1) Prepare initial (index 0) stage image fully off-DOM
     const first = IMAGES[0];
     if (!first) return;
 
-    // Hide caption & thumbs until stage is ready (prevents text-first flash)
     captionEl.style.visibility = "hidden";
     thumbBar.style.visibility = "hidden";
 
-    // Preload and decode the stage image
     const temp = new Image();
     temp.src = first.src;
     temp.alt = first.title || "";
@@ -235,21 +235,19 @@
     temp.decoding = "async";
     await decodeImg(temp);
 
-    // 2) Atomically show stage image
     stageImg.style.opacity = "0";
     stageImg.src = temp.src;
     stageImg.alt = temp.alt;
-    // Optional: reserve space exactly (further reduces any micro-shift)
+
     if (temp.naturalWidth && temp.naturalHeight) {
       stageImg.style.aspectRatio = `${temp.naturalWidth} / ${temp.naturalHeight}`;
     }
-    // Fade in now that pixels are ready
+
     requestAnimationFrame(() => { stageImg.style.opacity = "1"; });
 
-    // Reveal video now that the first image is ready
+    // Now that the first image is ready, reveal the video (once)
     revealVideoOnce();
 
-    // 3) Only now build thumbnails and caption, and reveal together
     thumbBar.innerHTML = "";
     IMAGES.forEach((it, i) => thumbBar.appendChild(makeThumb(it, i)));
     captionEl.innerHTML = formatMeta(first.meta);
@@ -257,7 +255,6 @@
     captionEl.style.visibility = "visible";
     thumbBar.style.visibility = "visible";
 
-    // 4) Preload neighbors for snappy next/prev
     current = 0;
     preloadAround(current);
   }
@@ -291,10 +288,8 @@
     clearTimeout(window.__sadgirls_resize);
     window.__sadgirls_resize = setTimeout(async () => {
       if (isPortraitMobile()) {
-        // Re-apply mobile no-shift flow on rotate into portrait
         await renderMobilePortraitNoShift();
       } else {
-        // Restore desktop/landscape original behavior
         render();
       }
     }, 120);
@@ -317,25 +312,20 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let paused = document.hidden;
 
-  // spawn timing window (ms)
   const MIN_INTERVAL_MS = 2200;
   const MAX_INTERVAL_MS = 12000;
 
-  // duration window ("old speed", ms)
-  const MIN_DURATION_MS = 1100; // increase for slower
+  const MIN_DURATION_MS = 1100;
   const MAX_DURATION_MS = 2500;
 
-  // tail & thickness (px)
   const MIN_TAIL = 120;
   const MAX_TAIL = 210;
   const MIN_THICK = 2;
   const MAX_THICK = 4;
 
-  // how far the head goes past the bottom after crossing (px)
   const MIN_EXTRA_BEYOND = 60;
   const MAX_EXTRA_BEYOND = 140;
 
-  // cap concurrent stars
   const MAX_CONCURRENT = 3;
   let activeStars = 0;
 
@@ -347,12 +337,10 @@
     }, wait);
   }
 
-  // sometimes spawn 1–3 at once, but never exceed MAX_CONCURRENT
   function spawnCluster() {
     const available = Math.max(0, MAX_CONCURRENT - activeStars);
     if (available === 0) return;
 
-    // weighted: mostly 1, sometimes 2, rarely 3
     const r = Math.random();
     let desired = r < 0.65 ? 1 : r < 0.92 ? 2 : 3;
     const count = Math.min(desired, available);
@@ -369,36 +357,28 @@
     const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
     const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-    // random column with small margins
     const startX = rand(0.02 * vw, 0.98 * vw);
     star.style.left = `${startX}px`;
 
-    // random thickness for head + tail
     const thick = randInt(MIN_THICK, MAX_THICK);
     star.style.width = `${thick}px`;
     star.style.height = `${thick}px`;
     star.style.setProperty('--thick', `${thick}px`);
 
-    // random tail
     const tail = randInt(MIN_TAIL, MAX_TAIL);
     star.style.setProperty('--tail', `${tail}px`);
 
-    // start just above the screen, so tail is off at spawn
     const startTop = -tail - 20;
     star.style.top = `${startTop}px`;
 
-    // ALWAYS cross entire page:
-    // distance = full viewport height + starting offset (tail+20) + a bit beyond
     const extraBeyond = randInt(MIN_EXTRA_BEYOND, MAX_EXTRA_BEYOND);
     const distance = vh + tail + 20 + extraBeyond;
     star.style.setProperty('--sg-distance', `${distance}px`);
 
-    // old-speed style duration with tiny jitter
     const durationMs = randInt(MIN_DURATION_MS, MAX_DURATION_MS);
     const delayMs = randInt(0, 200);
     star.style.animation = `sg_fall ${durationMs}ms linear ${delayMs}ms forwards`;
 
-    // track concurrency
     activeStars++;
     star.addEventListener('animationend', () => {
       star.remove();
@@ -414,7 +394,7 @@
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
   if (!reduceMotion.matches) {
-    setTimeout(() => spawnCluster(), randInt(300, 1500)); // first one at a random moment
+    setTimeout(() => spawnCluster(), randInt(300, 1500));
     scheduleNext();
   }
 })();

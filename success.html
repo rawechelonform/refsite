@@ -24,29 +24,35 @@
     </main>
   </div>
 
-  <!-- clear cart immediately on success, before any deferred scripts run -->
+  <!-- 1) clear immediately -->
   <script>
     (function () {
       try {
-        // clear both ways to cover old/new code paths
-        localStorage.setItem("ref_cart", "[]");
         localStorage.removeItem("ref_cart");
-      } catch (e) {}
+        console.log("[success] cleared ref_cart early:", localStorage.getItem("ref_cart"));
+      } catch (e) {
+        console.log("[success] clear failed", e);
+      }
     })();
   </script>
 
-  <!-- load UI + cart logic after the clear -->
+  <!-- 2) load scripts (include cart.js so badge/UI can update) -->
   <script src="menubar.js?v=mb27" defer></script>
   <script src="cart.js?v=6" defer></script>
 
-  <!-- once menubar/cart are ready, force a re-render -->
+  <!-- 3) clear again after scripts run + force UI refresh -->
   <script>
-    window.addEventListener("ref-menubar-ready", function () {
+    window.addEventListener("load", function () {
       try {
+        localStorage.removeItem("ref_cart");
+        console.log("[success] cleared ref_cart after load:", localStorage.getItem("ref_cart"));
+
         if (window.refCart && typeof window.refCart.render === "function") {
           window.refCart.render();
         }
-      } catch (e) {}
+      } catch (e) {
+        console.log("[success] post-load clear failed", e);
+      }
     });
   </script>
 </body>
