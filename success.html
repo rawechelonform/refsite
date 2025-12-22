@@ -8,6 +8,21 @@
   <link rel="stylesheet" href="bag.css?v=1">
   <link rel="stylesheet" href="menubar.css?v=mb27">
   <link rel="stylesheet" href="success.css?v=1">
+
+  <script>
+    (function () {
+      // clear cart as early as possible
+      function clearCart() {
+        try { localStorage.removeItem("ref_cart"); } catch (e) {}
+      }
+
+      // 1) run immediately
+      clearCart();
+
+      // 2) also run on pageshow (handles bfcache/back-forward restores)
+      window.addEventListener("pageshow", clearCart);
+    })();
+  </script>
 </head>
 
 <body class="menu-transparent">
@@ -24,36 +39,8 @@
     </main>
   </div>
 
-  <!-- 1) clear immediately -->
-  <script>
-    (function () {
-      try {
-        localStorage.removeItem("ref_cart");
-        console.log("[success] cleared ref_cart early:", localStorage.getItem("ref_cart"));
-      } catch (e) {
-        console.log("[success] clear failed", e);
-      }
-    })();
-  </script>
-
-  <!-- 2) load scripts (include cart.js so badge/UI can update) -->
   <script src="menubar.js?v=mb27" defer></script>
-  <script src="cart.js?v=6" defer></script>
-
-  <!-- 3) clear again after scripts run + force UI refresh -->
-  <script>
-    window.addEventListener("load", function () {
-      try {
-        localStorage.removeItem("ref_cart");
-        console.log("[success] cleared ref_cart after load:", localStorage.getItem("ref_cart"));
-
-        if (window.refCart && typeof window.refCart.render === "function") {
-          window.refCart.render();
-        }
-      } catch (e) {
-        console.log("[success] post-load clear failed", e);
-      }
-    });
-  </script>
+  <!-- only include cart.js here if you want the cart UI on success page -->
+  <!-- <script src="cart.js?v=7" defer></script> -->
 </body>
 </html>
