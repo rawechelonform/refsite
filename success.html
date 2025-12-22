@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <title>REF · Order received</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <link rel="stylesheet" href="bag.css?v=1">
   <link rel="stylesheet" href="menubar.css?v=mb27">
-<link rel="stylesheet" href="success.css?v=1">
-
+  <link rel="stylesheet" href="success.css?v=1">
 </head>
 
 <body class="menu-transparent">
@@ -25,21 +25,24 @@
   </div>
 
   <script src="menubar.js?v=mb27" defer></script>
-  
-<script>
-  (function () {
-    try {
-      // clear cart after successful checkout
-      localStorage.removeItem("ref_cart");
 
-      // update any cart UI if it's present on this page
-      if (window.refCart && typeof window.refCart.render === "function") {
-        window.refCart.render();
-      }
-    } catch (e) {}
-  })();
-</script>
+  <script>
+    (function () {
+      // 1) always clear the stored cart on success
+      try {
+        localStorage.removeItem("ref_cart");
+      } catch (e) {}
 
-
+      // 2) if the cart UI exists on this page (or gets injected),
+      // re-render once the menubar is ready
+      window.addEventListener("ref-menubar-ready", function () {
+        try {
+          if (window.refCart && typeof window.refCart.render === "function") {
+            window.refCart.render();
+          }
+        } catch (e) {}
+      });
+    })();
+  </script>
 </body>
 </html>
