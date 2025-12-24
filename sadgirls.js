@@ -194,6 +194,23 @@
     preloadAround(current);
   }
 
+  // ==== NEW: click stage to go to next image ===============================
+  if (stage) {
+    stage.addEventListener("click", (e) => {
+      const target = e.target;
+      if (target && (target.closest("button") || target.closest("a"))) return;
+      if (IMAGES.length > 0) go(current + 1);
+    });
+
+    // Optional: Enter/Space advances when stage is focused
+    stage.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (IMAGES.length > 0) go(current + 1);
+        e.preventDefault();
+      }
+    });
+  }
+
   function preload(src) { const i = new Image(); i.src = src; }
   function preloadAround(i) {
     if (!IMAGES.length) return;
